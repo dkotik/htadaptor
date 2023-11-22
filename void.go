@@ -72,7 +72,7 @@ func (a *VoidFuncAdaptor[T, V]) ServeHyperText(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
-	var request V
+	var request V = new(T)
 	if err := a.decoder.Decode(request, r); err != nil {
 		return NewInvalidRequestError(fmt.Errorf("unable to decode: %w", err))
 	}
@@ -92,18 +92,21 @@ func (a *VoidFuncAdaptor[T, V]) ServeHTTP(
 ) {
 	err := a.ServeHyperText(w, r)
 	if err == nil {
-		a.logger.ErrorContext(
-			r.Context(),
-			err.Error(),
-			slog.String("method", r.Method),
-			slog.String("URL", r.URL.String()),
-		)
-	} else {
 		a.logger.DebugContext(
 			r.Context(),
 			"completed HTTP request via void adaptor",
 			slog.String("method", r.Method),
-			slog.String("URL", r.URL.String()),
+			slog.String("host", r.Host),
+			slog.String("path", r.URL.String()),
+		)
+	} else {
+		a.errorHandler.HandleError(w, r, err)
+		a.logger.ErrorContext(
+			r.Context(),
+			err.Error(),
+			slog.String("method", r.Method),
+			slog.String("host", r.Host),
+			slog.String("path", r.URL.String()),
 		)
 	}
 }

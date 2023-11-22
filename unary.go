@@ -81,7 +81,8 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHyperText(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
-	var request V
+	var request V = new(T)
+	// request := new(V)
 	if err = a.decoder.Decode(request, r); err != nil {
 		return NewInvalidRequestError(fmt.Errorf("unable to decode: %w", err))
 	}
@@ -105,18 +106,21 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHTTP(
 ) {
 	err := a.ServeHyperText(w, r)
 	if err == nil {
-		a.logger.ErrorContext(
-			r.Context(),
-			err.Error(),
-			slog.String("method", r.Method),
-			slog.String("URL", r.URL.String()),
-		)
-	} else {
 		a.logger.DebugContext(
 			r.Context(),
 			"completed HTTP request via unary adaptor",
 			slog.String("method", r.Method),
-			slog.String("URL", r.URL.String()),
+			slog.String("host", r.Host),
+			slog.String("path", r.URL.String()),
+		)
+	} else {
+		a.errorHandler.HandleError(w, r, err)
+		a.logger.ErrorContext(
+			r.Context(),
+			err.Error(),
+			slog.String("method", r.Method),
+			slog.String("host", r.Host),
+			slog.String("path", r.URL.String()),
 		)
 	}
 }

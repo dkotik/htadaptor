@@ -88,7 +88,7 @@ func (d *Decoder) Decode(v any, r *http.Request) error {
 				return err
 			}
 		}
-		return json.NewDecoder(lr).Decode(v)
+		return json.NewDecoder(lr).Decode(&v)
 	default:
 		return fmt.Errorf("content type %q is not supported", ct)
 	}

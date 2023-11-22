@@ -92,6 +92,7 @@ func WithHyperTextEncoder(t *template.Template) Option {
 
 func WithDefaultEncoder() Option {
 	return WithEncoderFunc(func(w http.ResponseWriter, v any) error {
+		// panic("encoder")
 		w.Header().Set("Content-Type", "application/json")
 		return json.NewEncoder(w).Encode(v)
 	})

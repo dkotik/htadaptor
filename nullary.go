@@ -82,18 +82,21 @@ func (a *NullaryFuncAdaptor[O]) ServeHTTP(
 ) {
 	err := a.ServeHyperText(w, r)
 	if err == nil {
-		a.logger.ErrorContext(
-			r.Context(),
-			err.Error(),
-			slog.String("method", r.Method),
-			slog.String("URL", r.URL.String()),
-		)
-	} else {
 		a.logger.DebugContext(
 			r.Context(),
 			"completed HTTP request via nullary adaptor",
 			slog.String("method", r.Method),
-			slog.String("URL", r.URL.String()),
+			slog.String("host", r.Host),
+			slog.String("path", r.URL.String()),
+		)
+	} else {
+		a.errorHandler.HandleError(w, r, err)
+		a.logger.ErrorContext(
+			r.Context(),
+			err.Error(),
+			slog.String("method", r.Method),
+			slog.String("host", r.Host),
+			slog.String("path", r.URL.String()),
 		)
 	}
 }
