@@ -15,42 +15,55 @@ import (
 	"github.com/dkotik/htadaptor/decoder/schema"
 )
 
-var decoder = schema.NewDecoder()
+var structSchema = schema.NewDecoder()
 
-// TODO: should this be forked out to oakhttp library?
-// TODO: all the chaching could be ripped out `schema` package as schema can expect only one type of Request struct?
-// TODO: Add QueryValues and PathValues (from URL body) to produce url.Values and feed them to Gorilla scheme Decoder when 1.22 comes out.
-// id := r.PathValue("id")
-func Decode(v any, r *http.Request, readLimit, memoryLimit int64) (err error) {
-	values := r.URL.Query()
-	if len(values) > 0 {
-		// TODO: decode should happen only once by merging URL values below.
-		if err := decoder.Decode(v, values); err != nil {
-			return fmt.Errorf("failed decoding URL query values: %w", err)
+type Extractor func(*http.Request) (url.Values, error)
+
+type Decoder struct {
+	// schema      *schema.Decoder
+	readLimit   int64
+	memoryLimit int64
+	extractors  []Extractor
+}
+
+func (d *Decoder) Decode(v any, r *http.Request) error {
+	values := make(url.Values)
+	for _, extractor := range d.extractors {
+		more, err := extractor(r)
+		if err != nil {
+			return err
+		}
+		for key, valueSet := range more {
+			values[key] = valueSet
 		}
 	}
 
 	if r.Body == nil {
-		return nil // body is empty
+		return structSchema.Decode(v, values) // body is empty
 	}
 	ct := r.Header.Get("Content-Type")
 	if ct == "" {
-		return nil // unspecified content type
+		return structSchema.Decode(v, values) // unspecified content type
 	}
 	ct, params, err := mime.ParseMediaType(ct)
 	if err != nil {
 		return err
 	}
 	defer r.Body.Close()
-	lr := io.LimitReader(r.Body, readLimit)
+	lr := io.LimitReader(r.Body, d.readLimit)
 
 	switch ct {
 	case "application/x-www-form-urlencoded":
-		values, err := ParseURLEncodedBody(lr)
+		b, err := io.ReadAll(r.Body)
 		if err != nil {
 			return err
 		}
-		return decoder.Decode(v, values)
+		more, err := url.ParseQuery(string(b))
+		if err != nil {
+			return err
+		}
+		mergeURLValues(values, more)
+		return structSchema.Decode(v, values)
 	case "multipart/form-data":
 		fallthrough
 	case "multipart/mixed":
@@ -63,25 +76,54 @@ func Decode(v any, r *http.Request, readLimit, memoryLimit int64) (err error) {
 		// TODO: mime.Form could be thrown into a GC channel for
 		// batch processing.
 		// TODO: or can just start a context-waiting goRoutine.
-		values, err := ParseMultiPartBody(lr, boundary, memoryLimit)
+		more, err := ParseMultiPartBody(lr, boundary, d.memoryLimit)
 		if err != nil {
 			return err
 		}
-		return decoder.Decode(v, values)
+		mergeURLValues(values, more)
+		return structSchema.Decode(v, values)
 	case "application/json":
+		if len(values) > 0 {
+			if err = structSchema.Decode(v, values); err != nil {
+				return err
+			}
+		}
 		return json.NewDecoder(lr).Decode(v)
 	default:
 		return fmt.Errorf("content type %q is not supported", ct)
 	}
 }
 
-func ParseURLEncodedBody(r io.Reader) (url.Values, error) {
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
+func New(withOptions ...Option) (_ *Decoder, err error) {
+	o := &options{}
+	if err = WithOptions(append(withOptions,
+		func(o *options) (err error) {
+			if o.ReadLimit == 0 {
+				if err = WithDefaultReadLimitOf10MB()(o); err != nil {
+					return err
+				}
+			}
+			if o.MemoryLimit == 0 {
+				if err = WithDefaultMemoryLimitOfOneThirdOfReadLimit()(o); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)...)(o); err != nil {
+		return nil, fmt.Errorf("cannot initialize a decoder: %w", err)
 	}
-	return url.ParseQuery(string(b))
+	return &Decoder{
+		// schema:      o.Schema,
+		readLimit:   o.ReadLimit,
+		memoryLimit: o.MemoryLimit,
+		extractors:  o.Extractors,
+	}, nil
 }
+
+// TODO: all the chaching could be ripped out `schema` package as schema can expect only one type of Request struct?
+// TODO: Add QueryValues and PathValues (from URL body) to produce url.Values and feed them to Gorilla scheme Decoder when 1.22 comes out.
+// id := r.PathValue("id")
 
 func ParseMultiPartBody(r io.Reader, boundary string, memoryLimit int64) (url.Values, error) {
 	form, err := multipart.NewReader(r, boundary).ReadForm(memoryLimit)

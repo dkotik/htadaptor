@@ -1,6 +1,3 @@
-/*
-package htadaptor provides domain logic adaptors shaped to [oakmux.Handler].
-*/
 package htadaptor
 
 import (
