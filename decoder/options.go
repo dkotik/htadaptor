@@ -114,6 +114,7 @@ func WithQueryValues(names ...string) Option {
 				for _, desired := range names {
 					if name == desired {
 						result[name] = value
+						break
 					}
 				}
 			}

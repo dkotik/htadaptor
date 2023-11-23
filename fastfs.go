@@ -14,6 +14,21 @@ type fastFileSystemFile struct {
 	Contents    []byte
 }
 
+func (f *fastFileSystemFile) ServeHTTP(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	w.Header().Set("content-type", f.ContentType)
+	_, _ = io.Copy(w, bytes.NewReader(f.Contents))
+}
+
+func NewFastFileSystemFile(contents []byte) http.Handler {
+	return &fastFileSystemFile{
+		ContentType: http.DetectContentType(contents),
+		Contents:    contents,
+	}
+}
+
 type fastFileSystem struct {
 	index        map[string]*fastFileSystemFile
 	errorHandler ErrorHandler
@@ -84,15 +99,11 @@ func NewFastFileSystem(withOptions ...FastFileSystemOption) (_ http.Handler, err
 
 func WithFastFileSystemFile(
 	path string,
-	contentType string,
 	contents []byte,
 ) FastFileSystemOption {
 	return func(o *fastFileSystemOptions) error {
 		if path == "" {
 			return errors.New("cannot use an empty path")
-		}
-		if contentType == "" {
-			return fmt.Errorf("cannot use an empty content type: %s", path)
 		}
 		if len(contents) < 1 {
 			return fmt.Errorf("cannot use empty file contents: %s", path)
@@ -103,7 +114,7 @@ func WithFastFileSystemFile(
 		b := make([]byte, len(contents))
 		copy(b, contents)
 		o.index[path] = &fastFileSystemFile{
-			ContentType: contentType,
+			ContentType: http.DetectContentType(contentType),
 			Contents:    b,
 		}
 		return nil
