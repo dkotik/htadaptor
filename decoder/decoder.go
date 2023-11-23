@@ -15,6 +15,8 @@ import (
 	"github.com/dkotik/htadaptor/decoder/schema"
 )
 
+// TODO: move decoder inside root htadaptor package. Collect DecoderOptions under htadaptor.options.DecoderOptions
+
 var structSchema = schema.NewDecoder()
 
 type Extractor func(*http.Request) (url.Values, error)

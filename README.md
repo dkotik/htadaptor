@@ -2,6 +2,9 @@
 
 Package `htadaptor` provides generic domain logic adaptors for HTTP handlers. Available adaptors cover almost every possible combination of domain call shapes:
 
+<!-- TODO: link adaptors to GoDoc -->
+<!-- TODO: add FS adaptor -->
+
 | Struct Adaptor | Parameter Values     | Return Values |
 |----------------|----------------------|--------------:|
 | UnaryFunc      | context, inputStruct |    any, error |
@@ -46,3 +49,7 @@ See `examples` folder for most common project uses.
 - WithLogger
     - WithSlogLogger
 - WithErrorHandler
+
+## Credits
+
+Package includes reflection schema decoder from Gorilla toolkit.

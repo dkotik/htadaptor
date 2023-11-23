@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+var voidLogger RequestLogger
+
 type RequestLogger interface {
 	LogRequest(*http.Request, error)
 }
@@ -25,7 +27,7 @@ func (l *slogLogger) LogRequest(r *http.Request, err error) {
 		l.Log(
 			r.Context(),
 			l.successLevel,
-			"completed HTTP request via void adaptor",
+			"handled HTTP request",
 			slog.String("client_address", r.RemoteAddr),
 			slog.String("method", r.Method),
 			slog.String("host", r.Host),
@@ -34,7 +36,8 @@ func (l *slogLogger) LogRequest(r *http.Request, err error) {
 	} else {
 		l.ErrorContext(
 			r.Context(),
-			err.Error(),
+			"failed to handle HTTP request",
+			slog.Any("error", err),
 			slog.String("client_address", r.RemoteAddr),
 			slog.String("method", r.Method),
 			slog.String("host", r.Host),
@@ -54,5 +57,8 @@ func NewRequestLogger(logger *slog.Logger, successLevel slog.Leveler) RequestLog
 }
 
 func NewVoidLogger() RequestLogger {
-	return RequestLoggerFunc(func(r *http.Request, err error) {})
+	if voidLogger == nil {
+		voidLogger = RequestLoggerFunc(func(r *http.Request, err error) {})
+	}
+	return voidLogger
 }
