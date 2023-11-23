@@ -100,6 +100,8 @@ type Decoder interface {
 	Decode(any, *http.Request) error
 }
 
+type StringExtractor func(*http.Request) (string, error)
+
 func Must(h http.Handler, err error) http.Handler {
 	if err != nil {
 		panic(err)

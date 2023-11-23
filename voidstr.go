@@ -7,13 +7,11 @@ import (
 	"net/http"
 )
 
-func NewVoidFuncAdaptor[
-	T any,
-	V Validatable[T],
-](
-	domainCall func(context.Context, V) error,
+func NewVoidStringFuncAdaptor(
+	domainCall func(context.Context, string) error,
+	stringExtractor StringExtractor,
 	withOptions ...Option,
-) (*VoidFuncAdaptor[T, V], error) {
+) (*VoidStringFuncAdaptor, error) {
 	o := &options{}
 	err := WithOptions(append(
 		withOptions,
@@ -24,11 +22,6 @@ func NewVoidFuncAdaptor[
 				}
 			}()
 
-			if o.Decoder == nil {
-				if err = WithDefaultDecoder()(o); err != nil {
-					return err
-				}
-			}
 			if o.ErrorHandler == nil {
 				if err = WithDefaultErrorHandler()(o); err != nil {
 					return err
@@ -42,6 +35,9 @@ func NewVoidFuncAdaptor[
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")
 			}
+			if stringExtractor == nil {
+				return errors.New("cannot use a <nil> string extractor")
+			}
 			return nil
 		},
 	)...)(o)
@@ -49,43 +45,37 @@ func NewVoidFuncAdaptor[
 		return nil, fmt.Errorf("unable to initialize void adaptor: %w", err)
 	}
 
-	return &VoidFuncAdaptor[T, V]{
-		domainCall:   domainCall,
-		decoder:      o.Decoder,
-		errorHandler: o.ErrorHandler,
-		logger:       o.Logger,
+	return &VoidStringFuncAdaptor{
+		domainCall:      domainCall,
+		stringExtractor: stringExtractor,
+		errorHandler:    o.ErrorHandler,
+		logger:          o.Logger,
 	}, nil
 }
 
-type VoidFuncAdaptor[
-	T any,
-	V Validatable[T],
-] struct {
-	domainCall   func(context.Context, V) error
-	decoder      Decoder
-	errorHandler ErrorHandler
-	logger       RequestLogger
+type VoidStringFuncAdaptor struct {
+	domainCall      func(context.Context, string) error
+	stringExtractor StringExtractor
+	errorHandler    ErrorHandler
+	logger          RequestLogger
 }
 
-func (a *VoidFuncAdaptor[T, V]) ServeHyperText(
+func (a *VoidStringFuncAdaptor) ServeHyperText(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
-	var request V = new(T)
-	if err := a.decoder.Decode(request, r); err != nil {
+	value, err := a.stringExtractor(r)
+	if err != nil {
 		return NewInvalidRequestError(fmt.Errorf("unable to decode: %w", err))
 	}
-	if err = request.Validate(); err != nil {
-		return NewInvalidRequestError(err)
-	}
-	if err = a.domainCall(r.Context(), request); err != nil {
+	if err = a.domainCall(r.Context(), value); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 
-func (a *VoidFuncAdaptor[T, V]) ServeHTTP(
+func (a *VoidStringFuncAdaptor) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {

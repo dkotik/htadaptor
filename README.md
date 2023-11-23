@@ -1,9 +1,48 @@
 # Hyper Text Adaptors
 
-Package `htadaptor` provides generic domain logic adaptors for HTTP handlers. Adaptors come in three flavors:
+Package `htadaptor` provides generic domain logic adaptors for HTTP handlers. Available adaptors cover almost every possible combination of domain call shapes:
 
-1. UnaryFunc: func(context, inputStruct) (outputStruct, error)
-2. NullaryFunc: func(context) (outputStruct, error)
-3. VoidFunc: func(context, inputStruct) error
+| Struct Adaptor | Parameter Values     | Return Values |
+|----------------|----------------------|--------------:|
+| UnaryFunc      | context, inputStruct |    any, error |
+| NullaryFunc    | context              |    any, error |
+| VoidFunc       | context, inputStruct |         error |
 
-Each input requires implementation of `htadaptor.Validatable` for safety.
+Each inputStruct must implement `htadaptor.Validatable` for safety.
+
+| String Adaptor  | Parameter Values     | Return Values |
+|-----------------|----------------------|--------------:|
+| UnaryStringFunc | context, string      |    any, error |
+| VoidStringFunc  | context, string      |         error |
+
+## Installation
+
+```sh
+go get github.com/dkotik/htadaptor@latest
+```
+
+## Usage
+
+```go
+mux := http.NewServeMux()
+mux.Handle("/api/v1/order", htadaptor.Must(
+  htadaptor.NewUnaryFuncAdaptor(myService.Order),
+))
+```
+
+See `examples` folder for most common project uses.
+
+## Adaptor Options
+
+<!-- TODO: link to GoDoc -->
+
+- WithDecoder
+    - WithReadLimit
+    - WithMemoryLimit
+    - WithQueryValue
+    - WithHeaderValue
+    - WithExtractor
+- WithEncoder
+- WithLogger
+    - WithSlogLogger
+- WithErrorHandler

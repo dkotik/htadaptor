@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -32,6 +33,16 @@ func main() {
 		htadaptor.NewUnaryFuncAdaptor(domainLogic.Order),
 	))
 
+	mux.Handle("/api/v1/price", htadaptor.Must(
+		htadaptor.NewUnaryStringFuncAdaptor(
+			domainLogic.GetPrice,
+			func(r *http.Request) (string, error) {
+				log.Println("got query:", r.URL.RawQuery)
+				return r.URL.Query().Get("item"), nil
+			},
+		),
+	))
+
 	mux.Handle("/api/v1/inventory", htadaptor.Must(
 		htadaptor.NewNullaryFuncAdaptor(domainLogic.GetInventory),
 	))
@@ -39,19 +50,6 @@ func main() {
 	mux.Handle("/api/v1/record", htadaptor.Must(
 		htadaptor.NewVoidFuncAdaptor(domainLogic.Record),
 	))
-
-	// TODO: add string routes.
-	// handler, err := oakmux.New(
-	// 	oakmux.WithRouteStringFunc( // UnaryString
-	// 		"price", "price",
-	// 		domainLogic.GetPrice,
-	// 		func(r *http.Request) (string, error) {
-	// 			// string decoder
-	// 			log.Println("got query:", r.URL.RawQuery)
-	// 			return r.URL.Query().Get("item"), nil
-	// 		},
-	// 	),
-	// )
 
 	fmt.Printf(
 		`Listening at http://%[1]s/

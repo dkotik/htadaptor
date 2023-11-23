@@ -115,15 +115,17 @@ func WithErrorHandlerFunc(f func(http.ResponseWriter, *http.Request, error)) Opt
 	return WithErrorHandler(ErrorHandlerFunc(f))
 }
 
+var defaultErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+	htError, ok := err.(Error)
+	if ok {
+		http.Error(w, err.Error(), htError.HyperTextStatusCode())
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func WithDefaultErrorHandler() Option {
-	return WithErrorHandlerFunc(func(w http.ResponseWriter, r *http.Request, err error) {
-		htError, ok := err.(Error)
-		if ok {
-			http.Error(w, err.Error(), htError.HyperTextStatusCode())
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	})
+	return WithErrorHandlerFunc(defaultErrorHandler)
 }
 
 func WithLogger(l RequestLogger) Option {
