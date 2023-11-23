@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 )
 
@@ -65,7 +64,7 @@ type VoidFuncAdaptor[
 	domainCall   func(context.Context, V) error
 	decoder      Decoder
 	errorHandler ErrorHandler
-	logger       *slog.Logger
+	logger       RequestLogger
 }
 
 func (a *VoidFuncAdaptor[T, V]) ServeHyperText(
@@ -91,23 +90,9 @@ func (a *VoidFuncAdaptor[T, V]) ServeHTTP(
 	r *http.Request,
 ) {
 	err := a.ServeHyperText(w, r)
-	if err == nil {
-		a.logger.DebugContext(
-			r.Context(),
-			"completed HTTP request via void adaptor",
-			slog.String("method", r.Method),
-			slog.String("host", r.Host),
-			slog.String("path", r.URL.String()),
-		)
-	} else {
+	a.logger.LogRequest(r, err)
+	if err != nil {
 		a.errorHandler.HandleError(w, r, err)
-		a.logger.ErrorContext(
-			r.Context(),
-			err.Error(),
-			slog.String("method", r.Method),
-			slog.String("host", r.Host),
-			slog.String("path", r.URL.String()),
-		)
 	}
 }
 

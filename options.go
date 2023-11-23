@@ -15,7 +15,7 @@ type options struct {
 	Decoder      Decoder
 	Encoder      Encoder
 	ErrorHandler ErrorHandler
-	Logger       *slog.Logger
+	Logger       RequestLogger
 }
 
 type Option func(*options) error
@@ -126,19 +126,28 @@ func WithDefaultErrorHandler() Option {
 	})
 }
 
-func WithLogger(l *slog.Logger) Option {
+func WithLogger(l RequestLogger) Option {
 	return func(o *options) error {
 		if l == nil {
-			return errors.New("cannot use a <nil> logger")
+			return errors.New("cannot use a <nil> request logger")
 		}
 		if o.Logger != nil {
-			return errors.New("logger is already set")
+			return errors.New("request logger is already set")
 		}
 		o.Logger = l
 		return nil
 	}
 }
 
+func WithSlogLogger(l *slog.Logger, successLevel slog.Leveler) Option {
+	return func(o *options) error {
+		if l == nil {
+			return errors.New("cannot use a <nil> structured logger")
+		}
+		return WithLogger(NewRequestLogger(l, successLevel))(o)
+	}
+}
+
 func WithDefaultLogger() Option {
-	return WithLogger(slog.Default())
+	return WithLogger(NewRequestLogger(slog.Default(), slog.LevelInfo))
 }

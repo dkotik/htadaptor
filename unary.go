@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 )
 
@@ -74,7 +73,7 @@ type UnaryFuncAdaptor[
 	decoder      Decoder
 	encoder      Encoder
 	errorHandler ErrorHandler
-	logger       *slog.Logger
+	logger       RequestLogger
 }
 
 func (a *UnaryFuncAdaptor[T, V, O]) ServeHyperText(
@@ -105,23 +104,9 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHTTP(
 	r *http.Request,
 ) {
 	err := a.ServeHyperText(w, r)
-	if err == nil {
-		a.logger.DebugContext(
-			r.Context(),
-			"completed HTTP request via unary adaptor",
-			slog.String("method", r.Method),
-			slog.String("host", r.Host),
-			slog.String("path", r.URL.String()),
-		)
-	} else {
+	a.logger.LogRequest(r, err)
+	if err != nil {
 		a.errorHandler.HandleError(w, r, err)
-		a.logger.ErrorContext(
-			r.Context(),
-			err.Error(),
-			slog.String("method", r.Method),
-			slog.String("host", r.Host),
-			slog.String("path", r.URL.String()),
-		)
 	}
 }
 
