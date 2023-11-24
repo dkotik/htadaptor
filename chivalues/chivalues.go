@@ -33,16 +33,15 @@ func New(names ...string) (*ChiRequestValueExtractor, error) {
 	return &ChiRequestValueExtractor{names: names}, nil
 }
 
-func (c *ChiRequestValueExtractor) ExtractRequestValue(r *http.Request) (url.Values, error) {
-	result := make(url.Values)
+func (c *ChiRequestValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request) error {
 	rctx := chi.RouteContext(r.Context())
 	for i, name := range rctx.URLParams.Keys {
 		for _, desired := range c.names {
 			if name == desired {
-				result[name] = []string{rctx.URLParams.Values[i]}
+				vs[name] = []string{rctx.URLParams.Values[i]}
 				break
 			}
 		}
 	}
-	return result, nil
+	return nil
 }

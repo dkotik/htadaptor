@@ -1,5 +1,5 @@
 /*
-Package main demonstrates routing directly to domain function calls.
+Package main demonstrates application of generic domain adaptors to satisfy [http.Handler] interface.
 */
 package main
 

@@ -3,19 +3,42 @@ package htadaptor
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 
 	"log/slog"
-
-	"github.com/dkotik/htadaptor/decoder"
 )
 
 type options struct {
-	Decoder      Decoder
-	Encoder      Encoder
-	ErrorHandler ErrorHandler
-	Logger       RequestLogger
+	Decoder        Decoder
+	DecoderOptions []StructDecoderOption
+	Encoder        Encoder
+	ErrorHandler   ErrorHandler
+	Logger         RequestLogger
+}
+
+func (o *options) Validate() (err error) {
+	if len(o.DecoderOptions) > 0 {
+		if o.Decoder != nil {
+			return fmt.Errorf("option WithDecoder conflicts with %d decoder options; provide either a prepared decoder or options for preparing one, but not both", len(o.DecoderOptions))
+		}
+		o.Decoder, err = NewStructDecoder(o.DecoderOptions...)
+		if err != nil {
+			return err
+		}
+	}
+	if o.ErrorHandler == nil {
+		if err = WithDefaultErrorHandler()(o); err != nil {
+			return err
+		}
+	}
+	if o.Logger == nil {
+		if err = WithDefaultLogger()(o); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type Option func(*options) error
@@ -32,33 +55,6 @@ func WithOptions(withOptions ...Option) Option {
 		}
 		return nil
 	}
-}
-
-func WithDecoder(d Decoder) Option {
-	return func(o *options) error {
-		if d == nil {
-			return errors.New("cannot use a <nil> decoder")
-		}
-		if o.Decoder != nil {
-			return errors.New("decoder is already set")
-		}
-		o.Decoder = d
-		return nil
-	}
-}
-
-func WithDecoderOptions(withOptions ...decoder.Option) Option {
-	return func(o *options) error {
-		d, err := decoder.New(withOptions...)
-		if err != nil {
-			return err
-		}
-		return WithDecoder(d)(o)
-	}
-}
-
-func WithDefaultDecoder() Option {
-	return WithDecoderOptions()
 }
 
 func WithEncoder(e Encoder) Option {
@@ -152,4 +148,81 @@ func WithSlogLogger(l *slog.Logger, successLevel slog.Leveler) Option {
 
 func WithDefaultLogger() Option {
 	return WithLogger(NewRequestLogger(slog.Default(), slog.LevelInfo))
+}
+
+func WithDecoder(d Decoder) Option {
+	return func(o *options) error {
+		if d == nil {
+			return errors.New("cannot use a <nil> decoder")
+		}
+		if o.Decoder != nil {
+			return errors.New("decoder is already set")
+		}
+		o.Decoder = d
+		return nil
+	}
+}
+
+func WithDecoderOptions(withOptions ...StructDecoderOption) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, withOptions...)
+		return nil
+	}
+}
+
+func WithDefaultDecoder() Option {
+	return func(o *options) (err error) {
+		defer func() {
+			if err != nil {
+				err = fmt.Errorf("cannot initialize default struct decoder: %w", err)
+			}
+		}()
+		d, err := NewStructDecoder()
+		if err != nil {
+			return err
+		}
+		return WithDecoder(d)(o)
+	}
+}
+
+func WithReadLimit(upto int64) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, WithDecoderReadLimit(upto))
+		return nil
+	}
+}
+
+func WithMemoryLimit(upto int64) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, WithDecoderMemoryLimit(upto))
+		return nil
+	}
+}
+
+func WithExtractors(exs ...RequestValueExtractor) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, WithDecoderExtractors(exs...))
+		return nil
+	}
+}
+
+func WithQueryValues(names ...string) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, WithDecoderQueryValues(names...))
+		return nil
+	}
+}
+
+func WithHeaderValues(names ...string) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, WithDecoderHeaderValues(names...))
+		return nil
+	}
+}
+
+func WithPathValues(names ...string) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, WithDecoderPathValues(names...))
+		return nil
+	}
 }

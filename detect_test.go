@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-type testRequest struct{}
-
 func (t *testRequest) Validate() error {
 	return nil
 }

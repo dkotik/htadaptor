@@ -114,7 +114,7 @@ func WithFastFileSystemFile(
 		b := make([]byte, len(contents))
 		copy(b, contents)
 		o.index[path] = &fastFileSystemFile{
-			ContentType: http.DetectContentType(contentType),
+			ContentType: http.DetectContentType(contents),
 			Contents:    b,
 		}
 		return nil

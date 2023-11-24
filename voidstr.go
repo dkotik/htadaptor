@@ -16,21 +16,8 @@ func NewVoidStringFuncAdaptor(
 	err := WithOptions(append(
 		withOptions,
 		func(o *options) (err error) {
-			defer func() {
-				if err != nil {
-					err = fmt.Errorf("unable to apply default option: %w", err)
-				}
-			}()
-
-			if o.ErrorHandler == nil {
-				if err = WithDefaultErrorHandler()(o); err != nil {
-					return err
-				}
-			}
-			if o.Logger == nil {
-				if err = WithDefaultLogger()(o); err != nil {
-					return err
-				}
+			if err = o.Validate(); err != nil {
+				return err
 			}
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")

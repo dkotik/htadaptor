@@ -50,6 +50,13 @@ See `examples` folder for most common project uses.
     - WithSlogLogger
 - WithErrorHandler
 
+## Extractors
+
+- Query
+- Header
+- Path (pending with 1.22)
+- Chi
+
 ## Credits
 
 Package includes reflection schema decoder from Gorilla toolkit.
