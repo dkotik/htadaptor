@@ -9,7 +9,7 @@ import (
 
 func NewVoidStringFuncAdaptor(
 	domainCall func(context.Context, string) error,
-	stringExtractor StringExtractor,
+	stringExtractor StringValueExtractor,
 	withOptions ...Option,
 ) (*VoidStringFuncAdaptor, error) {
 	o := &options{}
@@ -23,7 +23,7 @@ func NewVoidStringFuncAdaptor(
 				return errors.New("cannot use a <nil> domain call")
 			}
 			if stringExtractor == nil {
-				return errors.New("cannot use a <nil> string extractor")
+				return errors.New("cannot use a <nil> string value extractor")
 			}
 			return nil
 		},
@@ -42,7 +42,7 @@ func NewVoidStringFuncAdaptor(
 
 type VoidStringFuncAdaptor struct {
 	domainCall      func(context.Context, string) error
-	stringExtractor StringExtractor
+	stringExtractor StringValueExtractor
 	errorHandler    ErrorHandler
 	logger          RequestLogger
 }
@@ -51,9 +51,9 @@ func (a *VoidStringFuncAdaptor) ServeHyperText(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
-	value, err := a.stringExtractor(r)
+	value, err := a.stringExtractor.ExtractStringValue(r)
 	if err != nil {
-		return NewInvalidRequestError(fmt.Errorf("unable to decode: %w", err))
+		return NewInvalidRequestError(fmt.Errorf("unable to decode string value: %w", err))
 	}
 	if err = a.domainCall(r.Context(), value); err != nil {
 		return err

@@ -7,11 +7,9 @@ import (
 	"net/http"
 )
 
-type StringExtractor func(*http.Request) (string, error)
-
 func NewUnaryStringFuncAdaptor[O any](
 	domainCall func(context.Context, string) (O, error),
-	stringExtractor StringExtractor,
+	stringExtractor StringValueExtractor,
 	withOptions ...Option,
 ) (*UnaryStringFuncAdaptor[O], error) {
 	o := &options{}
@@ -36,7 +34,7 @@ func NewUnaryStringFuncAdaptor[O any](
 				return errors.New("cannot use a <nil> domain call")
 			}
 			if stringExtractor == nil {
-				return errors.New("cannot use a <nil> string extractor")
+				return errors.New("cannot use a <nil> string value extractor")
 			}
 			return nil
 		},
@@ -56,7 +54,7 @@ func NewUnaryStringFuncAdaptor[O any](
 
 type UnaryStringFuncAdaptor[O any] struct {
 	domainCall      func(context.Context, string) (O, error)
-	stringExtractor StringExtractor
+	stringExtractor StringValueExtractor
 	encoder         Encoder
 	errorHandler    ErrorHandler
 	logger          RequestLogger
@@ -66,9 +64,9 @@ func (a *UnaryStringFuncAdaptor[O]) ServeHyperText(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
-	value, err := a.stringExtractor(r)
+	value, err := a.stringExtractor.ExtractStringValue(r)
 	if err != nil {
-		return NewInvalidRequestError(fmt.Errorf("unable to decode: %w", err))
+		return NewInvalidRequestError(fmt.Errorf("unable to decode string value: %w", err))
 	}
 	response, err := a.domainCall(r.Context(), value)
 	if err != nil {

@@ -5,9 +5,8 @@
 [![https://coveralls.io/github/dkotik/htadaptor](https://coveralls.io/repos/github/dkotik/htadaptor/badge.svg?branch=main)](https://coveralls.io/github/dkotik/htadaptor)
 [![https://goreportcard.com/report/github.com/dkotik/htadaptor](https://goreportcard.com/badge/github.com/dkotik/htadaptor)](https://goreportcard.com/report/github.com/dkotik/htadaptor)
 
-Package `htadaptor` provides generic domain logic adaptors for HTTP handlers. Available adaptors cover almost every possible combination of domain call shapes:
+Package `htadaptor` provides generic domain logic adaptors for HTTP handlers. Available adaptors cover most common function signatures of domain logic calls:
 
-<!-- TODO: link adaptors to GoDoc -->
 <!-- TODO: add FS adaptor -->
 
 | Struct Adaptor | Parameter Values     | Return Values |

@@ -71,21 +71,6 @@ import (
 // 	}, nil
 // }
 
-type Error interface {
-	error
-	HyperTextStatusCode() int
-}
-
-type ErrorHandler interface {
-	HandleError(http.ResponseWriter, *http.Request, error)
-}
-
-type ErrorHandlerFunc func(http.ResponseWriter, *http.Request, error)
-
-func (f ErrorHandlerFunc) HandleError(w http.ResponseWriter, r *http.Request, err error) {
-	f(w, r, err)
-}
-
 type Decoder interface {
 	Decode(any, *http.Request) error
 }

@@ -36,10 +36,12 @@ func main() {
 	mux.Handle("/api/v1/price", htadaptor.Must(
 		htadaptor.NewUnaryStringFuncAdaptor(
 			domainLogic.GetPrice,
-			func(r *http.Request) (string, error) {
-				log.Println("got query:", r.URL.RawQuery)
-				return r.URL.Query().Get("item"), nil
-			},
+			htadaptor.StringValueExtractorFunc(
+				func(r *http.Request) (string, error) {
+					log.Println("got query:", r.URL.RawQuery)
+					return r.URL.Query().Get("item"), nil
+				},
+			),
 		),
 	))
 
