@@ -6,9 +6,15 @@ import (
 	"log/slog"
 )
 
-var ErrNotFound = &NotFoundError{}
+var _ slog.LogValuer = (*NotFoundError)(nil)
 
-type NotFoundError struct{}
+type NotFoundError struct {
+	path string
+}
+
+func NewNotFoundError(p string) *NotFoundError {
+	return &NotFoundError{path: p}
+}
 
 func (e *NotFoundError) Error() string {
 	return "Not Found"
@@ -18,13 +24,19 @@ func (e *NotFoundError) HyperTextStatusCode() int {
 	return http.StatusNotFound
 }
 
+func (e *NotFoundError) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("path", e.path),
+	)
+}
+
 func (fs *FS) ServeHyperText(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
 	real, ok := fs.index[r.URL.Path]
 	if !ok {
-		return ErrNotFound
+		return NewNotFoundError(r.URL.Path)
 	}
 	r.URL.Path = real // TODO: not kosher.
 	// r.URL.Path = "main.go"

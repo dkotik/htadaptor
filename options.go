@@ -113,7 +113,7 @@ func WithErrorHandlerFunc(f func(http.ResponseWriter, *http.Request, error)) Opt
 	return WithErrorHandler(ErrorHandlerFunc(f))
 }
 
-var defaultErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+var DefaultErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 	htError, ok := err.(Error)
 	if ok {
 		http.Error(w, err.Error(), htError.HyperTextStatusCode())
@@ -123,7 +123,7 @@ var defaultErrorHandler = func(w http.ResponseWriter, r *http.Request, err error
 }
 
 func WithDefaultErrorHandler() Option {
-	return WithErrorHandlerFunc(defaultErrorHandler)
+	return WithErrorHandlerFunc(DefaultErrorHandler)
 }
 
 func WithLogger(l RequestLogger) Option {

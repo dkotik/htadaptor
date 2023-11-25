@@ -1,4 +1,4 @@
-package htadaptor
+package staticfs
 
 import (
 	"bytes"
@@ -7,6 +7,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
+	"github.com/dkotik/htadaptor"
 )
 
 type fastFileSystemFile struct {
@@ -22,6 +24,7 @@ func (f *fastFileSystemFile) ServeHTTP(
 	_, _ = io.Copy(w, bytes.NewReader(f.Contents))
 }
 
+// NewFastFileSystemFile serves a single file from memory without logging.
 func NewFastFileSystemFile(contents []byte) http.Handler {
 	return &fastFileSystemFile{
 		ContentType: http.DetectContentType(contents),
@@ -31,8 +34,8 @@ func NewFastFileSystemFile(contents []byte) http.Handler {
 
 type fastFileSystem struct {
 	index        map[string]*fastFileSystemFile
-	errorHandler ErrorHandler
-	logger       RequestLogger
+	errorHandler htadaptor.ErrorHandler
+	logger       htadaptor.RequestLogger
 }
 
 func (f *fastFileSystem) ServeHyperText(
@@ -42,7 +45,7 @@ func (f *fastFileSystem) ServeHyperText(
 	p := r.URL.Path
 	file, ok := f.index[p]
 	if !ok {
-		return &NotFoundError{path: p}
+		return NewNotFoundError(p)
 	}
 	w.Header().Set("content-type", file.ContentType)
 	_, err := io.Copy(w, bytes.NewReader(file.Contents))
@@ -59,8 +62,8 @@ func (f *fastFileSystem) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type fastFileSystemOptions struct {
 	index        map[string]*fastFileSystemFile
-	errorHandler ErrorHandler
-	logger       RequestLogger
+	errorHandler htadaptor.ErrorHandler
+	logger       htadaptor.RequestLogger
 }
 
 type FastFileSystemOption func(*fastFileSystemOptions) error
@@ -121,7 +124,7 @@ func WithFastFileSystemFile(
 	}
 }
 
-func WithFastFileSystemErrorHandler(e ErrorHandler) FastFileSystemOption {
+func WithFastFileSystemErrorHandler(e htadaptor.ErrorHandler) FastFileSystemOption {
 	return func(o *fastFileSystemOptions) error {
 		if e == nil {
 			return errors.New("cannot use a <nil> error handler")
@@ -136,15 +139,15 @@ func WithFastFileSystemErrorHandler(e ErrorHandler) FastFileSystemOption {
 
 func WithFastFileSystemErrorHandlerFunc(f func(http.ResponseWriter, *http.Request, error)) FastFileSystemOption {
 	return WithFastFileSystemErrorHandler(
-		ErrorHandlerFunc(f),
+		htadaptor.ErrorHandlerFunc(f),
 	)
 }
 
 func WithDefaultFastFileSystemErrorHandler() FastFileSystemOption {
-	return WithFastFileSystemErrorHandlerFunc(defaultErrorHandler)
+	return WithFastFileSystemErrorHandlerFunc(htadaptor.DefaultErrorHandler)
 }
 
-func WithFastFileSystemLogger(l RequestLogger) FastFileSystemOption {
+func WithFastFileSystemLogger(l htadaptor.RequestLogger) FastFileSystemOption {
 	return func(o *fastFileSystemOptions) error {
 		if l == nil {
 			return errors.New("cannot use a <nil> request logger")
@@ -165,10 +168,10 @@ func WithFastFileSystemSlogLogger(
 		if l == nil {
 			return errors.New("cannot use a <nil> structured logger")
 		}
-		return WithFastFileSystemLogger(NewRequestLogger(l, successLevel))(o)
+		return WithFastFileSystemLogger(htadaptor.NewRequestLogger(l, successLevel))(o)
 	}
 }
 
 func WithDefaultFastFileSystemLogger() FastFileSystemOption {
-	return WithFastFileSystemLogger(NewVoidLogger())
+	return WithFastFileSystemLogger(htadaptor.NewVoidLogger())
 }
