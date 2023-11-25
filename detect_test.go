@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+type testRequest struct {
+	TestField    string
+	AnotherField string
+	TestHeader   string
+}
+
 func (t *testRequest) Validate() error {
 	return nil
 }

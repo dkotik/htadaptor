@@ -1,4 +1,4 @@
-package htadaptor
+package reflectd
 
 import (
 	"errors"
@@ -7,8 +7,6 @@ import (
 	"net/textproto"
 	"net/url"
 )
-
-type StringExtractor func(*http.Request) (string, error)
 
 // RequestValueExtractor pulls [url.Values] from an [http.Request]
 // in order to provide a [Decoder] with values to populate

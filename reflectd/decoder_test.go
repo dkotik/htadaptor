@@ -1,4 +1,4 @@
-package htadaptor
+package reflectd
 
 import (
 	"net/http"
@@ -13,9 +13,9 @@ type testRequest struct {
 }
 
 func TestDecoder(t *testing.T) {
-	decoder, err := NewStructDecoder(
-		WithDecoderQueryValues("anotherField"),
-		WithDecoderHeaderValues("testHeader"),
+	decoder, err := NewDecoder(
+		WithQueryValues("anotherField"),
+		WithHeaderValues("testHeader"),
 	)
 	if err != nil {
 		t.Fatal(err)

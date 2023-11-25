@@ -8,11 +8,13 @@ import (
 	"net/http"
 
 	"log/slog"
+
+	"github.com/dkotik/htadaptor/reflectd"
 )
 
 type options struct {
 	Decoder        Decoder
-	DecoderOptions []StructDecoderOption
+	DecoderOptions []reflectd.Option
 	Encoder        Encoder
 	ErrorHandler   ErrorHandler
 	Logger         RequestLogger
@@ -23,7 +25,7 @@ func (o *options) Validate() (err error) {
 		if o.Decoder != nil {
 			return fmt.Errorf("option WithDecoder conflicts with %d decoder options; provide either a prepared decoder or options for preparing one, but not both", len(o.DecoderOptions))
 		}
-		o.Decoder, err = NewStructDecoder(o.DecoderOptions...)
+		o.Decoder, err = reflectd.NewDecoder(o.DecoderOptions...)
 		if err != nil {
 			return err
 		}
@@ -163,7 +165,7 @@ func WithDecoder(d Decoder) Option {
 	}
 }
 
-func WithDecoderOptions(withOptions ...StructDecoderOption) Option {
+func WithDecoderOptions(withOptions ...reflectd.Option) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, withOptions...)
 		return nil
@@ -177,7 +179,7 @@ func WithDefaultDecoder() Option {
 				err = fmt.Errorf("cannot initialize default struct decoder: %w", err)
 			}
 		}()
-		d, err := NewStructDecoder()
+		d, err := reflectd.NewDecoder()
 		if err != nil {
 			return err
 		}
@@ -187,42 +189,42 @@ func WithDefaultDecoder() Option {
 
 func WithReadLimit(upto int64) Option {
 	return func(o *options) error {
-		o.DecoderOptions = append(o.DecoderOptions, WithDecoderReadLimit(upto))
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithReadLimit(upto))
 		return nil
 	}
 }
 
 func WithMemoryLimit(upto int64) Option {
 	return func(o *options) error {
-		o.DecoderOptions = append(o.DecoderOptions, WithDecoderMemoryLimit(upto))
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithMemoryLimit(upto))
 		return nil
 	}
 }
 
-func WithExtractors(exs ...RequestValueExtractor) Option {
+func WithExtractors(exs ...reflectd.RequestValueExtractor) Option {
 	return func(o *options) error {
-		o.DecoderOptions = append(o.DecoderOptions, WithDecoderExtractors(exs...))
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithExtractors(exs...))
 		return nil
 	}
 }
 
 func WithQueryValues(names ...string) Option {
 	return func(o *options) error {
-		o.DecoderOptions = append(o.DecoderOptions, WithDecoderQueryValues(names...))
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithQueryValues(names...))
 		return nil
 	}
 }
 
 func WithHeaderValues(names ...string) Option {
 	return func(o *options) error {
-		o.DecoderOptions = append(o.DecoderOptions, WithDecoderHeaderValues(names...))
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithHeaderValues(names...))
 		return nil
 	}
 }
 
 func WithPathValues(names ...string) Option {
 	return func(o *options) error {
-		o.DecoderOptions = append(o.DecoderOptions, WithDecoderPathValues(names...))
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithPathValues(names...))
 		return nil
 	}
 }

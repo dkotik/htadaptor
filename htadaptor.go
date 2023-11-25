@@ -86,6 +86,20 @@ func (f ErrorHandlerFunc) HandleError(w http.ResponseWriter, r *http.Request, er
 	f(w, r, err)
 }
 
+type Decoder interface {
+	Decode(any, *http.Request) error
+}
+
+type Encoder interface {
+	Encode(http.ResponseWriter, any) error
+}
+
+type EncoderFunc func(http.ResponseWriter, any) error
+
+func (f EncoderFunc) Encode(w http.ResponseWriter, v any) error {
+	return f(w, v)
+}
+
 func Must(h http.Handler, err error) http.Handler {
 	if err != nil {
 		panic(err)

@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+type StringExtractor func(*http.Request) (string, error)
+
 func NewUnaryStringFuncAdaptor[O any](
 	domainCall func(context.Context, string) (O, error),
 	stringExtractor StringExtractor,
