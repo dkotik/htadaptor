@@ -33,6 +33,23 @@ func (e HeaderValueExtractor) ExtractStringValue(r *http.Request) (string, error
 	return value, nil
 }
 
+type CookieValueExtractor string
+
+func NewCookieValueExtractor(name string) CookieValueExtractor {
+	return CookieValueExtractor(name)
+}
+
+func (e CookieValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(string(e))
+	if err != nil {
+		return "", err
+	}
+	if cookie.Value == "" {
+		return "", ErrNoStringValue
+	}
+	return cookie.Value, nil
+}
+
 type QueryValueExtractor string
 
 func NewQueryValueExtractor(name string) QueryValueExtractor {

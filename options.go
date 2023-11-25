@@ -213,6 +213,13 @@ func WithHeaderValues(names ...string) Option {
 	}
 }
 
+func WithCookieValues(names ...string) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithCookieValues(names...))
+		return nil
+	}
+}
+
 func WithPathValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithPathValues(names...))

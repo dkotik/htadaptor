@@ -5,7 +5,28 @@
 [![https://coveralls.io/github/dkotik/htadaptor](https://coveralls.io/repos/github/dkotik/htadaptor/badge.svg?branch=main)](https://coveralls.io/github/dkotik/htadaptor)
 [![https://goreportcard.com/report/github.com/dkotik/htadaptor](https://goreportcard.com/badge/github.com/dkotik/htadaptor)](https://goreportcard.com/report/github.com/dkotik/htadaptor)
 
-Package `htadaptor` provides generic domain logic adaptors for HTTP handlers. Available adaptors cover most common function signatures of domain logic calls:
+Package `htadaptor` provides convenient generic domain logic adaptors for HTTP handlers. It eliminates boiler plate code, increases security by enforcing read limits and struct validation, and reduces bugs by providing a more intuitive request data parsing API than the standard library.
+
+Why do you need this package? An HTTP request contains at least five various sources of input that your HTTP handlers may consider: URL path, URL query, headers, cookies, and the request body. Much of the code that you have to write manually is wrestling those inputs into a struct. `htadaptor` can do all of it for you:
+
+```go
+// lets make a slightly ridiculous example [http.Handler]:
+myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
+  // your domain function call
+  func(ctx context.Context, myInputStruct) (myOutputStruct, error) {
+    // ... myInputStruct is passed in already validated
+    // ... the fields of myInputStruct will be filled in
+    //     with values from sources specified below
+  },
+  htadaptor.WithPathValues("slug"),           // (1) URL routing path
+  htadaptor.WithQueryValues("search"),        // (2) URL query
+  htadaptor.WithHeaderValues("accessToken"),  // (3) header
+  htadaptor.WithCookieValues("sessionID"),    // (4) cookie
+  // (5) JSON, URL-encoded or MIME-encoded body is always parsed last
+))
+```
+
+Adaptors address all common function signatures of domain logic calls for both structs and single strings:
 
 <!-- TODO: add FS adaptor -->
 
@@ -28,7 +49,7 @@ Each inputStruct must implement `htadaptor.Validatable` for safety.
 go get github.com/dkotik/htadaptor@latest
 ```
 
-## Usage
+## Basic Usage
 
 ```go
 mux := http.NewServeMux()
@@ -56,8 +77,9 @@ See `examples` folder for most common project uses.
 
 - [Query](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithQueryValues)
 - [Header](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithHeaderValues)
+- [Cookie](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithCookieValues)
 - Path (pending with 1.22)
-- [Chi](https://pkg.go.dev/github.com/dkotik/htadaptor/chivalues#New)
+- [Chi Path](https://pkg.go.dev/github.com/dkotik/htadaptor/chivalues#New)
 
 ## Credits
 

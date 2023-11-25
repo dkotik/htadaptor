@@ -106,12 +106,23 @@ func WithQueryValues(names ...string) Option {
 	}
 }
 
-// WithQueryValues adds a [HeaderValueExtractor] to a [Decoder].
+// WithHeaderValues adds a [HeaderValueExtractor] to a [Decoder].
 func WithHeaderValues(names ...string) Option {
 	return func(o *options) error {
 		ex, err := NewHeaderValueExtractor(names...)
 		if err != nil {
 			return fmt.Errorf("failed to initialize header value extractor: %w", err)
+		}
+		return WithExtractors(ex)(o)
+	}
+}
+
+// WithCookieValues adds a [CookieValueExtractor] to a [Decoder].
+func WithCookieValues(names ...string) Option {
+	return func(o *options) error {
+		ex, err := NewCookieValueExtractor(names...)
+		if err != nil {
+			return fmt.Errorf("failed to initialize cookie value extractor: %w", err)
 		}
 		return WithExtractors(ex)(o)
 	}
