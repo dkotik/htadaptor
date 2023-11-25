@@ -36,7 +36,7 @@ Adaptors address all common function signatures of domain logic calls for both s
 | [NullaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NullaryFuncAdaptor)    | context              |    any, error |
 | [VoidFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#VoidFuncAdaptor)       | context, inputStruct |         error |
 
-Each inputStruct must implement `htadaptor.Validatable` for safety.
+Each inputStruct must implement `htadaptor.Validatable` for safety. String adaptors are best when only one request value is needed:
 
 | String Adaptor  | Parameter Values     | Return Values |
 |-----------------|----------------------|--------------:|
