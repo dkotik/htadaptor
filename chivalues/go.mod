@@ -1,4 +1,4 @@
-module github.com/dkotik/htaccess/chivalues
+module github.com/dkotik/htadaptor/chivalues
 
 go 1.21.0
 

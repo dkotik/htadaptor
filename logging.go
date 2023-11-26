@@ -5,14 +5,18 @@ import (
 	"net/http"
 )
 
+// voidLogger does not perform any logging.
 var voidLogger RequestLogger
 
+// RequestLogger creates records of each request and an error if one occured.
 type RequestLogger interface {
 	LogRequest(*http.Request, error)
 }
 
+// RequestLoggerFunc provides syntax sugar for satisfying [RequestLogger] interface with a function with the same signature.
 type RequestLoggerFunc func(*http.Request, error)
 
+// LogRequest redirects the interface responsility to its function's representation.
 func (f RequestLoggerFunc) LogRequest(r *http.Request, err error) {
 	f(r, err)
 }
@@ -46,6 +50,7 @@ func (l *slogLogger) LogRequest(r *http.Request, err error) {
 	}
 }
 
+// NewRequestLogger records requests and errors into an [slog.Logger]. The success level specifies which [slog.Level] to use when no error occured.
 func NewRequestLogger(logger *slog.Logger, successLevel slog.Leveler) RequestLogger {
 	if logger == nil {
 		logger = slog.Default()
@@ -56,6 +61,7 @@ func NewRequestLogger(logger *slog.Logger, successLevel slog.Leveler) RequestLog
 	}
 }
 
+// NewVoidLogger sets up a logger that performs no logging operations.
 func NewVoidLogger() RequestLogger {
 	if voidLogger == nil {
 		voidLogger = RequestLoggerFunc(func(r *http.Request, err error) {})
