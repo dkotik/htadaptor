@@ -25,8 +25,8 @@ func NewUnaryStringFuncAdaptor[O any](
 					return err
 				}
 			}
-			if o.ErrorHandler == nil {
-				if err = WithDefaultErrorHandler()(o); err != nil {
+			if o.ResponseHandler == nil {
+				if err = WithDefaultResponseHandler()(o); err != nil {
 					return err
 				}
 			}
@@ -47,8 +47,7 @@ func NewUnaryStringFuncAdaptor[O any](
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,
 		encoder:         o.Encoder,
-		errorHandler:    o.ErrorHandler,
-		logger:          o.Logger,
+		responseHandler: o.ResponseHandler,
 	}, nil
 }
 
@@ -56,8 +55,7 @@ type UnaryStringFuncAdaptor[O any] struct {
 	domainCall      func(context.Context, string) (O, error)
 	stringExtractor StringValueExtractor
 	encoder         Encoder
-	errorHandler    ErrorHandler
-	logger          RequestLogger
+	responseHandler ResponseHandler
 }
 
 func (a *UnaryStringFuncAdaptor[O]) ServeHyperText(
@@ -75,7 +73,7 @@ func (a *UnaryStringFuncAdaptor[O]) ServeHyperText(
 	if err = a.encoder.Encode(w, response); err != nil {
 		return fmt.Errorf("unable to encode: %w", err)
 	}
-	return nil
+	return a.responseHandler.HandleSuccess(w, r)
 }
 
 func (a *UnaryStringFuncAdaptor[O]) ServeHTTP(
@@ -83,8 +81,7 @@ func (a *UnaryStringFuncAdaptor[O]) ServeHTTP(
 	r *http.Request,
 ) {
 	err := a.ServeHyperText(w, r)
-	a.logger.LogRequest(r, err)
 	if err != nil {
-		a.errorHandler.HandleError(w, r, err)
+		a.responseHandler.HandleError(w, r, err)
 	}
 }

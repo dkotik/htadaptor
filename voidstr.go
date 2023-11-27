@@ -19,6 +19,11 @@ func NewVoidStringFuncAdaptor(
 			if err = o.Validate(); err != nil {
 				return err
 			}
+			if o.ResponseHandler == nil {
+				if err = WithDefaultResponseHandler()(o); err != nil {
+					return err
+				}
+			}
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")
 			}
@@ -35,16 +40,14 @@ func NewVoidStringFuncAdaptor(
 	return &VoidStringFuncAdaptor{
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,
-		errorHandler:    o.ErrorHandler,
-		logger:          o.Logger,
+		responseHandler: o.ResponseHandler,
 	}, nil
 }
 
 type VoidStringFuncAdaptor struct {
 	domainCall      func(context.Context, string) error
 	stringExtractor StringValueExtractor
-	errorHandler    ErrorHandler
-	logger          RequestLogger
+	responseHandler ResponseHandler
 }
 
 func (a *VoidStringFuncAdaptor) ServeHyperText(
@@ -59,7 +62,7 @@ func (a *VoidStringFuncAdaptor) ServeHyperText(
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
-	return nil
+	return a.responseHandler.HandleSuccess(w, r)
 }
 
 func (a *VoidStringFuncAdaptor) ServeHTTP(
@@ -67,8 +70,7 @@ func (a *VoidStringFuncAdaptor) ServeHTTP(
 	r *http.Request,
 ) {
 	err := a.ServeHyperText(w, r)
-	a.logger.LogRequest(r, err)
 	if err != nil {
-		a.errorHandler.HandleError(w, r, err)
+		a.responseHandler.HandleError(w, r, err)
 	}
 }

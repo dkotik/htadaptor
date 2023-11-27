@@ -7,17 +7,16 @@ import (
 	"html/template"
 	"net/http"
 
-	"log/slog"
-
 	"github.com/dkotik/htadaptor/reflectd"
+	"github.com/dkotik/htadaptor/slogrh"
 )
 
 type options struct {
-	Decoder        Decoder
-	DecoderOptions []reflectd.Option
-	Encoder        Encoder
-	ErrorHandler   ErrorHandler
-	Logger         RequestLogger
+	Decoder                Decoder
+	DecoderOptions         []reflectd.Option
+	Encoder                Encoder
+	ResponseHandler        ResponseHandler
+	ResponseHandlerOptions []slogrh.Option
 }
 
 func (o *options) Validate() (err error) {
@@ -30,13 +29,13 @@ func (o *options) Validate() (err error) {
 			return err
 		}
 	}
-	if o.ErrorHandler == nil {
-		if err = WithDefaultErrorHandler()(o); err != nil {
-			return err
+
+	if len(o.ResponseHandlerOptions) > 0 {
+		if o.ResponseHandler != nil {
+			return fmt.Errorf("option WithResponseHandler conflicts with %d response handler options; provide either a prepared response handler or options for preparing an slog one, but not both", len(o.ResponseHandlerOptions))
 		}
-	}
-	if o.Logger == nil {
-		if err = WithDefaultLogger()(o); err != nil {
+		o.ResponseHandler, err = slogrh.New(o.ResponseHandlerOptions...)
+		if err != nil {
 			return err
 		}
 	}
@@ -96,51 +95,27 @@ func WithDefaultEncoder() Option {
 	})
 }
 
-func WithErrorHandler(e ErrorHandler) Option {
+func WithResponseHandler(h ResponseHandler) Option {
 	return func(o *options) error {
-		if e == nil {
-			return errors.New("cannot use a <nil> error handler")
+		if h == nil {
+			return errors.New("cannot use a <nil> response handler")
 		}
-		if o.ErrorHandler != nil {
-			return errors.New("error handler is already set")
+		if o.ResponseHandler != nil {
+			return errors.New("response handler is already set")
 		}
-		o.ErrorHandler = e
+		o.ResponseHandler = h
 		return nil
 	}
 }
 
-func WithErrorHandlerFunc(f func(http.ResponseWriter, *http.Request, error)) Option {
-	return WithErrorHandler(ErrorHandlerFunc(f))
-}
-
-func WithDefaultErrorHandler() Option {
-	return WithErrorHandlerFunc(DefaultErrorHandler)
-}
-
-func WithLogger(l RequestLogger) Option {
-	return func(o *options) error {
-		if l == nil {
-			return errors.New("cannot use a <nil> request logger")
+func WithDefaultResponseHandler() Option {
+	return func(o *options) (err error) {
+		rh, err := slogrh.New()
+		if err != nil {
+			return err
 		}
-		if o.Logger != nil {
-			return errors.New("request logger is already set")
-		}
-		o.Logger = l
-		return nil
+		return WithResponseHandler(rh)(o)
 	}
-}
-
-func WithSlogLogger(l *slog.Logger, successLevel slog.Leveler) Option {
-	return func(o *options) error {
-		if l == nil {
-			return errors.New("cannot use a <nil> structured logger")
-		}
-		return WithLogger(NewRequestLogger(l, successLevel))(o)
-	}
-}
-
-func WithDefaultLogger() Option {
-	return WithLogger(NewRequestLogger(slog.Default(), slog.LevelInfo))
 }
 
 func WithDecoder(d Decoder) Option {

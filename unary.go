@@ -32,6 +32,11 @@ func NewUnaryFuncAdaptor[
 					return err
 				}
 			}
+			if o.ResponseHandler == nil {
+				if err = WithDefaultResponseHandler()(o); err != nil {
+					return err
+				}
+			}
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")
 			}
@@ -43,11 +48,10 @@ func NewUnaryFuncAdaptor[
 	}
 
 	return &UnaryFuncAdaptor[T, V, O]{
-		domainCall:   domainCall,
-		decoder:      o.Decoder,
-		encoder:      o.Encoder,
-		errorHandler: o.ErrorHandler,
-		logger:       o.Logger,
+		domainCall:      domainCall,
+		decoder:         o.Decoder,
+		encoder:         o.Encoder,
+		responseHandler: o.ResponseHandler,
 	}, nil
 }
 
@@ -56,11 +60,10 @@ type UnaryFuncAdaptor[
 	V Validatable[T],
 	O any,
 ] struct {
-	domainCall   func(context.Context, V) (O, error)
-	decoder      Decoder
-	encoder      Encoder
-	errorHandler ErrorHandler
-	logger       RequestLogger
+	domainCall      func(context.Context, V) (O, error)
+	decoder         Decoder
+	encoder         Encoder
+	responseHandler ResponseHandler
 }
 
 func (a *UnaryFuncAdaptor[T, V, O]) ServeHyperText(
@@ -83,7 +86,7 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHyperText(
 	if err = a.encoder.Encode(w, response); err != nil {
 		return fmt.Errorf("unable to encode: %w", err)
 	}
-	return nil
+	return a.responseHandler.HandleSuccess(w, r)
 }
 
 func (a *UnaryFuncAdaptor[T, V, O]) ServeHTTP(
@@ -91,8 +94,7 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHTTP(
 	r *http.Request,
 ) {
 	err := a.ServeHyperText(w, r)
-	a.logger.LogRequest(r, err)
 	if err != nil {
-		a.errorHandler.HandleError(w, r, err)
+		a.responseHandler.HandleError(w, r, err)
 	}
 }

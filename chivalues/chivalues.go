@@ -12,10 +12,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// ChiRequestValueExtractor retrieves [chi.Router] named URL parameters.
 type ChiRequestValueExtractor struct {
 	names []string
 }
 
+// New creates a [ChiRequestValueExtractor] that retrieves named URL parameters seeded by a [chi.Router].
 func New(names ...string) (*ChiRequestValueExtractor, error) {
 	if len(names) == 0 {
 		return nil, errors.New("provide at least one URL query parameter name")
@@ -33,6 +35,7 @@ func New(names ...string) (*ChiRequestValueExtractor, error) {
 	return &ChiRequestValueExtractor{names: names}, nil
 }
 
+// ExtractRequestValue populates [url.Value]s with URL parameters.
 func (c *ChiRequestValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request) error {
 	rctx := chi.RouteContext(r.Context())
 	for i, name := range rctx.URLParams.Keys {

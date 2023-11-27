@@ -85,6 +85,23 @@ func (f EncoderFunc) Encode(w http.ResponseWriter, v any) error {
 	return f(w, v)
 }
 
+type ResponseHandler interface {
+	HandleSuccess(http.ResponseWriter, *http.Request) error
+	HandleError(http.ResponseWriter, *http.Request, error)
+}
+
+/*
+type silentResponseHandler struct{}
+
+func (s *silentResponseHandler) HandleSuccess(_ http.ResponseWriter, _ *http.Request) error {
+	return nil
+}
+
+func (s *silentResponseHandler) HandleError(w http.ResponseWriter, r *http.Request, err error) {
+  // apply error encoder
+}
+*/
+
 func Must(h http.Handler, err error) http.Handler {
 	if err != nil {
 		panic(err)

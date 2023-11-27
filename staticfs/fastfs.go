@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/dkotik/htadaptor"
+	"github.com/dkotik/htadaptor/slogrh"
 )
 
 type fastFileSystemFile struct {
@@ -33,9 +34,8 @@ func NewFastFileSystemFile(contents []byte) http.Handler {
 }
 
 type fastFileSystem struct {
-	index        map[string]*fastFileSystemFile
-	errorHandler htadaptor.ErrorHandler
-	logger       htadaptor.RequestLogger
+	index           map[string]*fastFileSystemFile
+	responseHandler htadaptor.ResponseHandler
 }
 
 func (f *fastFileSystem) ServeHyperText(
@@ -48,22 +48,23 @@ func (f *fastFileSystem) ServeHyperText(
 		return NewNotFoundError(p)
 	}
 	w.Header().Set("content-type", file.ContentType)
-	_, err := io.Copy(w, bytes.NewReader(file.Contents))
-	return err
+	if _, err := io.Copy(w, bytes.NewReader(file.Contents)); err != nil {
+		return err
+	}
+	return f.responseHandler.HandleSuccess(w, r)
 }
 
 func (f *fastFileSystem) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := f.ServeHyperText(w, r)
-	f.logger.LogRequest(r, err)
 	if err != nil {
-		f.errorHandler.HandleError(w, r, err)
+		f.responseHandler.HandleError(w, r, err)
 	}
 }
 
 type fastFileSystemOptions struct {
-	index        map[string]*fastFileSystemFile
-	errorHandler htadaptor.ErrorHandler
-	logger       htadaptor.RequestLogger
+	index                  map[string]*fastFileSystemFile
+	responseHandler        htadaptor.ResponseHandler
+	responseHandlerOptions []slogrh.Option
 }
 
 type FastFileSystemOption func(*fastFileSystemOptions) error
@@ -75,13 +76,17 @@ func NewFastFileSystem(withOptions ...FastFileSystemOption) (_ http.Handler, err
 	for _, option := range append(
 		withOptions,
 		func(o *fastFileSystemOptions) (err error) {
-			if o.errorHandler == nil {
-				if err = WithDefaultFastFileSystemErrorHandler()(o); err != nil {
+			if len(o.responseHandlerOptions) > 0 {
+				if o.responseHandler != nil {
+					return fmt.Errorf("option WithResponseHandler conflicts with %d response handler options; provide either a prepared response handler or options for preparing an slog one, but not both", len(o.responseHandlerOptions))
+				}
+				o.responseHandler, err = slogrh.New(o.responseHandlerOptions...)
+				if err != nil {
 					return err
 				}
 			}
-			if o.logger == nil {
-				if err = WithDefaultFastFileSystemLogger()(o); err != nil {
+			if o.responseHandler == nil {
+				if err = WithDefaultFastFileSystemResponseHandler()(o); err != nil {
 					return err
 				}
 			}
@@ -94,9 +99,8 @@ func NewFastFileSystem(withOptions ...FastFileSystemOption) (_ http.Handler, err
 	}
 
 	return &fastFileSystem{
-		index:        o.index,
-		errorHandler: o.errorHandler,
-		logger:       o.logger,
+		index:           o.index,
+		responseHandler: o.responseHandler,
 	}, nil
 }
 
@@ -124,54 +128,29 @@ func WithFastFileSystemFile(
 	}
 }
 
-func WithFastFileSystemErrorHandler(e htadaptor.ErrorHandler) FastFileSystemOption {
+func WithFastFileSystemResponseHandler(h htadaptor.ResponseHandler) FastFileSystemOption {
 	return func(o *fastFileSystemOptions) error {
-		if e == nil {
-			return errors.New("cannot use a <nil> error handler")
+		if h == nil {
+			return errors.New("cannot use a <nil> response handler")
 		}
-		if o.errorHandler != nil {
-			return errors.New("error handler is already set")
+		if o.responseHandler != nil {
+			return errors.New("response handler is already set")
 		}
-		o.errorHandler = e
+		o.responseHandler = h
 		return nil
 	}
 }
 
-func WithFastFileSystemErrorHandlerFunc(f func(http.ResponseWriter, *http.Request, error)) FastFileSystemOption {
-	return WithFastFileSystemErrorHandler(
-		htadaptor.ErrorHandlerFunc(f),
-	)
-}
-
-func WithDefaultFastFileSystemErrorHandler() FastFileSystemOption {
-	return WithFastFileSystemErrorHandlerFunc(htadaptor.DefaultErrorHandler)
-}
-
-func WithFastFileSystemLogger(l htadaptor.RequestLogger) FastFileSystemOption {
+func WithDefaultFastFileSystemResponseHandler() FastFileSystemOption {
 	return func(o *fastFileSystemOptions) error {
-		if l == nil {
-			return errors.New("cannot use a <nil> request logger")
+		handler, err := slogrh.New(
+			slogrh.WithSuccessLevel(slog.LevelDebug),
+		)
+		if err != nil {
+			return err
 		}
-		if o.logger != nil {
-			return errors.New("request logger is already set")
-		}
-		o.logger = l
-		return nil
+		return WithFastFileSystemResponseHandler(handler)(o)
 	}
 }
 
-func WithFastFileSystemSlogLogger(
-	l *slog.Logger,
-	successLevel slog.Leveler,
-) FastFileSystemOption {
-	return func(o *fastFileSystemOptions) error {
-		if l == nil {
-			return errors.New("cannot use a <nil> structured logger")
-		}
-		return WithFastFileSystemLogger(htadaptor.NewRequestLogger(l, successLevel))(o)
-	}
-}
-
-func WithDefaultFastFileSystemLogger() FastFileSystemOption {
-	return WithFastFileSystemLogger(htadaptor.NewVoidLogger())
-}
+// TODO: write out slogrh.Options for convenience.

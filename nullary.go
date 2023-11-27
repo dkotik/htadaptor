@@ -23,6 +23,11 @@ func NewNullaryFuncAdaptor[O any](
 					return err
 				}
 			}
+			if o.ResponseHandler == nil {
+				if err = WithDefaultResponseHandler()(o); err != nil {
+					return err
+				}
+			}
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")
 			}
@@ -34,18 +39,16 @@ func NewNullaryFuncAdaptor[O any](
 	}
 
 	return &NullaryFuncAdaptor[O]{
-		domainCall:   domainCall,
-		encoder:      o.Encoder,
-		errorHandler: o.ErrorHandler,
-		logger:       o.Logger,
+		domainCall:      domainCall,
+		encoder:         o.Encoder,
+		responseHandler: o.ResponseHandler,
 	}, nil
 }
 
 type NullaryFuncAdaptor[O any] struct {
-	domainCall   func(context.Context) (O, error)
-	encoder      Encoder
-	errorHandler ErrorHandler
-	logger       RequestLogger
+	domainCall      func(context.Context) (O, error)
+	encoder         Encoder
+	responseHandler ResponseHandler
 }
 
 func (a *NullaryFuncAdaptor[O]) ServeHyperText(
@@ -59,7 +62,7 @@ func (a *NullaryFuncAdaptor[O]) ServeHyperText(
 	if err = a.encoder.Encode(w, response); err != nil {
 		return fmt.Errorf("unable to encode: %w", err)
 	}
-	return nil
+	return a.responseHandler.HandleSuccess(w, r)
 }
 
 func (a *NullaryFuncAdaptor[O]) ServeHTTP(
@@ -67,8 +70,7 @@ func (a *NullaryFuncAdaptor[O]) ServeHTTP(
 	r *http.Request,
 ) {
 	err := a.ServeHyperText(w, r)
-	a.logger.LogRequest(r, err)
 	if err != nil {
-		a.errorHandler.HandleError(w, r, err)
+		a.responseHandler.HandleError(w, r, err)
 	}
 }
