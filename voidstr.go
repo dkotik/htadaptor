@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/dkotik/htadaptor/extractor"
 )
 
 func NewVoidStringFuncAdaptor(
 	domainCall func(context.Context, string) error,
-	stringExtractor StringValueExtractor,
+	stringExtractor extractor.StringValueExtractor,
 	withOptions ...Option,
 ) (*VoidStringFuncAdaptor, error) {
 	o := &options{}
@@ -46,7 +48,7 @@ func NewVoidStringFuncAdaptor(
 
 type VoidStringFuncAdaptor struct {
 	domainCall      func(context.Context, string) error
-	stringExtractor StringValueExtractor
+	stringExtractor extractor.StringValueExtractor
 	responseHandler ResponseHandler
 }
 

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/dkotik/htadaptor/extractor"
 	"github.com/dkotik/htadaptor/reflectd/schema"
 )
 
@@ -25,7 +26,7 @@ type Decoder struct {
 	// schema      *schema.Decoder
 	readLimit   int64
 	memoryLimit int64
-	extractor   RequestValueExtractor
+	extractor   extractor.RequestValueExtractor
 }
 
 func NewDecoder(withOptions ...Option) (_ *Decoder, err error) {
@@ -51,7 +52,7 @@ func NewDecoder(withOptions ...Option) (_ *Decoder, err error) {
 		// schema:      o.Schema,
 		readLimit:   o.ReadLimit,
 		memoryLimit: o.MemoryLimit,
-		extractor:   JoinRequestValueExtractors(o.Extractors...),
+		extractor:   extractor.Join(o.Extractors...),
 	}, nil
 }
 
