@@ -131,12 +131,10 @@ func WithCookieValues(names ...string) Option {
 // WithPathValues adds a [PathValueExtractor] to a [Decoder].
 func WithPathValues(names ...string) Option {
 	return func(o *options) error {
-		// TODO: add WithPathValues when 1.22 routing comes out.
-		return errors.New("required Go version 1.22")
-		// ex, err := NewPathValueExtractor(names...)
-		// if err != nil {
-		// 	return fmt.Errorf("failed to initialize path value extractor: %w", err)
-		// }
-		// return WithExtractors(ex)(o)
+		ex, err := NewPathValueExtractor(names...)
+		if err != nil {
+			return fmt.Errorf("failed to initialize path value extractor: %w", err)
+		}
+		return WithExtractors(ex)(o)
 	}
 }

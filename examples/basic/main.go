@@ -29,8 +29,11 @@ func main() {
 
 	domainLogic := &OnlineStore{}
 	mux := http.NewServeMux()
-	mux.Handle("/api/v1/order", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(domainLogic.Order),
+	mux.Handle("/api/v1/order/{number}", htadaptor.Must(
+		htadaptor.NewUnaryFuncAdaptor(
+			domainLogic.Order,
+			htadaptor.WithPathValues("number"),
+		),
 	))
 
 	mux.Handle("/api/v1/price", htadaptor.Must(
@@ -57,7 +60,7 @@ func main() {
 		`Listening at http://%[1]s/
 
     Test Order (Unary):
-      curl -v -d '{"item":"box","quantity":1}' -H 'Content-Type: application/json' http://%[1]s/api/v1/order
+      curl -v -d '{"item":"box","quantity":1}' -H 'Content-Type: application/json' http://%[1]s/api/v1/order/1
     Test Price (Unary String):
       curl -v -G -d 'item=shirt' http://%[1]s/api/v1/price
     Test Inventory (Nullary):

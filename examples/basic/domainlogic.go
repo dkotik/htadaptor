@@ -9,6 +9,7 @@ import (
 )
 
 type OrderRequest struct {
+	Number   int
 	Item     string
 	Quantity uint8
 }
@@ -26,6 +27,9 @@ func (o *OrderRequest) Validate() error {
 type OnlineStore struct{}
 
 func (o *OnlineStore) Order(ctx context.Context, r *OrderRequest) (bool, error) {
+	if r.Number != 1 {
+		return false, errors.New("order number extracted from URL path must be 1")
+	}
 	return true, nil
 }
 

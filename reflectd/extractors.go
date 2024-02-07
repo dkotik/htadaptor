@@ -139,5 +139,21 @@ func (e *QueryValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request
 	return nil
 }
 
-// TODO: Add PathValues (from URL body) to produce url.Values and feed them to Gorilla scheme Decoder when 1.22 comes out.
-// id := r.PathValue("id")
+type PathValueExtractor []string
+
+func NewPathValueExtractor(names ...string) (PathValueExtractor, error) {
+	if err := uniqueNonEmptyValueNames(names); err != nil {
+		return nil, err
+	}
+	return PathValueExtractor(names), nil
+}
+
+func (e PathValueExtractor) ExtractRequestValue(
+	vs url.Values,
+	r *http.Request,
+) error {
+	for _, desired := range e {
+		vs[desired] = []string{r.PathValue(desired)}
+	}
+	return nil
+}

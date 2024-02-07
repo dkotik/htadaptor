@@ -1,5 +1,7 @@
 package htadaptor
 
+// TODO: better extractors are in reflectd package. All the below functions must be removed in favor of reflectd.
+
 import (
 	"errors"
 	"net/http"
@@ -66,19 +68,4 @@ func (e QueryValueExtractor) ExtractStringValue(r *http.Request) (value string, 
 		return "", ErrNoStringValue
 	}
 	return value, nil
-}
-
-type PathValueExtractor string
-
-func NewPathValueExtractor(name string) PathValueExtractor {
-	return PathValueExtractor(name)
-}
-
-func (e PathValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
-	// value := r.PathValue(string(e))
-	// if value == "" {
-	//   return "", ErrNoStringValue
-	// }
-	// return value, nil
-	return "", errors.New("requires Go version 1.22")
 }
