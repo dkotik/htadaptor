@@ -13,15 +13,38 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-// NoValueError indicates that request does not contain an exacted
-// named value.
-type NoValueError string
+// NoValueError indicates that none of the required values
+// from a list of possible value names were extracted.
+type NoValueError []string
 
-// Error satisfies [error] interface.
-func (err NoValueError) Error() string {
-	return "request value absent: " + string(err)
+func (e NoValueError) Error() string {
+	switch len(e) {
+	case 0:
+		return "request does not include required value"
+	case 1:
+		return fmt.Sprintf("request requires %q value", e[0])
+	default:
+		b := strings.Builder{}
+		b.WriteString("request requires any of ")
+		for _, name := range e {
+			b.WriteRune('"')
+			b.WriteString(name)
+			b.WriteRune('"')
+			b.WriteRune(',')
+			b.WriteRune(' ')
+		}
+		return b.String()[:b.Len()-2] + " values"
+	}
+}
+
+// Extractor pulls values from an [http.Request]
+// for domain function parameters.
+type Extractor interface {
+	RequestValueExtractor
+	StringValueExtractor
 }
 
 // RequestValueExtractor pulls [url.Values] from an [http.Request]

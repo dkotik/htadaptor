@@ -57,13 +57,13 @@ func validateResponse(t *testing.T, h http.Handler, c *testCase) {
 	}
 
 	var response testResponse
+	t.Logf("response: %s", data)
 	err = json.NewDecoder(bytes.NewReader(data)).Decode(&response)
 	if err != nil {
 		t.Fatal("failed to decode JSON:", err.Error())
 	}
 
 	if !reflect.DeepEqual(&c.Response, &response) {
-		t.Logf("response: %s", data)
 		expected, err := json.Marshal(c.Response)
 		if err != nil {
 			panic(err)

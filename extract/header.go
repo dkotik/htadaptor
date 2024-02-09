@@ -8,13 +8,15 @@ import (
 )
 
 var (
-	_ RequestValueExtractor = (*HeaderValueExtractor)(nil)
-	_ StringValueExtractor  = (*HeaderValueExtractor)(nil)
+	_ RequestValueExtractor = (singleHeader)("")
+	_ StringValueExtractor  = (singleHeader)("")
+	_ RequestValueExtractor = (multiHeader)(nil)
+	_ StringValueExtractor  = (multiHeader)(nil)
 )
 
-type HeaderValueExtractor string
-
-func NewHeaderValueExtractor(headerNames ...string) (RequestValueExtractor, error) {
+// NewHeaderValueExtractor builds an [Extractor] that pulls
+// out [http.Header] values by name from an [http.Request].
+func NewHeaderValueExtractor(headerNames ...string) (Extractor, error) {
 	total := len(headerNames)
 	if total == 0 {
 		return nil, errors.New("HTTP header value extractor requires at least one header name")
@@ -23,16 +25,14 @@ func NewHeaderValueExtractor(headerNames ...string) (RequestValueExtractor, erro
 		return nil, err
 	}
 	if total == 1 {
-		return HeaderValueExtractor(headerNames[0]), nil
+		return singleHeader(headerNames[0]), nil
 	}
-	extractors := make([]RequestValueExtractor, total)
-	for i, name := range headerNames {
-		extractors[i] = HeaderValueExtractor(name)
-	}
-	return Join(extractors...), nil
+	return multiHeader(headerNames), nil
 }
 
-func (e HeaderValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request) error {
+type singleHeader string
+
+func (e singleHeader) ExtractRequestValue(vs url.Values, r *http.Request) error {
 	desired := string(e)
 	valueSet := textproto.MIMEHeader(r.Header)
 	// found := r.Header.Values(desired)
@@ -43,8 +43,7 @@ func (e HeaderValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request
 	return nil
 }
 
-// ExtractStringValue satisfies [StringValue] interface.
-func (e HeaderValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+func (e singleHeader) ExtractStringValue(r *http.Request) (string, error) {
 	desired := string(e)
 	valueSet := textproto.MIMEHeader(r.Header)
 	// found := r.Header.Values(desired)
@@ -52,5 +51,29 @@ func (e HeaderValueExtractor) ExtractStringValue(r *http.Request) (string, error
 	if last := len(found); last > 0 {
 		return found[last-1], nil
 	}
-	return "", NoValueError(desired)
+	return "", NoValueError{desired}
+}
+
+type multiHeader []string
+
+func (e multiHeader) ExtractRequestValue(vs url.Values, r *http.Request) error {
+	valueSet := textproto.MIMEHeader(r.Header)
+	for _, desired := range e {
+		found := valueSet.Values(desired)
+		if len(found) > 0 {
+			vs[desired] = found
+		}
+	}
+	return nil
+}
+
+func (e multiHeader) ExtractStringValue(r *http.Request) (string, error) {
+	valueSet := textproto.MIMEHeader(r.Header)
+	for _, desired := range e {
+		found := valueSet.Values(desired)
+		if last := len(found); last > 0 {
+			return found[last-1], nil
+		}
+	}
+	return "", NoValueError(e)
 }

@@ -7,13 +7,15 @@ import (
 )
 
 var (
-	_ RequestValueExtractor = (*PathValueExtractor)(nil)
-	_ StringValueExtractor  = (*PathValueExtractor)(nil)
+	_ RequestValueExtractor = (singlePath)("")
+	_ StringValueExtractor  = (singlePath)("")
+	_ RequestValueExtractor = (multiPath)(nil)
+	_ StringValueExtractor  = (multiPath)(nil)
 )
 
-type PathValueExtractor string
-
-func NewPathValueExtractor(names ...string) (RequestValueExtractor, error) {
+// NewPathValueExtractor is a [Extractor] extractor that pull
+// out [url.URL] path values by name from an [http.Request].
+func NewPathValueExtractor(names ...string) (Extractor, error) {
 	total := len(names)
 	if total == 0 {
 		return nil, errors.New("URL path value extractor requires at least one path segment name")
@@ -22,16 +24,14 @@ func NewPathValueExtractor(names ...string) (RequestValueExtractor, error) {
 		return nil, err
 	}
 	if total == 1 {
-		return PathValueExtractor(names[0]), nil
+		return singlePath(names[0]), nil
 	}
-	extractors := make([]RequestValueExtractor, total)
-	for i, name := range names {
-		extractors[i] = PathValueExtractor(name)
-	}
-	return Join(extractors...), nil
+	return multiPath(names), nil
 }
 
-func (e PathValueExtractor) ExtractRequestValue(
+type singlePath string
+
+func (e singlePath) ExtractRequestValue(
 	vs url.Values,
 	r *http.Request,
 ) error {
@@ -42,11 +42,33 @@ func (e PathValueExtractor) ExtractRequestValue(
 	return nil
 }
 
-// ExtractStringValue satisfies [StringValue] interface.
-func (e PathValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+func (e singlePath) ExtractStringValue(r *http.Request) (string, error) {
 	desired := string(e)
 	if value := r.PathValue(desired); value != "" {
 		return value, nil
 	}
-	return "", NoValueError(desired)
+	return "", NoValueError{desired}
+}
+
+type multiPath []string
+
+func (e multiPath) ExtractRequestValue(
+	vs url.Values,
+	r *http.Request,
+) error {
+	for _, desired := range e {
+		if value := r.PathValue(desired); value != "" {
+			vs[desired] = []string{value}
+		}
+	}
+	return nil
+}
+
+func (e multiPath) ExtractStringValue(r *http.Request) (string, error) {
+	for _, desired := range e {
+		if value := r.PathValue(desired); value != "" {
+			return value, nil
+		}
+	}
+	return "", NoValueError(e)
 }
