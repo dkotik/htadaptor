@@ -6,6 +6,11 @@ import (
 	"net/url"
 )
 
+var (
+	_ RequestValueExtractor = (*PathValueExtractor)(nil)
+	_ StringValueExtractor  = (*PathValueExtractor)(nil)
+)
+
 type PathValueExtractor string
 
 func NewPathValueExtractor(names ...string) (RequestValueExtractor, error) {
@@ -35,4 +40,13 @@ func (e PathValueExtractor) ExtractRequestValue(
 		vs[desired] = []string{value}
 	}
 	return nil
+}
+
+// ExtractStringValue satisfies [StringValue] interface.
+func (e PathValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+	desired := string(e)
+	if value := r.PathValue(desired); value != "" {
+		return value, nil
+	}
+	return "", NoValueError(desired)
 }

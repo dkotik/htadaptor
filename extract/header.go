@@ -7,6 +7,11 @@ import (
 	"net/url"
 )
 
+var (
+	_ RequestValueExtractor = (*HeaderValueExtractor)(nil)
+	_ StringValueExtractor  = (*HeaderValueExtractor)(nil)
+)
+
 type HeaderValueExtractor string
 
 func NewHeaderValueExtractor(headerNames ...string) (RequestValueExtractor, error) {
@@ -36,4 +41,16 @@ func (e HeaderValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request
 		vs[desired] = found
 	}
 	return nil
+}
+
+// ExtractStringValue satisfies [StringValue] interface.
+func (e HeaderValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+	desired := string(e)
+	valueSet := textproto.MIMEHeader(r.Header)
+	// found := r.Header.Values(desired)
+	found := valueSet.Values(desired)
+	if last := len(found); last > 0 {
+		return found[last-1], nil
+	}
+	return "", NoValueError(desired)
 }

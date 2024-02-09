@@ -48,3 +48,16 @@ func (c *ChiRequestValueExtractor) ExtractRequestValue(vs url.Values, r *http.Re
 	}
 	return nil
 }
+
+// ExtractStringValue satisfies `extract.StringValue` interface.
+func (c *ChiRequestValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+	rctx := chi.RouteContext(r.Context())
+	for i, name := range rctx.URLParams.Keys {
+		for _, desired := range c.names {
+			if name == desired {
+				return rctx.URLParams.Values[i], nil
+			}
+		}
+	}
+	return "", errors.New("route path value not found")
+}

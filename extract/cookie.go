@@ -6,9 +6,16 @@ import (
 	"net/url"
 )
 
-type CookieValueExtractor string
+var (
+	_ RequestValueExtractor = (CookieValueExtractor)(nil)
+	_ StringValueExtractor  = (CookieValueExtractor)(nil)
+)
 
-func NewCookieValueExtractor(names ...string) (RequestValueExtractor, error) {
+// CookieValueExtractor is a [RequestValueExtractor] extractor that pull
+// out [http.Cookie] values by name from an [http.Request].
+type CookieValueExtractor []string
+
+func NewCookieValueExtractor(names ...string) (CookieValueExtractor, error) {
 	total := len(names)
 	if total == 0 {
 		return nil, errors.New("HTTP cookie value extractor requires at least one cookie name")
@@ -16,23 +23,30 @@ func NewCookieValueExtractor(names ...string) (RequestValueExtractor, error) {
 	if err := uniqueNonEmptyValueNames(names); err != nil {
 		return nil, err
 	}
-	if total == 1 {
-		return CookieValueExtractor(names[0]), nil
-	}
-	extractors := make([]RequestValueExtractor, total)
-	for i, name := range names {
-		extractors[i] = CookieValueExtractor(name)
-	}
-	return Join(extractors...), nil
+	return CookieValueExtractor(names), nil
 }
 
+// ExtractRequestValue satisfies [RequestValueExtractor] interface.
 func (e CookieValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request) error {
-	desired := string(e)
-	for _, cookie := range r.Cookies() {
-		if cookie.Name == desired && len(cookie.Value) > 0 {
-			vs[desired] = []string{cookie.Value}
-			break
+	for _, desired := range e {
+		for _, cookie := range r.Cookies() {
+			if cookie.Name == desired && len(cookie.Value) > 0 {
+				vs[desired] = []string{cookie.Value}
+				break
+			}
 		}
 	}
 	return nil
+}
+
+// ExtractStringValue satisfies [StringValue] interface.
+func (e CookieValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+	for _, desired := range e {
+		for _, cookie := range r.Cookies() {
+			if cookie.Name == desired && len(cookie.Value) > 0 {
+				return cookie.Value, nil
+			}
+		}
+	}
+	return "", NoValueError(e[0])
 }

@@ -15,6 +15,15 @@ import (
 	"net/url"
 )
 
+// NoValueError indicates that request does not contain an exacted
+// named value.
+type NoValueError string
+
+// Error satisfies [error] interface.
+func (err NoValueError) Error() string {
+	return "request value absent: " + string(err)
+}
+
 // RequestValueExtractor pulls [url.Values] from an [http.Request]
 // in order to provide a [Decoder] with values to populate
 // domain request struct with.
@@ -26,10 +35,27 @@ type RequestValueExtractor interface {
 // implementation of a [RequestValueExtractor].
 type RequestValueExtractorFunc func(url.Values, *http.Request) error
 
-// ExtractRequestValue satisfies [RequestValueExtractor] interface
+// RequestValueExtractor satisfies [RequestValueExtractor] interface
 // for [RequestValueExtractorFunc].
 func (f RequestValueExtractorFunc) ExtractRequestValue(vs url.Values, r *http.Request) error {
 	return f(vs, r)
+}
+
+// StringValueExtractor pulls out a string value from an [http.Request].
+// It is used primarily for custom implentations of
+// [htadaptor.UnaryStringFuncAdaptor] and
+// [htadaptor.VoidStringFuncAdaptor].
+type StringValueExtractor interface {
+	ExtractStringValue(*http.Request) (string, error)
+}
+
+// StringValueExtractorFunc is a convient function type that
+// satisfies [StringValue].
+type StringValueExtractorFunc func(*http.Request) (string, error)
+
+// ExtractStringValue satisfies [StringValue] for [StringValueFunc].
+func (f StringValueExtractorFunc) ExtractStringValue(r *http.Request) (string, error) {
+	return f(r)
 }
 
 // Join unites several extractors into one.

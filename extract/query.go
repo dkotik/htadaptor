@@ -6,6 +6,11 @@ import (
 	"net/url"
 )
 
+var (
+	_ RequestValueExtractor = (QueryValueExtractor)(nil)
+	_ StringValueExtractor  = (QueryValueExtractor)(nil)
+)
+
 type QueryValueExtractor []string
 
 func NewQueryValueExtractor(headerNames ...string) (QueryValueExtractor, error) {
@@ -23,9 +28,10 @@ func (e QueryValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request)
 	if err != nil {
 		return err
 	}
-	for name, value := range values {
-		if len(value) > 0 {
-			for _, desired := range e {
+
+	for _, desired := range e {
+		for name, value := range values {
+			if len(value) > 0 {
 				if name == desired {
 					vs[name] = value
 					break
@@ -34,4 +40,23 @@ func (e QueryValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request)
 		}
 	}
 	return nil
+}
+
+// ExtractStringValue satisfies [StringValue] interface.
+func (e QueryValueExtractor) ExtractStringValue(r *http.Request) (string, error) {
+	values, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return "", err
+	}
+
+	for _, desired := range e {
+		for name, value := range values {
+			if last := len(value); last > 0 {
+				if name == desired {
+					return value[last-1], nil
+				}
+			}
+		}
+	}
+	return "", NoValueError(e[0])
 }
