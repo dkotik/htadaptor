@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 )
@@ -8,6 +9,9 @@ import (
 type QueryValueExtractor []string
 
 func NewQueryValueExtractor(headerNames ...string) (QueryValueExtractor, error) {
+	if len(headerNames) == 0 {
+		return nil, errors.New("URL query value extractor requires at least one parameter name")
+	}
 	if err := uniqueNonEmptyValueNames(headerNames); err != nil {
 		return nil, err
 	}

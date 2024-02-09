@@ -1,27 +1,38 @@
 package extract
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 )
 
-type PathValueExtractor []string
+type PathValueExtractor string
 
-func NewPathValueExtractor(names ...string) (PathValueExtractor, error) {
+func NewPathValueExtractor(names ...string) (RequestValueExtractor, error) {
+	total := len(names)
+	if total == 0 {
+		return nil, errors.New("URL path value extractor requires at least one path segment name")
+	}
 	if err := uniqueNonEmptyValueNames(names); err != nil {
 		return nil, err
 	}
-	return PathValueExtractor(names), nil
+	if total == 1 {
+		return PathValueExtractor(names[0]), nil
+	}
+	extractors := make([]RequestValueExtractor, total)
+	for i, name := range names {
+		extractors[i] = PathValueExtractor(name)
+	}
+	return Join(extractors...), nil
 }
 
 func (e PathValueExtractor) ExtractRequestValue(
 	vs url.Values,
 	r *http.Request,
 ) error {
-	for _, desired := range e {
-		if value := r.PathValue(desired); value != "" {
-			vs[desired] = []string{value}
-		}
+	desired := string(e)
+	if value := r.PathValue(desired); value != "" {
+		vs[desired] = []string{value}
 	}
 	return nil
 }

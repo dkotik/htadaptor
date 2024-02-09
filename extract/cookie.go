@@ -1,26 +1,37 @@
 package extract
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 )
 
-type CookieValueExtractor []string
+type CookieValueExtractor string
 
-func NewCookieValueExtractor(names ...string) (CookieValueExtractor, error) {
+func NewCookieValueExtractor(names ...string) (RequestValueExtractor, error) {
+	total := len(names)
+	if total == 0 {
+		return nil, errors.New("HTTP cookie value extractor requires at least one cookie name")
+	}
 	if err := uniqueNonEmptyValueNames(names); err != nil {
 		return nil, err
 	}
-	return CookieValueExtractor(names), nil
+	if total == 1 {
+		return CookieValueExtractor(names[0]), nil
+	}
+	extractors := make([]RequestValueExtractor, total)
+	for i, name := range names {
+		extractors[i] = CookieValueExtractor(name)
+	}
+	return Join(extractors...), nil
 }
 
 func (e CookieValueExtractor) ExtractRequestValue(vs url.Values, r *http.Request) error {
+	desired := string(e)
 	for _, cookie := range r.Cookies() {
-		for _, desired := range e {
-			if cookie.Name == desired && len(cookie.Value) > 0 {
-				vs[desired] = []string{cookie.Value}
-				break
-			}
+		if cookie.Name == desired && len(cookie.Value) > 0 {
+			vs[desired] = []string{cookie.Value}
+			break
 		}
 	}
 	return nil

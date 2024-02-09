@@ -1,5 +1,5 @@
 /*
-Package main demonstrates the use of cookie extractor for request decoding.
+Package main demonstrates the use of URL query value extractor for request decoding.
 */
 package main
 
@@ -36,22 +36,22 @@ func main() {
 	defer l.Close()
 
 	mux := http.NewServeMux()
-	mux.Handle("/test/cookie", htadaptor.Must(
+	mux.Handle("/test/query", htadaptor.Must(
 		htadaptor.NewUnaryFuncAdaptor(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
 				return &testResponse{
 					Value: r.UUID,
 				}, nil
 			},
-			htadaptor.WithCookieValues("UUID"),
+			htadaptor.WithQueryValues("UUID"),
 		),
 	))
 
 	fmt.Printf(
 		`Listening at http://%[1]s/
 
-    Test Cookie Value Extraction:
-      curl -v -b "UUID=testUUID" http://%[1]s/test/cookie
+    Test URL Query Value Extraction:
+      curl -v "http://%[1]s/test/query?UUID=testUUID"
 `,
 		l.Addr(),
 	)
