@@ -75,12 +75,12 @@ See `examples` folder for most common project uses.
 
 ## Extractors
 
+- [Path](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithPathValues)
+- [Chi Path](https://pkg.go.dev/github.com/dkotik/htadaptor/chivalues#New)
 - [Query](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithQueryValues)
 - [Header](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithHeaderValues)
 - [Cookie](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithCookieValues)
-- Path (pending with 1.22)
-- [Chi Path](https://pkg.go.dev/github.com/dkotik/htadaptor/chivalues#New)
 
 ## Credits
 
-Package includes reflection schema decoder from Gorilla toolkit.
+The core idea was sparked in conversations with members of the Ardan Labs team. Package includes reflection schema decoder from Gorilla toolkit.
