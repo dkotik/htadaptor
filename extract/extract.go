@@ -1,12 +1,12 @@
 /*
-Package extractor provides a standard set of most common [http.Request]
+Package extract provides a standard set of most common [http.Request]
 value extractors which populate fields of a decoded generic request struct.
 
 The most of the extractors target [url.Values] because it preserves
 duplicate fields. This gives the flexibility to a [htadaptor.Decoder]
 to choose how to handle the duplicates.
 */
-package extractor
+package extract
 
 import (
 	"errors"

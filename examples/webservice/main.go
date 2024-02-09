@@ -13,7 +13,7 @@ import (
 	"log/slog"
 
 	"github.com/dkotik/htadaptor"
-	"github.com/dkotik/htadaptor/extractor"
+	"github.com/dkotik/htadaptor/extract"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	mux.Handle("/api/v1/price", htadaptor.Must(
 		htadaptor.NewUnaryStringFuncAdaptor(
 			domainLogic.GetPrice,
-			extractor.StringValueExtractorFunc(
+			extract.StringValueExtractorFunc(
 				func(r *http.Request) (string, error) {
 					log.Println("got query:", r.URL.RawQuery)
 					return r.URL.Query().Get("item"), nil

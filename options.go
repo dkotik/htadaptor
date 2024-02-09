@@ -7,7 +7,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/dkotik/htadaptor/extractor"
+	"github.com/dkotik/htadaptor/extract"
 	"github.com/dkotik/htadaptor/reflectd"
 	"github.com/dkotik/htadaptor/slogrh"
 )
@@ -168,7 +168,7 @@ func WithMemoryLimit(upto int64) Option {
 	}
 }
 
-func WithExtractors(exs ...extractor.RequestValueExtractor) Option {
+func WithExtractors(exs ...extract.RequestValueExtractor) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithExtractors(exs...))
 		return nil

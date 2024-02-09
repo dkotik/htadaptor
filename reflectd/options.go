@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/dkotik/htadaptor/extractor"
+	"github.com/dkotik/htadaptor/extract"
 )
 
 type options struct {
 	// Schema      *schema.Decoder
 	ReadLimit   int64
 	MemoryLimit int64
-	Extractors  []extractor.RequestValueExtractor
+	Extractors  []extract.RequestValueExtractor
 }
 
 // Option configures new [Decoder]s.
@@ -81,8 +81,8 @@ func WithDefaultMemoryLimitOfOneThirdOfReadLimit() Option {
 	}
 }
 
-// WithExtractors adds [extractor.RequestValueExtractor]s to a [Decoder]. The order of extractors determines their precedence.
-func WithExtractors(exs ...extractor.RequestValueExtractor) Option {
+// WithExtractors adds [extract.RequestValueExtractor]s to a [Decoder]. The order of extractors determines their precedence.
+func WithExtractors(exs ...extract.RequestValueExtractor) Option {
 	return func(o *options) error {
 		if len(exs) < 1 {
 			return errors.New("at least one request value extractor is required")
@@ -100,7 +100,7 @@ func WithExtractors(exs ...extractor.RequestValueExtractor) Option {
 // WithQueryValues adds a [QueryValueExtractor] to a [Decoder].
 func WithQueryValues(names ...string) Option {
 	return func(o *options) error {
-		ex, err := extractor.NewQueryValueExtractor(names...)
+		ex, err := extract.NewQueryValueExtractor(names...)
 		if err != nil {
 			return fmt.Errorf("failed to initialize query value extractor: %w", err)
 		}
@@ -111,7 +111,7 @@ func WithQueryValues(names ...string) Option {
 // WithHeaderValues adds a [HeaderValueExtractor] to a [Decoder].
 func WithHeaderValues(names ...string) Option {
 	return func(o *options) error {
-		ex, err := extractor.NewHeaderValueExtractor(names...)
+		ex, err := extract.NewHeaderValueExtractor(names...)
 		if err != nil {
 			return fmt.Errorf("failed to initialize header value extractor: %w", err)
 		}
@@ -122,7 +122,7 @@ func WithHeaderValues(names ...string) Option {
 // WithCookieValues adds a [CookieValueExtractor] to a [Decoder].
 func WithCookieValues(names ...string) Option {
 	return func(o *options) error {
-		ex, err := extractor.NewCookieValueExtractor(names...)
+		ex, err := extract.NewCookieValueExtractor(names...)
 		if err != nil {
 			return fmt.Errorf("failed to initialize cookie value extractor: %w", err)
 		}
@@ -133,7 +133,7 @@ func WithCookieValues(names ...string) Option {
 // WithPathValues adds a [PathValueExtractor] to a [Decoder].
 func WithPathValues(names ...string) Option {
 	return func(o *options) error {
-		ex, err := extractor.NewPathValueExtractor(names...)
+		ex, err := extract.NewPathValueExtractor(names...)
 		if err != nil {
 			return fmt.Errorf("failed to initialize path value extractor: %w", err)
 		}

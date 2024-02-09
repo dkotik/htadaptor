@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dkotik/htadaptor/extractor"
+	"github.com/dkotik/htadaptor/extract"
 )
 
 var ErrNoStringValue = errors.New("empty value")
 
 func NewUnaryStringFuncAdaptor[O any](
 	domainCall func(context.Context, string) (O, error),
-	stringExtractor extractor.StringValueExtractor,
+	stringExtractor extract.StringValueExtractor,
 	withOptions ...Option,
 ) (*UnaryStringFuncAdaptor[O], error) {
 	o := &options{}
@@ -57,7 +57,7 @@ func NewUnaryStringFuncAdaptor[O any](
 
 type UnaryStringFuncAdaptor[O any] struct {
 	domainCall      func(context.Context, string) (O, error)
-	stringExtractor extractor.StringValueExtractor
+	stringExtractor extract.StringValueExtractor
 	encoder         Encoder
 	responseHandler ResponseHandler
 }
