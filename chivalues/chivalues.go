@@ -12,6 +12,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// ErrNoValue indicates that all possible route path segments were empty.
+var ErrNoValue = errors.New("request path value is empty")
+
 // ChiRequestValueExtractor retrieves [chi.Router] named URL parameters.
 type ChiRequestValueExtractor struct {
 	names []string
@@ -59,5 +62,5 @@ func (c *ChiRequestValueExtractor) ExtractStringValue(r *http.Request) (string, 
 			}
 		}
 	}
-	return "", errors.New("route path value not found")
+	return "", ErrNoValue
 }

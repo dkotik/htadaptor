@@ -73,7 +73,7 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHyperText(
 	var request V = new(T)
 	// request := new(V)
 	if err = a.decoder.Decode(request, r); err != nil {
-		return NewInvalidRequestError(fmt.Errorf("unable to decode: %w", err))
+		return NewDecodingError(err)
 	}
 	if err = request.Validate(); err != nil {
 		return NewInvalidRequestError(err)
@@ -84,7 +84,7 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHyperText(
 		return err
 	}
 	if err = a.encoder.Encode(w, response); err != nil {
-		return fmt.Errorf("unable to encode: %w", err)
+		return NewEncodingError(err)
 	}
 	return a.responseHandler.HandleSuccess(w, r)
 }

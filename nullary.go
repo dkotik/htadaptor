@@ -60,7 +60,7 @@ func (a *NullaryFuncAdaptor[O]) ServeHyperText(
 		return err
 	}
 	if err = a.encoder.Encode(w, response); err != nil {
-		return fmt.Errorf("unable to encode: %w", err)
+		return NewEncodingError(err)
 	}
 	return a.responseHandler.HandleSuccess(w, r)
 }

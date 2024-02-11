@@ -68,14 +68,14 @@ func (a *UnaryStringFuncAdaptor[O]) ServeHyperText(
 ) (err error) {
 	value, err := a.stringExtractor.ExtractStringValue(r)
 	if err != nil {
-		return NewInvalidRequestError(fmt.Errorf("unable to decode string value: %w", err))
+		return NewDecodingError(err)
 	}
 	response, err := a.domainCall(r.Context(), value)
 	if err != nil {
 		return err
 	}
 	if err = a.encoder.Encode(w, response); err != nil {
-		return fmt.Errorf("unable to encode: %w", err)
+		return NewEncodingError(err)
 	}
 	return a.responseHandler.HandleSuccess(w, r)
 }

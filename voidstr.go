@@ -58,7 +58,7 @@ func (a *VoidStringFuncAdaptor) ServeHyperText(
 ) (err error) {
 	value, err := a.stringExtractor.ExtractStringValue(r)
 	if err != nil {
-		return NewInvalidRequestError(fmt.Errorf("unable to decode string value: %w", err))
+		return NewDecodingError(err)
 	}
 	if err = a.domainCall(r.Context(), value); err != nil {
 		return err

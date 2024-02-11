@@ -63,7 +63,7 @@ func (a *VoidFuncAdaptor[T, V]) ServeHyperText(
 ) (err error) {
 	var request V = new(T)
 	if err := a.decoder.Decode(request, r); err != nil {
-		return NewInvalidRequestError(fmt.Errorf("unable to decode: %w", err))
+		return NewDecodingError(err)
 	}
 	if err = request.Validate(); err != nil {
 		return NewInvalidRequestError(err)

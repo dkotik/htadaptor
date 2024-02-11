@@ -14,43 +14,6 @@ import (
 )
 
 // func New(withOptions ...Option) (func(any) (http.Handler, error), error) {
-// 	o := &options{}
-// 	err := WithOptions(append(
-// 		withOptions,
-// 		func(o *options) (err error) {
-// 			defer func() {
-// 				if err != nil {
-// 					err = fmt.Errorf("unable to apply default option: %w", err)
-// 				}
-// 			}()
-//
-// 			if o.Encoder == nil {
-// 				if err = WithDefaultEncoder()(o); err != nil {
-// 					return err
-// 				}
-// 			}
-// 			if o.Decoder == nil {
-// 				if err = WithDefaultDecoder()(o); err != nil {
-// 					return err
-// 				}
-// 			}
-// 			if o.ErrorHandler == nil {
-// 				if err = WithDefaultErrorHandler()(o); err != nil {
-// 					return err
-// 				}
-// 			}
-// 			if o.Logger == nil {
-// 				if err = WithDefaultLogger()(o); err != nil {
-// 					return err
-// 				}
-// 			}
-// 			return nil
-// 		},
-// 	)...)(o)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("unable to initialize a generic adaptor: %w", err)
-// 	}
-//
 // 	return func(domainCall any) (http.Handler, error) {
 // 		funcType, err := Detect(domainCall)
 // 		if err != nil {
@@ -73,6 +36,12 @@ import (
 
 type Decoder interface {
 	Decode(any, *http.Request) error
+}
+
+type DecoderFunc func(any, *http.Request) error
+
+func (f DecoderFunc) Decoder(v any, r *http.Request) error {
+	return f(v, r)
 }
 
 type Encoder interface {
