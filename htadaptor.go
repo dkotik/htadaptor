@@ -10,6 +10,8 @@ Each input requires implementation of [Validatable] for safety. Validation error
 package htadaptor
 
 import (
+	"encoding/json"
+	"html/template"
 	"net/http"
 )
 
@@ -45,31 +47,35 @@ func (f DecoderFunc) Decoder(v any, r *http.Request) error {
 }
 
 type Encoder interface {
+	ContentType() string
 	Encode(http.ResponseWriter, any) error
 }
 
-type EncoderFunc func(http.ResponseWriter, any) error
-
-func (f EncoderFunc) Encode(w http.ResponseWriter, v any) error {
-	return f(w, v)
+func writeEncoderContentType(w http.ResponseWriter, e Encoder) {
+	w.Header().Set("content-type", e.ContentType())
 }
 
-type ResponseHandler interface {
-	HandleSuccess(http.ResponseWriter, *http.Request) error
-	HandleError(http.ResponseWriter, *http.Request, error)
+type JSONEncoder struct{}
+
+func (e *JSONEncoder) ContentType() string {
+	return "application/json"
 }
 
-/*
-type silentResponseHandler struct{}
-
-func (s *silentResponseHandler) HandleSuccess(_ http.ResponseWriter, _ *http.Request) error {
-	return nil
+func (e *JSONEncoder) Encode(w http.ResponseWriter, v any) error {
+	return json.NewEncoder(w).Encode(v)
 }
 
-func (s *silentResponseHandler) HandleError(w http.ResponseWriter, r *http.Request, err error) {
-  // apply error encoder
+type TemplateEncoder struct {
+	*template.Template
 }
-*/
+
+func (e *TemplateEncoder) ContentType() string {
+	return "text/html"
+}
+
+func (e *TemplateEncoder) Encode(w http.ResponseWriter, v any) error {
+	return e.Template.Execute(w, v)
+}
 
 func Must(h http.Handler, err error) http.Handler {
 	if err != nil {

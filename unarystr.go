@@ -29,11 +29,6 @@ func NewUnaryStringFuncAdaptor[O any](
 					return err
 				}
 			}
-			if o.ResponseHandler == nil {
-				if err = WithDefaultResponseHandler()(o); err != nil {
-					return err
-				}
-			}
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")
 			}
@@ -51,7 +46,8 @@ func NewUnaryStringFuncAdaptor[O any](
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,
 		encoder:         o.Encoder,
-		responseHandler: o.ResponseHandler,
+		errorHandler:    o.ErrorHandler,
+		logger:          o.Logger,
 	}, nil
 }
 
@@ -59,10 +55,11 @@ type UnaryStringFuncAdaptor[O any] struct {
 	domainCall      func(context.Context, string) (O, error)
 	stringExtractor extract.StringValueExtractor
 	encoder         Encoder
-	responseHandler ResponseHandler
+	errorHandler    ErrorHandler
+	logger          Logger
 }
 
-func (a *UnaryStringFuncAdaptor[O]) ServeHyperText(
+func (a *UnaryStringFuncAdaptor[O]) executeDomainCall(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
@@ -74,18 +71,20 @@ func (a *UnaryStringFuncAdaptor[O]) ServeHyperText(
 	if err != nil {
 		return err
 	}
+	writeEncoderContentType(w, a.encoder)
 	if err = a.encoder.Encode(w, response); err != nil {
 		return NewEncodingError(err)
 	}
-	return a.responseHandler.HandleSuccess(w, r)
+	return nil
 }
 
 func (a *UnaryStringFuncAdaptor[O]) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	err := a.ServeHyperText(w, r)
+	err := a.executeDomainCall(w, r)
 	if err != nil {
-		a.responseHandler.HandleError(w, r, err)
+		err = a.errorHandler.HandleError(w, r, err)
 	}
+	a.logger.LogRequest(r, err)
 }

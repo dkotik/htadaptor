@@ -1,23 +1,22 @@
 package htadaptor
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
-	"net/http"
+	"log/slog"
+	"sync"
 
 	"github.com/dkotik/htadaptor/extract"
 	"github.com/dkotik/htadaptor/reflectd"
-	"github.com/dkotik/htadaptor/slogrh"
 )
 
 type options struct {
-	Decoder                Decoder
-	DecoderOptions         []reflectd.Option
-	Encoder                Encoder
-	ResponseHandler        ResponseHandler
-	ResponseHandlerOptions []slogrh.Option
+	Decoder        Decoder
+	DecoderOptions []reflectd.Option
+	Encoder        Encoder
+	ErrorHandler   ErrorHandler
+	Logger         Logger
 }
 
 func (o *options) Validate() (err error) {
@@ -30,17 +29,11 @@ func (o *options) Validate() (err error) {
 			return err
 		}
 	}
-
-	if len(o.ResponseHandlerOptions) > 0 {
-		if o.ResponseHandler != nil {
-			return fmt.Errorf("option WithResponseHandler conflicts with %d response handler options; provide either a prepared response handler or options for preparing an slog one, but not both", len(o.ResponseHandlerOptions))
-		}
-		o.ResponseHandler, err = slogrh.New(o.ResponseHandlerOptions...)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return WithOptions(
+		WithDefaultEncoder(),
+		WithDefaultErrorHandler(),
+		WithDefaultLogger(),
+	)(o)
 }
 
 type Option func(*options) error
@@ -72,50 +65,73 @@ func WithEncoder(e Encoder) Option {
 	}
 }
 
-func WithEncoderFunc(f func(http.ResponseWriter, any) error) Option {
-	return WithEncoder(EncoderFunc(f))
-}
-
-func WithHyperTextEncoder(t *template.Template) Option {
+func WithTemplateEncoder(t *template.Template) Option {
 	return func(o *options) error {
 		if t == nil {
 			return errors.New("cannot use a <nil> template")
 		}
-		return WithEncoderFunc(func(w http.ResponseWriter, v any) error {
-			w.Header().Set("Content-Type", "text/html")
-			return t.Execute(w, v)
-		})(o)
+		return WithEncoder(&TemplateEncoder{t})(o)
 	}
 }
 
+var (
+	defaultEncoder      Encoder
+	defaultEncoderSetup sync.Once
+)
+
 func WithDefaultEncoder() Option {
-	return WithEncoderFunc(func(w http.ResponseWriter, v any) error {
-		// panic("encoder")
-		w.Header().Set("Content-Type", "application/json")
-		return json.NewEncoder(w).Encode(v)
-	})
+	return func(o *options) error {
+		if o.Encoder != nil {
+			return nil
+		}
+		defaultEncoderSetup.Do(func() {
+			defaultEncoder = &JSONEncoder{}
+		})
+		return WithEncoder(defaultEncoder)(o)
+	}
 }
 
-func WithResponseHandler(h ResponseHandler) Option {
+func WithErrorHandler(h ErrorHandler) Option {
 	return func(o *options) error {
 		if h == nil {
-			return errors.New("cannot use a <nil> response handler")
+			return errors.New("cannot use a <nil> error handler")
 		}
-		if o.ResponseHandler != nil {
-			return errors.New("response handler is already set")
+		if o.ErrorHandler != nil {
+			return errors.New("error handler is already set")
 		}
-		o.ResponseHandler = h
+		o.ErrorHandler = h
 		return nil
 	}
 }
 
-func WithDefaultResponseHandler() Option {
-	return func(o *options) (err error) {
-		rh, err := slogrh.New()
-		if err != nil {
-			return err
+var (
+	defaultErrorHandlerJSON      ErrorHandler
+	defaultErrorHandlerJSONSetup sync.Once
+	defaultErrorHandlerHTML      ErrorHandler
+	defaultErrorHandlerHTMLSetup sync.Once
+)
+
+func WithDefaultErrorHandler() Option {
+	return func(o *options) error {
+		if o.ErrorHandler != nil {
+			return nil
 		}
-		return WithResponseHandler(rh)(o)
+		switch o.Encoder.ContentType() {
+		case "application/json":
+			defaultErrorHandlerJSONSetup.Do(func() {
+				defaultErrorHandlerJSON = NewErrorHandler(&JSONEncoder{})
+			})
+			return WithErrorHandler(defaultErrorHandlerJSON)(o)
+		case "text/html":
+			defaultErrorHandlerHTMLSetup.Do(func() {
+				defaultErrorHandlerHTML = NewErrorHandler(&TemplateEncoder{
+					DefaultErrorTemplate(),
+				})
+			})
+			return WithErrorHandler(defaultErrorHandlerHTML)(o)
+		default:
+			return WithErrorHandler(NewErrorHandler(o.Encoder))(o)
+		}
 	}
 }
 
@@ -200,5 +216,39 @@ func WithPathValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithPathValues(names...))
 		return nil
+	}
+}
+
+func WithLogger(l Logger) Option {
+	return func(o *options) error {
+		if l == nil {
+			return errors.New("cannot use a <nil> logger")
+		}
+		if o.Logger != nil {
+			return errors.New("adaptor logger is already set")
+		}
+		o.Logger = l
+		return nil
+	}
+}
+
+var (
+	defaultLogger      Logger
+	defaultLoggerSetup sync.Once
+)
+
+func WithDefaultLogger() Option {
+	return func(o *options) error {
+		if o.Logger != nil {
+			return nil
+		}
+		defaultLoggerSetup.Do(func() {
+			defaultLogger = &SlogLogger{
+				Logger:  slog.Default(),
+				Success: slog.LevelDebug,
+				Error:   slog.LevelError,
+			}
+		})
+		return WithLogger(defaultLogger)(o)
 	}
 }

@@ -1,34 +1,11 @@
 package staticfs
 
 import (
+	"log/slog"
 	"net/http"
 
-	"log/slog"
+	"github.com/dkotik/htadaptor"
 )
-
-var _ slog.LogValuer = (*NotFoundError)(nil)
-
-type NotFoundError struct {
-	path string
-}
-
-func NewNotFoundError(p string) *NotFoundError {
-	return &NotFoundError{path: p}
-}
-
-func (e *NotFoundError) Error() string {
-	return "Not Found"
-}
-
-func (e *NotFoundError) HyperTextStatusCode() int {
-	return http.StatusNotFound
-}
-
-func (e *NotFoundError) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.String("path", e.path),
-	)
-}
 
 func (fs *FS) ServeHyperText(
 	w http.ResponseWriter,
@@ -36,7 +13,7 @@ func (fs *FS) ServeHyperText(
 ) (err error) {
 	real, ok := fs.index[r.URL.Path]
 	if !ok {
-		return NewNotFoundError(r.URL.Path)
+		return htadaptor.NewNotFoundError(r.URL.Path)
 	}
 	r.URL.Path = real // TODO: not kosher.
 	// r.URL.Path = "main.go"

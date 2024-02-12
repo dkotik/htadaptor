@@ -2,14 +2,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Backend Server Error</title>
+    <title>Error - {{ .Title }}</title>
     <style>
       /* TODO: write out styles together with darkmode */
     </style>
   </head>
   <body>
     <main>
-      <h1>{{ .StatusCode }} Error</h1>
+      <h1>{{ .StatusCode }} {{ .Title }}</h1>
       <p>{{ .Message }}</p>
     </main>
   </body>

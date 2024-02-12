@@ -21,11 +21,6 @@ func NewVoidStringFuncAdaptor(
 			if err = o.Validate(); err != nil {
 				return err
 			}
-			if o.ResponseHandler == nil {
-				if err = WithDefaultResponseHandler()(o); err != nil {
-					return err
-				}
-			}
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")
 			}
@@ -42,17 +37,19 @@ func NewVoidStringFuncAdaptor(
 	return &VoidStringFuncAdaptor{
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,
-		responseHandler: o.ResponseHandler,
+		errorHandler:    o.ErrorHandler,
+		logger:          o.Logger,
 	}, nil
 }
 
 type VoidStringFuncAdaptor struct {
 	domainCall      func(context.Context, string) error
 	stringExtractor extract.StringValueExtractor
-	responseHandler ResponseHandler
+	errorHandler    ErrorHandler
+	logger          Logger
 }
 
-func (a *VoidStringFuncAdaptor) ServeHyperText(
+func (a *VoidStringFuncAdaptor) executeDomainCall(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
@@ -64,15 +61,16 @@ func (a *VoidStringFuncAdaptor) ServeHyperText(
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
-	return a.responseHandler.HandleSuccess(w, r)
+	return nil
 }
 
 func (a *VoidStringFuncAdaptor) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	err := a.ServeHyperText(w, r)
+	err := a.executeDomainCall(w, r)
 	if err != nil {
-		a.responseHandler.HandleError(w, r, err)
+		err = a.errorHandler.HandleError(w, r, err)
 	}
+	a.logger.LogRequest(r, err)
 }

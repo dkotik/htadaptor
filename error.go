@@ -1,10 +1,37 @@
 package htadaptor
 
 import (
+	"fmt"
+	"io"
+	"log/slog"
+	"sync"
+
+	_ "embed" // for error template
+
 	"errors"
 	"html/template"
 	"net/http"
 )
+
+var (
+	//go:embed error.html
+	defaultErrorTemplateSource []byte
+	defaultErrorTemplateSetup  sync.Once
+	defaultErrorTemplate       *template.Template
+)
+
+func DefaultErrorTemplate() *template.Template {
+	defaultErrorTemplateSetup.Do(func() {
+		t, err := template.New("error").Parse(string(defaultErrorTemplateSource))
+		if err != nil {
+			panic(fmt.Errorf("could not pase default template: %w", err))
+		}
+		defaultErrorTemplate = t
+	})
+	return defaultErrorTemplate
+}
+
+var _ slog.LogValuer = (*NotFoundError)(nil)
 
 type ErrorHandler interface {
 	HandleError(http.ResponseWriter, *http.Request, error) error
@@ -18,6 +45,7 @@ func (e ErrorHandlerFunc) HandleError(w http.ResponseWriter, r *http.Request, er
 
 func NewErrorHandler(encoder Encoder) ErrorHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, err error) error {
+		writeEncoderContentType(w, encoder)
 		w.WriteHeader(GetHyperTextStatusCode(err))
 		return errors.Join(err, encoder.Encode(w, struct {
 			Error string `json:"error"`
@@ -27,17 +55,25 @@ func NewErrorHandler(encoder Encoder) ErrorHandlerFunc {
 	}
 }
 
+type ErrorMessage struct {
+	StatusCode int
+	Title      string
+	Message    string
+}
+
+func (e *ErrorMessage) Render(w io.Writer) error {
+	return DefaultErrorTemplate().Execute(w, e)
+}
+
 func NewErrorHandlerFromTemplate(t *template.Template) ErrorHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, err error) error {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("content-type", "text/html")
 		code := GetHyperTextStatusCode(err)
 		w.WriteHeader(code)
-		return errors.Join(err, t.Execute(w, struct {
-			Title   string
-			Message string
-		}{
-			Title:   http.StatusText(code),
-			Message: err.Error(),
+		return errors.Join(err, t.Execute(w, &ErrorMessage{
+			StatusCode: code,
+			Title:      http.StatusText(code),
+			Message:    err.Error(),
 		}))
 	}
 }
@@ -119,4 +155,26 @@ func (e *EncodingError) Unwrap() error {
 
 func (e *EncodingError) HyperTextStatusCode() int {
 	return http.StatusInternalServerError
+}
+
+type NotFoundError struct {
+	path string
+}
+
+func NewNotFoundError(p string) *NotFoundError {
+	return &NotFoundError{path: p}
+}
+
+func (e *NotFoundError) Error() string {
+	return "Not Found"
+}
+
+func (e *NotFoundError) HyperTextStatusCode() int {
+	return http.StatusNotFound
+}
+
+func (e *NotFoundError) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("path", e.path),
+	)
 }

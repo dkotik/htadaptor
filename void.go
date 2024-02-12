@@ -26,11 +26,6 @@ func NewVoidFuncAdaptor[
 					return err
 				}
 			}
-			if o.ResponseHandler == nil {
-				if err = WithDefaultResponseHandler()(o); err != nil {
-					return err
-				}
-			}
 			if domainCall == nil {
 				return errors.New("cannot use a <nil> domain call")
 			}
@@ -42,9 +37,10 @@ func NewVoidFuncAdaptor[
 	}
 
 	return &VoidFuncAdaptor[T, V]{
-		domainCall:      domainCall,
-		decoder:         o.Decoder,
-		responseHandler: o.ResponseHandler,
+		domainCall:   domainCall,
+		decoder:      o.Decoder,
+		errorHandler: o.ErrorHandler,
+		logger:       o.Logger,
 	}, nil
 }
 
@@ -52,12 +48,13 @@ type VoidFuncAdaptor[
 	T any,
 	V Validatable[T],
 ] struct {
-	domainCall      func(context.Context, V) error
-	decoder         Decoder
-	responseHandler ResponseHandler
+	domainCall   func(context.Context, V) error
+	decoder      Decoder
+	errorHandler ErrorHandler
+	logger       Logger
 }
 
-func (a *VoidFuncAdaptor[T, V]) ServeHyperText(
+func (a *VoidFuncAdaptor[T, V]) executeDomainCall(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (err error) {
@@ -72,15 +69,16 @@ func (a *VoidFuncAdaptor[T, V]) ServeHyperText(
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)
-	return a.responseHandler.HandleSuccess(w, r)
+	return nil
 }
 
 func (a *VoidFuncAdaptor[T, V]) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	err := a.ServeHyperText(w, r)
+	err := a.executeDomainCall(w, r)
 	if err != nil {
-		a.responseHandler.HandleError(w, r, err)
+		err = a.errorHandler.HandleError(w, r, err)
 	}
+	a.logger.LogRequest(r, err)
 }
