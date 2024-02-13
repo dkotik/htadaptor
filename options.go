@@ -11,6 +11,11 @@ import (
 	"github.com/dkotik/htadaptor/reflectd"
 )
 
+// TODO: use Option interface that applies to various options structs?
+// TODO: put StringExtractor into common options to remove it as
+// parameter from unarystr.go and voidstr.go
+// TODO: allow options to overwrite previous sets? or use
+// WithDecoderOverride... option set to make override explicit?
 type options struct {
 	Decoder        Decoder
 	DecoderOptions []reflectd.Option
@@ -55,22 +60,22 @@ func WithOptions(withOptions ...Option) Option {
 func WithEncoder(e Encoder) Option {
 	return func(o *options) error {
 		if e == nil {
-			return errors.New("cannot use a <nil> encoder")
+			return errors.New("cannot use a <nil> response encoder")
 		}
 		if o.Encoder != nil {
-			return errors.New("encoder is already set")
+			return errors.New("response encoder is already set")
 		}
 		o.Encoder = e
 		return nil
 	}
 }
 
-func WithTemplateEncoder(t *template.Template) Option {
+func WithTemplate(t *template.Template) Option {
 	return func(o *options) error {
 		if t == nil {
 			return errors.New("cannot use a <nil> template")
 		}
-		return WithEncoder(&TemplateEncoder{t})(o)
+		return WithEncoder(NewTemplateEncoder(t))(o)
 	}
 }
 
@@ -124,9 +129,8 @@ func WithDefaultErrorHandler() Option {
 			return WithErrorHandler(defaultErrorHandlerJSON)(o)
 		case "text/html":
 			defaultErrorHandlerHTMLSetup.Do(func() {
-				defaultErrorHandlerHTML = NewErrorHandler(&TemplateEncoder{
-					DefaultErrorTemplate(),
-				})
+				defaultErrorHandlerHTML = NewErrorHandler(
+					NewTemplateEncoder(DefaultErrorTemplate()))
 			})
 			return WithErrorHandler(defaultErrorHandlerHTML)(o)
 		default:

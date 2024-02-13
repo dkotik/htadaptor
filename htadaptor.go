@@ -65,16 +65,20 @@ func (e *JSONEncoder) Encode(w http.ResponseWriter, v any) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
-type TemplateEncoder struct {
+type templateEncoder struct {
 	*template.Template
 }
 
-func (e *TemplateEncoder) ContentType() string {
+func (e *templateEncoder) ContentType() string {
 	return "text/html"
 }
 
-func (e *TemplateEncoder) Encode(w http.ResponseWriter, v any) error {
+func (e *templateEncoder) Encode(w http.ResponseWriter, v any) error {
 	return e.Template.Execute(w, v)
+}
+
+func NewTemplateEncoder(t *template.Template) Encoder {
+	return &templateEncoder{t}
 }
 
 func Must(h http.Handler, err error) http.Handler {

@@ -9,8 +9,7 @@ package middleware
 
 import "net/http"
 
-// TODO: move panic middleware out of slorgh.
-
+// TODO: Middleware func(http.Handler) (http.Handler, error)
 type Middleware func(http.Handler) http.Handler
 
 // Must panics if middleware creation returned an error.

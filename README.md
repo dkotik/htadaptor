@@ -24,7 +24,7 @@ myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
 ))
 ```
 
-Adaptors address all common function signatures of domain logic calls for both structs and single strings:
+Adaptors address all common function signatures of domain logic calls that operate on a request struct and return a response struct:
 
 <!-- TODO: add FS adaptor -->
 
@@ -63,12 +63,9 @@ See `examples` folder for most common project uses.
 - [WithDecoder](https://pkg.go.dev/github.com/dkotik/htadaptor#WithDecoder)
     - [WithReadLimit](https://pkg.go.dev/github.com/dkotik/htadaptor#WithReadLimit)
     - [WithMemoryLimit](https://pkg.go.dev/github.com/dkotik/htadaptor#WithMemoryLimit)
-    - [WithQueryValue](https://pkg.go.dev/github.com/dkotik/htadaptor#WithQueryValue)
-    - [WithHeaderValue](https://pkg.go.dev/github.com/dkotik/htadaptor#WithHeaderValue)
     - [WithExtractors](https://pkg.go.dev/github.com/dkotik/htadaptor#WithExtractors)
 - [WithEncoder](https://pkg.go.dev/github.com/dkotik/htadaptor#WithEncoder)
 - [WithLogger](https://pkg.go.dev/github.com/dkotik/htadaptor#WithLogger)
-    - [WithSlogLogger](https://pkg.go.dev/github.com/dkotik/htadaptor#WithSlogLogger)
 - [WithErrorHandler](https://pkg.go.dev/github.com/dkotik/htadaptor#WithErrorHandler)
 
 ## Extractors
