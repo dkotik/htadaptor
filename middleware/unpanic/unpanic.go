@@ -1,8 +1,14 @@
-package middleware
+/*
+Package unpanic provides [htadaptor.Middleware] that gracefully recovers
+from request panics.
+*/
+package unpanic
 
 import (
 	"log/slog"
 	"net/http"
+
+	"github.com/dkotik/htadaptor"
 )
 
 type panicHandler struct {
@@ -10,12 +16,19 @@ type panicHandler struct {
 	lastResort http.Handler
 }
 
-// NewPanic returns middleware that prevents service shutdown by
+// New returns middleware that prevents service shutdown by
 // recovering from panics. Then, it logs the recovery value and
 // runs lastResort [http.Handler]. If lastResort is <nil>
 // the service will panic again and shutdown.
-func NewPanic(lastResort http.Handler) Middleware {
+func New(lastResort http.Handler) htadaptor.Middleware {
 	return func(next http.Handler) http.Handler {
+		if next == nil {
+			panic("cannot use a <nil> next handler")
+		}
+		if lastResort == nil {
+			panic("cannot use a <nil> last resort handler")
+		}
+
 		return &panicHandler{
 			next:       next,
 			lastResort: lastResort,
@@ -23,6 +36,7 @@ func NewPanic(lastResort http.Handler) Middleware {
 	}
 }
 
+// ServeHTTP satisfies [http.Handler] interface.
 func (p *panicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rvr := recover(); rvr != nil {

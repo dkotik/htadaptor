@@ -87,3 +87,17 @@ func Must(h http.Handler, err error) http.Handler {
 	}
 	return h
 }
+
+// Middleware modifies an [http.Handler].
+type Middleware func(http.Handler) http.Handler
+
+// Apply wraps an [http.Handler] into [Middleware] in reverse order.
+func ApplyMiddleware(h http.Handler, mws ...Middleware) http.Handler {
+	if h == nil {
+		panic("cannot use <nil> handler")
+	}
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
+}

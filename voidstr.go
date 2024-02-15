@@ -64,6 +64,7 @@ func (a *VoidStringFuncAdaptor) executeDomainCall(
 	return nil
 }
 
+// ServeHTTP satisfies [http.Handler] interface.
 func (a *VoidStringFuncAdaptor) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,

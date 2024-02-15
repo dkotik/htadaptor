@@ -78,6 +78,7 @@ func (a *UnaryStringFuncAdaptor[O]) executeDomainCall(
 	return nil
 }
 
+// ServeHTTP satisfies [http.Handler] interface.
 func (a *UnaryStringFuncAdaptor[O]) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,

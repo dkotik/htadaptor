@@ -63,6 +63,7 @@ func (a *NullaryFuncAdaptor[O]) executeDomainCall(
 	return nil
 }
 
+// ServeHTTP satisfies [http.Handler] interface.
 func (a *NullaryFuncAdaptor[O]) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,

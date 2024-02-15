@@ -1,10 +1,16 @@
-package middleware
+/*
+Package idledown provides a [htadaptor.Middleware] that shuts
+the server down due to inactivity.
+*/
+package idledown
 
 import (
 	"fmt"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/dkotik/htadaptor"
 )
 
 // IdleDown resets its timer for each [http.Request] and shuts down
@@ -16,8 +22,15 @@ type IdleDown struct {
 	next  http.Handler
 }
 
-func NewIdleDown(d time.Duration) Middleware {
+func NewIdleDown(d time.Duration) htadaptor.Middleware {
 	return func(next http.Handler) http.Handler {
+		if d < time.Second {
+			panic("idle duration must be greater than zero")
+		}
+		if next == nil {
+			panic("cannot use a <nil> next handler")
+		}
+
 		idleDown := &IdleDown{
 			idle:  d,
 			timer: time.NewTimer(d),
@@ -34,6 +47,7 @@ func NewIdleDown(d time.Duration) Middleware {
 	}
 }
 
+// ServeHTTP satisfies [http.Handler] interface.
 func (d *IdleDown) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// OPTIMIZE: documentation seems unclear if Reset is concurrency safe?
 	d.timer.Reset(d.idle)
