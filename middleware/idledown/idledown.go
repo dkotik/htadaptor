@@ -1,59 +1,57 @@
 /*
-Package idledown provides a [htadaptor.Middleware] that shuts
+Package idledown provides an [htadaptor.Middleware] that shuts
 the server down due to inactivity.
 */
 package idledown
 
 import (
+	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/dkotik/htadaptor"
 )
 
-// IdleDown resets its timer for each [http.Request] and shuts down
+// New creates an [htadaptor.Middleware] that resets its internal timer
+// for each [http.Request] and shuts down
 // an [http.Server] when the timer runs out. Use it for services
 // that are meant to scale down to zero or few instances.
-type IdleDown struct {
-	idle  time.Duration
-	timer *time.Timer
-	next  http.Handler
-}
-
-func NewIdleDown(d time.Duration) htadaptor.Middleware {
-	return func(next http.Handler) http.Handler {
-		if d < time.Second {
-			panic("idle duration must be greater than zero")
+func New(
+	parent context.Context,
+	shutdownAfter time.Duration,
+) (context.Context, htadaptor.Middleware) {
+	if shutdownAfter < time.Second {
+		panic("idle duration must be greater than zero")
+	}
+	if parent == nil {
+		panic("cannot use a <nil> context")
+	}
+	ctx, cancel := context.WithCancelCause(parent)
+	timer := time.NewTimer(shutdownAfter)
+	go func(ctx context.Context, waitingOn <-chan time.Time, d time.Duration) {
+		select {
+		case <-ctx.Done():
+			// nothing
+		case <-waitingOn:
+			cancel(fmt.Errorf("HTTP handlers were idle for more than %.2f minutes", float32(d)/float32(time.Minute)))
 		}
+	}(ctx, timer.C, shutdownAfter)
+
+	return ctx, func(next http.Handler) http.Handler {
 		if next == nil {
 			panic("cannot use a <nil> next handler")
 		}
-
-		idleDown := &IdleDown{
-			idle:  d,
-			timer: time.NewTimer(d),
-			next:  next,
-		}
-
-		go func(waitingOn <-chan time.Time, d time.Duration) {
-			<-waitingOn
-			fmt.Printf("Shutting down service because there were no HTTP requests for %.2f minutes.\n", float32(d)/float32(time.Minute))
-			os.Exit(0)
-		}(idleDown.timer.C, d)
-
-		return idleDown
+		return http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				// OPTIMIZE: documentation seems unclear if Reset is concurrency safe?
+				timer.Reset(shutdownAfter)
+				// if ResponseWriter is a reverse proxy, see:
+				//  - https://github.com/superfly/tired-proxy
+				//  - https://github.com/ties-v/tired-proxy
+				// r.Host = remote.Host
+				next.ServeHTTP(w, r)
+			},
+		)
 	}
-}
-
-// ServeHTTP satisfies [http.Handler] interface.
-func (d *IdleDown) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// OPTIMIZE: documentation seems unclear if Reset is concurrency safe?
-	d.timer.Reset(d.idle)
-	// if ResponseWriter is a reverse proxy, see:
-	//  - https://github.com/superfly/tired-proxy
-	//  - https://github.com/ties-v/tired-proxy
-	// r.Host = remote.Host
-	d.next.ServeHTTP(w, r)
 }
