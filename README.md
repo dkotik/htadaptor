@@ -80,4 +80,7 @@ The order of extractors matters with the latter overriding the former. Request b
 
 ## Credits
 
-The core idea was sparked in conversations with members of the Ardan Labs team. Package includes reflection schema decoder from Gorilla toolkit.
+The core idea was sparked in conversations with members of the Ardan Labs team. Package includes reflection schema decoder from Gorilla toolkit. Similar projects:
+
+- Generic REST Controllers: <https://github.com/dolanor/rip/>
+- Baby API: <https://github.com/calvinmclean/babyapi>

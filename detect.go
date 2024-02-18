@@ -26,6 +26,8 @@ var (
 )
 
 func Detect(f any) (FuncType, error) {
+	// https://medium.com/kokster/go-reflection-creating-objects-from-types-part-ii-composite-types-69a0e8134f20
+	// https://github.com/golang/go/issues/50741
 	t := reflect.TypeOf(f)
 	if t.Kind() != reflect.Func {
 		return 0, errors.New("not a function")

@@ -21,12 +21,13 @@ type panicHandler struct {
 // runs lastResort [http.Handler]. If lastResort is <nil>
 // the service will panic again and shutdown.
 func New(lastResort http.Handler) htadaptor.Middleware {
+	if lastResort == nil {
+		panic("cannot use a <nil> last resort handler")
+	}
+
 	return func(next http.Handler) http.Handler {
 		if next == nil {
 			panic("cannot use a <nil> next handler")
-		}
-		if lastResort == nil {
-			panic("cannot use a <nil> last resort handler")
 		}
 
 		return &panicHandler{

@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+// TODO: custom stack printing: https://github.com/upspin/upspin/blob/master/errors/debug.go#L74. `_, file, line, ok := runtime.Caller(1)`
+
 type Logger interface {
 	LogRequest(*http.Request, error)
 }

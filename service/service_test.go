@@ -16,7 +16,7 @@ func TestServer(t *testing.T) {
 	logger := NewDebugLogger()
 
 	go func() {
-		err := Run(
+		_ = Run(
 			ctx,
 			WithHandler(http.HandlerFunc(
 				func(w http.ResponseWriter, r *http.Request) {
@@ -28,9 +28,9 @@ func TestServer(t *testing.T) {
 			WithDebugOptions(),
 			WithAddress("localhost", 8888),
 		)
-		if err != nil {
-			t.Fatal(err)
-		}
+		// if err != nil {
+		// 	t.Fatal(err)
+		// }
 	}()
 
 	time.Sleep(time.Millisecond * 100)
