@@ -66,5 +66,7 @@ func (c *cookieDecoder) Decode(
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// log.Printf("decoding %x %x", &c.current, &c.previous)
 	return securecookie.DecodeMulti(c.name, cookie.Value, data, c.current, c.previous)
 }

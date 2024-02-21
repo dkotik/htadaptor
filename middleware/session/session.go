@@ -25,8 +25,8 @@ type Session interface {
 	TraceID() string
 	Get(string) any
 	Set(string, any)
-	Commit() error
-	Rotate() error
+	// Close() error
+	Reset()
 }
 
 func New(withOptions ...Option) (func(http.Handler) http.Handler, error) {
@@ -37,6 +37,7 @@ func New(withOptions ...Option) (func(http.Handler) http.Handler, error) {
 		WithDefaultName(),
 		WithDefaultExpiry(),
 		WithDefaultRotationContext(),
+		WithDefaultFactory(),
 	) {
 		if err = option(options); err != nil {
 			return nil, fmt.Errorf("cannot create session middleware: %w", err)
@@ -80,16 +81,19 @@ func New(withOptions ...Option) (func(http.Handler) http.Handler, error) {
 				// TODO: update KV store with fresh codec.
 
 				dec.mu.Lock()
+				// current := dec.current
 				dec.previous = dec.current
 				dec.current = fresh
 				dec.mu.Unlock()
 
 				enc.mu.Lock()
-				dec.current = fresh
+				enc.current = fresh
 				enc.mu.Unlock()
+				// log.Printf("---------- rotated %x %x", &fresh, &dec.current)
 			}
 		}
 	}(options.RotationContext, enc, dec, t.C)
+	factory := options.Factory
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -99,6 +103,7 @@ func New(withOptions ...Option) (func(http.Handler) http.Handler, error) {
 						Context: r.Context(),
 						encoder: enc,
 						decoder: dec,
+						factory: factory,
 
 						mu: &sync.Mutex{},
 						w:  w,

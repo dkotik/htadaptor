@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 )
@@ -10,39 +11,62 @@ type contextKeyType struct{}
 
 var contextKey = contextKeyType{}
 
-func Lock(ctx context.Context) (s Session, unlock func()) {
+func Read(ctx context.Context, view func(Session) error) (err error) {
 	c, ok := ctx.Value(contextKey).(*sessionContext)
 	if !ok {
-		return nil, nil
+		return errors.New("no session context")
 	}
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.values == nil {
-		// c.id = base32RawStdEncoding.EncodeToString(
-		// 	securecookie.GenerateRandomKey(32))
-		// var data any
 		_ = c.decoder.Decode(&c.values, c.w, c.r)
-		// TODO deal with error?
-		// if err != nil {
-		// 	fmt.Println("decoding failure:", err.Error())
-		// }
 		if c.values == nil {
-			c.values = map[string]any{
-				"id": FastRandom(32),
+			c.values = c.factory()
+			if err = view(c); err != nil {
+				return err
 			}
-			return c, func() {
-				_ = c.encoder.Encode(c.w, c.r, c.values)
-				// TODO deal with error?
-				c.mu.Unlock()
-			}
+			return c.encoder.Encode(c.w, c.r, c.values)
 		}
 	}
-	return c, c.mu.Unlock
+	return view(c)
+}
+
+func Write(ctx context.Context, update func(Session) error) (err error) {
+	c, ok := ctx.Value(contextKey).(*sessionContext)
+	if !ok {
+		return errors.New("no session context")
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.values == nil {
+		err = c.decoder.Decode(&c.values, c.w, c.r)
+		if err != nil && !errors.Is(http.ErrNoCookie, err) {
+			decodingError, ok := err.(interface {
+				IsDecode() bool
+			})
+			// var decodingError securecookie.Error
+			// var decodingError securecookie.MultiError
+			// if !errors.As(decodingError, err) || !decodingError.IsDecode() {
+			if !ok || !decodingError.IsDecode() {
+				// panic(decodingError.IsDecode())
+				return err
+			}
+		}
+		if c.values == nil {
+			c.values = c.factory()
+		}
+	}
+	if err = update(c); err != nil {
+		return err
+	}
+	return c.encoder.Encode(c.w, c.r, c.values)
 }
 
 type sessionContext struct {
 	context.Context
 	encoder Encoder
 	decoder Decoder
+	factory Factory
 
 	mu     *sync.Mutex
 	w      http.ResponseWriter
@@ -76,19 +100,20 @@ func (c *sessionContext) Get(key string) any {
 }
 
 func (c *sessionContext) Set(key string, value any) {
-	if key == "" || key == "id" {
-		// TODO: remove panic.
-		panic("invalid session data key: no empty of \"id\" keys")
-	}
 	c.values[key] = value
 }
 
-func (c *sessionContext) Commit() error {
-	return c.encoder.Encode(c.w, c.r, c.values)
-}
+// func (c *sessionContext) Close() error {
+// 	defer c.mu.Unlock()
+// 	if !c.modified {
+// 		return nil
+// 	}
+// 	// panic(c.values)
+// 	return
+// }
 
-func (c *sessionContext) Rotate() error {
-	return nil
+func (c *sessionContext) Reset() {
+	c.values = c.factory()
 }
 
 func (c *sessionContext) Value(key any) any {
