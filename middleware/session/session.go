@@ -13,7 +13,7 @@ import (
 )
 
 type Encoder interface {
-	Encode(http.ResponseWriter, *http.Request, any) error
+	Encode(http.ResponseWriter, *http.Request, any, time.Time) error
 }
 
 type Decoder interface {
@@ -23,9 +23,12 @@ type Decoder interface {
 type Session interface {
 	ID() string
 	TraceID() string
+	Address() string
+	Role() string
+	Expires() time.Time
+	IsExpired() bool
 	Get(string) any
 	Set(string, any)
-	// Close() error
 	Reset()
 }
 
@@ -50,9 +53,8 @@ func New(withOptions ...Option) (func(http.Handler) http.Handler, error) {
 	codec := newCodec()
 
 	enc := &cookieEncoder{
-		name:   options.Name,
-		path:   "/",
-		maxAge: int(options.Expiry.Seconds()),
+		name: options.Name,
+		path: "/",
 
 		mu:      &sync.Mutex{},
 		current: codec,

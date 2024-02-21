@@ -106,7 +106,8 @@ func WithDefaultFactory() Option {
 		}
 		o.Factory = func() map[string]any {
 			return map[string]any{
-				"id": FastRandom(32),
+				"id":         FastRandom(32),
+				expiresField: time.Now().Add(o.Expiry).Unix(),
 			}
 		}
 		return nil

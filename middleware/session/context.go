@@ -5,11 +5,17 @@ import (
 	"errors"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type contextKeyType struct{}
 
 var contextKey = contextKeyType{}
+
+const (
+	expiresField = "expires"
+	roleField    = "role"
+)
 
 func Read(ctx context.Context, view func(Session) error) (err error) {
 	c, ok := ctx.Value(contextKey).(*sessionContext)
@@ -19,13 +25,15 @@ func Read(ctx context.Context, view func(Session) error) (err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.values == nil {
-		_ = c.decoder.Decode(&c.values, c.w, c.r)
-		if c.values == nil {
+		if err = c.decoder.Decode(&c.values, c.w, c.r); err != nil {
+			return err
+		}
+		if c.values == nil || c.IsExpired() {
 			c.values = c.factory()
 			if err = view(c); err != nil {
 				return err
 			}
-			return c.encoder.Encode(c.w, c.r, c.values)
+			return c.encoder.Encode(c.w, c.r, c.values, c.Expires())
 		}
 	}
 	return view(c)
@@ -38,28 +46,19 @@ func Write(ctx context.Context, update func(Session) error) (err error) {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	if c.values == nil {
-		err = c.decoder.Decode(&c.values, c.w, c.r)
-		if err != nil && !errors.Is(http.ErrNoCookie, err) {
-			decodingError, ok := err.(interface {
-				IsDecode() bool
-			})
-			// var decodingError securecookie.Error
-			// var decodingError securecookie.MultiError
-			// if !errors.As(decodingError, err) || !decodingError.IsDecode() {
-			if !ok || !decodingError.IsDecode() {
-				// panic(decodingError.IsDecode())
-				return err
-			}
+		if err = c.decoder.Decode(&c.values, c.w, c.r); err != nil {
+			return err
 		}
-		if c.values == nil {
+		if c.values == nil || c.IsExpired() {
 			c.values = c.factory()
 		}
 	}
 	if err = update(c); err != nil {
 		return err
 	}
-	return c.encoder.Encode(c.w, c.r, c.values)
+	return c.encoder.Encode(c.w, c.r, c.values, c.Expires())
 }
 
 type sessionContext struct {
@@ -91,6 +90,25 @@ func (c *sessionContext) TraceID() string {
 	return c.traceID
 }
 
+func (c *sessionContext) Role() (s string) {
+	s, _ = c.values[roleField].(string)
+	return s
+}
+
+func (c *sessionContext) Expires() (t time.Time) {
+	t, _ = c.values[expiresField].(time.Time)
+	return t
+}
+
+func (c *sessionContext) IsExpired() bool {
+	expires, ok := c.values[expiresField].(int64)
+	return !ok || expires <= time.Now().Unix()
+}
+
+func (c *sessionContext) Address() string {
+	return c.r.RemoteAddr
+}
+
 func (c *sessionContext) Get(key string) any {
 	value, ok := c.values[key]
 	if !ok {
@@ -102,15 +120,6 @@ func (c *sessionContext) Get(key string) any {
 func (c *sessionContext) Set(key string, value any) {
 	c.values[key] = value
 }
-
-// func (c *sessionContext) Close() error {
-// 	defer c.mu.Unlock()
-// 	if !c.modified {
-// 		return nil
-// 	}
-// 	// panic(c.values)
-// 	return
-// }
 
 func (c *sessionContext) Reset() {
 	c.values = c.factory()

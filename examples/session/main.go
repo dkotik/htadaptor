@@ -6,8 +6,10 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/dkotik/htadaptor/middleware/session"
@@ -26,6 +28,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	logger := slog.New(session.NewSlogHandler(
+		slog.NewTextHandler(os.Stderr, nil),
+	))
+
 	handler := sessionMiddleware(http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			var previous int64
@@ -43,6 +50,12 @@ func main() {
 			}
 
 			fmt.Fprintf(w, "previous: %d; current: %d; id: %s", previous, current, id)
+			logger.InfoContext(
+				r.Context(), // important for value injection
+				"demonstrating log context injection",
+				slog.Int64("previous", previous),
+				slog.Int64("current", current),
+			)
 		},
 	))
 
