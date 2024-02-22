@@ -12,6 +12,8 @@ type options struct {
 	Name            string
 	Expiry          time.Duration
 	RotationContext context.Context
+	Tokenizer       Tokenizer
+	CookieCodec     CookieCodec
 	Factory         Factory
 }
 
@@ -86,6 +88,53 @@ func WithDefaultRotationContext() Option {
 	}
 }
 
+func WithTokenizer(t Tokenizer) Option {
+	return func(o *options) error {
+		if t == nil {
+			return errors.New("cannot use <nil> tokenizer")
+		}
+		if o.Tokenizer != nil {
+			return errors.New("tokenizer is already set")
+		}
+		o.Tokenizer = t
+		return nil
+	}
+}
+
+func WithDefaultTokenizer() Option {
+	return func(o *options) error {
+		if o.Tokenizer != nil {
+			return nil
+		}
+		// o.Tokenizer = NewGorillaSecureCookieTokenizer("session")
+		o.Tokenizer = NewTokenizer()
+		return nil
+	}
+}
+
+func WithCookieCodec(c CookieCodec) Option {
+	return func(o *options) error {
+		if c == nil {
+			return errors.New("cannot use empty cookie codec")
+		}
+		if o.CookieCodec != nil {
+			return errors.New("cookie codec is already set")
+		}
+		o.CookieCodec = c
+		return nil
+	}
+}
+
+func WithDefaultCookieCodec() Option {
+	return func(o *options) error {
+		if o.CookieCodec != nil {
+			return nil
+		}
+		o.CookieCodec = NewStrictCookieCodec("session", "/")
+		return nil
+	}
+}
+
 func WithFactory(f Factory) Option {
 	return func(o *options) error {
 		if f == nil {
@@ -106,7 +155,7 @@ func WithDefaultFactory() Option {
 		}
 		o.Factory = func() map[string]any {
 			return map[string]any{
-				"id":         FastRandom(32),
+				"id":         string(FastRandom(32)),
 				expiresField: time.Now().Add(o.Expiry).Unix(),
 			}
 		}

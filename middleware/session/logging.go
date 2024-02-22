@@ -39,6 +39,10 @@ func (h *SlogHandler) Handle(ctx context.Context, r slog.Record) error {
 				Value: slog.StringValue(s.TraceID()),
 			},
 			slog.Attr{
+				Key:   "user_id",
+				Value: slog.StringValue(s.UserID()),
+			},
+			slog.Attr{
 				Key:   "ip_address",
 				Value: slog.StringValue(s.Address()),
 			},

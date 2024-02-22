@@ -18,7 +18,7 @@ var src = rand.NewSource(time.Now().UnixNano())
 //
 // - https://github.com/kpbird/golang_random_string/blob/master/main.go
 // - https://kpbird.medium.com/golang-generate-fixed-size-random-string-dd6dbd5e63c0
-func FastRandom(n int) string {
+func FastRandom(n int) []byte {
 	b := make([]byte, n)
 	l := len(letterBytes)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
@@ -34,5 +34,5 @@ func FastRandom(n int) string {
 		remain--
 	}
 
-	return string(b)
+	return b
 }

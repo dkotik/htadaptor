@@ -12,21 +12,17 @@ import (
 	"time"
 )
 
-type Encoder interface {
-	Encode(http.ResponseWriter, *http.Request, any, time.Time) error
-}
-
-type Decoder interface {
-	Decode(any, http.ResponseWriter, *http.Request) error
-}
-
 type Session interface {
 	ID() string
 	TraceID() string
 	Address() string
+	UserID() string
+	SetUserID(string)
 	Role() string
+	SetRole(string)
 	Expires() time.Time
 	IsExpired() bool
+	IsNew() bool
 	Get(string) any
 	Set(string, any)
 	Reset()
@@ -40,72 +36,39 @@ func New(withOptions ...Option) (func(http.Handler) http.Handler, error) {
 		WithDefaultName(),
 		WithDefaultExpiry(),
 		WithDefaultRotationContext(),
+		WithDefaultTokenizer(),
+		WithDefaultCookieCodec(),
 		WithDefaultFactory(),
 	) {
 		if err = option(options); err != nil {
 			return nil, fmt.Errorf("cannot create session middleware: %w", err)
 		}
 	}
-
-	// TODO: instead of codec use a KV key repository.
-	// TODO: add pooled decoder and encoder? no, the pool itself locks
-	// a mutex!
-	codec := newCodec()
-
-	enc := &cookieEncoder{
-		name: options.Name,
-		path: "/",
-
-		mu:      &sync.Mutex{},
-		current: codec,
-	}
-	dec := &cookieDecoder{
-		name: options.Name,
-
-		mu:       &sync.Mutex{},
-		current:  codec,
-		previous: codec,
-	}
-
-	t := time.NewTicker(options.Expiry * 9 / 10)
-	go func(
-		ctx context.Context,
-		enc *cookieEncoder,
-		dec *cookieDecoder,
-		rotate <-chan time.Time,
-	) {
+	tokenizer := options.Tokenizer
+	go func(ctx context.Context, tokenizer Tokenizer) {
+		t := time.NewTicker(options.Expiry * 9 / 10)
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case _ = <-rotate: // t := <-rotate to capture rotation time
-				fresh := newCodec()
-				// TODO: update KV store with fresh codec.
-
-				dec.mu.Lock()
-				// current := dec.current
-				dec.previous = dec.current
-				dec.current = fresh
-				dec.mu.Unlock()
-
-				enc.mu.Lock()
-				enc.current = fresh
-				enc.mu.Unlock()
+			case at := <-t.C:
+				_ = tokenizer.Rotate(at)
 				// log.Printf("---------- rotated %x %x", &fresh, &dec.current)
 			}
 		}
-	}(options.RotationContext, enc, dec, t.C)
+	}(options.RotationContext, tokenizer)
 	factory := options.Factory
+	cookieCodec := options.CookieCodec
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				next.ServeHTTP(w, r.WithContext(
 					&sessionContext{
-						Context: r.Context(),
-						encoder: enc,
-						decoder: dec,
-						factory: factory,
+						Context:   r.Context(),
+						cookies:   cookieCodec,
+						tokenizer: tokenizer,
+						factory:   factory,
 
 						mu: &sync.Mutex{},
 						w:  w,
