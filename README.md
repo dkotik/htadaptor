@@ -14,13 +14,15 @@ myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
   // your domain function call
   func(ctx context.Context, myInputStruct) (myOutputStruct, error) {
     // ... myInputStruct is passed in already validated
-    // ... the fields of myInputStruct will be filled in
-    //     with values from sources specified below
+    // ... the fields of myInputStruct will be populated with
+    // ... the contents of `request.Body` with overrides
+    //     from sources the below in their given order:
   },
   htadaptor.WithPathValues("slug"),           // (1) URL routing path
   htadaptor.WithQueryValues("search"),        // (2) URL query
   htadaptor.WithHeaderValues("accessToken"),  // (3) header
   htadaptor.WithCookieValues("sessionID"),    // (4) cookie
+  htadaptor.WithSessionValues("role"),        // (5) session
 ))
 ```
 
@@ -77,6 +79,7 @@ The order of extractors matters with the latter overriding the former. Request b
 - [Query](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithQueryValues)
 - [Header](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithHeaderValues)
 - [Cookie](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithCookieValues)
+- [Session](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithSessionValues)
 
 ## Credits
 

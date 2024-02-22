@@ -6,8 +6,6 @@ package jwt
 
 import (
 	"bytes"
-	"encoding/base64"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"sync"
@@ -38,17 +36,11 @@ func New(withOptions ...secrets.Option) *Tokenizer {
 }
 
 func (h *Tokenizer) Encode(data any) (string, error) {
-	b := &bytes.Buffer{}
-	if err := gob.NewEncoder(b).Encode(data); err != nil {
-		return "", err
+	claims := jwt.MapClaims(data.(map[string]any))
+	if exp, ok := claims["expires"].(int64); ok {
+		claims["exp"] = exp
 	}
-	encoded := make([]byte, base64.RawURLEncoding.EncodedLen(b.Len()))
-	base64.RawURLEncoding.Encode(encoded, b.Bytes())
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"data": string(encoded),
-		"exp":  data.(map[string]any)["expires"].(int64),
-	})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	h.wmu.Lock()
 	defer h.wmu.Unlock()
@@ -83,20 +75,7 @@ func (h *Tokenizer) Decode(data any, tokenString string) (err error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if encoded, ok := claims["data"].(string); ok {
-			dbuf := make([]byte, base64.RawURLEncoding.DecodedLen(len(encoded)))
-			if _, err = base64.RawURLEncoding.Decode(dbuf, []byte(encoded)); err != nil {
-				return err
-			}
-			return gob.NewDecoder(bytes.NewReader(dbuf)).Decode(data)
-		}
-		// *data.(map[string]any) = *claims
-		// if dest, ok := data.(map[string]any); ok {
-		// 	for k, v := range claims["data"].(map[string]any) {
-		// 		fmt.Printf("!!!!!!!!! %+v\n\n", v)
-		// 		dest[k] = v
-		// 	}
-		// }
+		*(data.(*map[string]any)) = claims
 	}
 	return nil
 }
