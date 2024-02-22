@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dkotik/htadaptor/middleware/session/secrets"
-	"github.com/dkotik/htadaptor/middleware/session/token/gorilla"
 )
 
 type Factory func() map[string]any
@@ -109,8 +108,8 @@ func WithDefaultTokenizer() Option {
 		if o.Tokenizer != nil {
 			return nil
 		}
-		o.Tokenizer = gorilla.New("session", secrets.WithExpiry(o.Expiry))
-		// o.Tokenizer = NewTokenizer(secrets.WithExpiry(o.Expiry))
+		// o.Tokenizer = gorilla.New("session", secrets.WithExpiry(o.Expiry))
+		o.Tokenizer = NewTokenizer(secrets.WithExpiry(o.Expiry))
 		return nil
 	}
 }

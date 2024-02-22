@@ -71,7 +71,7 @@ func NewRotation(callback Callback, withOptions ...Option) (err error) {
 	}
 	r.Snapshot.Present = r.Snapshot.Future
 	if err = r.Rotate(now); err != nil {
-		fmt.Errorf("failed initial key rotation: %w", err)
+		return fmt.Errorf("failed initial key rotation: %w", err)
 	}
 	go r.Loop(context.Background()) // TODO: add ctx option.
 	return nil
@@ -118,7 +118,7 @@ func (r *Rotation) Loop(ctx context.Context) {
 				step = time.After(
 					time.Unix(r.Snapshot.Present.Expires, 0).Add(-r.window).Sub(at),
 				)
-				r.logger.InfoContext(
+				r.logger.DebugContext(
 					ctx,
 					"performed secrets rotation",
 					slog.String("present_secret_id", string(r.Snapshot.Present.ID)),
@@ -130,6 +130,7 @@ func (r *Rotation) Loop(ctx context.Context) {
 }
 
 func (r *Rotation) Next(expires int64) (s *Secret, err error) {
+	// TODO: check for ID or entropy collision!
 	s = &Secret{
 		ID:      NewID(r.idSize),
 		Entropy: make([]byte, r.entropySize),

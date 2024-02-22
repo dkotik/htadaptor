@@ -24,7 +24,7 @@ func TestTimingModulator(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
-	if took := time.Now().Sub(from); took < time.Second/2 {
-		t.Fatal("request executed faster than one second:", took)
+	if took := time.Now().Sub(from); took < time.Second/2+time.Millisecond*50 {
+		t.Fatal("request executed faster than half second:", took)
 	}
 }

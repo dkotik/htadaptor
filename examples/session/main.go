@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/dkotik/htadaptor/middleware/session"
+	"github.com/dkotik/htadaptor/middleware/session/token/jwt"
 )
 
 func main() {
@@ -23,7 +24,12 @@ func main() {
 	defer l.Close()
 
 	sessionMiddleware, err := session.New(
-		session.WithExpiry(time.Second * 5),
+		session.WithExpiry(time.Second*5),
+		// GorillaKit secure cookie is more tested than the default
+		// "github.com/dkotik/htadaptor/middleware/session/token/gorilla"
+		// session.WithTokenizer(gorilla.New("test")),
+		// "github.com/dkotik/htadaptor/middleware/session/token/jwt"
+		session.WithTokenizer(jwt.New()),
 	)
 	if err != nil {
 		panic(err)
