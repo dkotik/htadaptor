@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/dkotik/htadaptor/middleware/session/secrets"
+	"github.com/dkotik/htadaptor/middleware/session/token/gorilla"
 )
 
 type Factory func() map[string]any
@@ -106,8 +109,8 @@ func WithDefaultTokenizer() Option {
 		if o.Tokenizer != nil {
 			return nil
 		}
-		// o.Tokenizer = NewGorillaSecureCookieTokenizer("session")
-		o.Tokenizer = NewTokenizer()
+		o.Tokenizer = gorilla.New("session", secrets.WithExpiry(o.Expiry))
+		// o.Tokenizer = NewTokenizer(secrets.WithExpiry(o.Expiry))
 		return nil
 	}
 }
@@ -155,7 +158,7 @@ func WithDefaultFactory() Option {
 		}
 		o.Factory = func() map[string]any {
 			return map[string]any{
-				"id":         string(FastRandom(32)),
+				"id":         string(secrets.NewID(32)),
 				expiresField: time.Now().Add(o.Expiry).Unix(),
 			}
 		}

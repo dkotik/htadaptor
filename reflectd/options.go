@@ -140,3 +140,14 @@ func WithPathValues(names ...string) Option {
 		return WithExtractors(ex)(o)
 	}
 }
+
+// WithSessionValues adds a [extract.SessionValueExtractor] to a [Decoder].
+func WithSessionValues(keys ...string) Option {
+	return func(o *options) error {
+		ex, err := extract.NewSessionValueExtractor(keys...)
+		if err != nil {
+			return fmt.Errorf("failed to initialize path value extractor: %w", err)
+		}
+		return WithExtractors(ex)(o)
+	}
+}

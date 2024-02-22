@@ -3,17 +3,14 @@ package session
 import (
 	"bytes"
 	"crypto/hmac"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/gob"
 	"encoding/hex"
-	"io"
 	"slices"
 	"sync"
-	"time"
 
-	"github.com/gorilla/securecookie"
+	"github.com/dkotik/htadaptor/middleware/session/secrets"
 )
 
 const (
@@ -25,93 +22,46 @@ const (
 type Tokenizer interface {
 	Encode(any) (string, error)
 	Decode(any, string) error
-	Rotate(time.Time) error
 }
 
-func NewGorillaSecureCookieTokenizer(name string) Tokenizer {
-	sc := securecookie.New(
-		securecookie.GenerateRandomKey(64),
-		securecookie.GenerateRandomKey(32),
-	)
-	return &gorillaTokenizer{
-		name: name,
-
-		wmu:   &sync.Mutex{},
-		write: sc,
-
-		rmu:      &sync.Mutex{},
-		current:  sc,
-		previous: sc,
-	}
-}
-
-type gorillaTokenizer struct {
-	name string
-
+type hmacTokenizer struct {
 	wmu   *sync.Mutex
-	write *securecookie.SecureCookie
+	write *secrets.Secret
 
-	rmu      *sync.Mutex
-	current  *securecookie.SecureCookie
-	previous *securecookie.SecureCookie
+	rmu     *sync.Mutex
+	present *secrets.Secret
+	past    *secrets.Secret
 }
 
-func (g *gorillaTokenizer) Encode(data any) (string, error) {
-	g.wmu.Lock()
-	defer g.wmu.Unlock()
-	return g.write.Encode(g.name, data)
-}
-
-func (g *gorillaTokenizer) Decode(data any, token string) (err error) {
-	g.rmu.Lock()
-	err = securecookie.DecodeMulti(g.name, token, data, g.current, g.previous)
-	g.rmu.Unlock()
-	if err == nil {
-		return nil
+func NewTokenizer(withOptions ...secrets.Option) Tokenizer {
+	t := &hmacTokenizer{
+		wmu: &sync.Mutex{},
+		rmu: &sync.Mutex{},
 	}
 
-	decodingError, ok := err.(interface {
-		IsDecode() bool
-	})
-	// var decodingError securecookie.Error
-	// var decodingError securecookie.MultiError
-	// if !errors.As(decodingError, err) || !decodingError.IsDecode() {
-	if ok && decodingError.IsDecode() {
-		// panic(decodingError.IsDecode())
-		return nil
+	if err := secrets.NewRotation(t.Rotate, withOptions...); err != nil {
+		panic(err) // TODO: beautify.
 	}
-	// log.Printf("decoding %x %x", &c.current, &c.previous)
-	return err
+	return t
 }
 
-func (g *gorillaTokenizer) Rotate(t time.Time) error {
-	fresh := securecookie.New(
-		securecookie.GenerateRandomKey(64),
-		securecookie.GenerateRandomKey(32),
-	)
-	// TODO: update KV store with fresh codec.
+func (h *hmacTokenizer) Encode(data any) (string, error) {
+	b := &bytes.Buffer{}
+	if err := gob.NewEncoder(b).Encode(data); err != nil {
+		return "", err
+	}
+	encoded := make([]byte, base64.RawURLEncoding.EncodedLen(b.Len()))
+	base64.RawURLEncoding.Encode(encoded, b.Bytes())
 
-	g.rmu.Lock()
-	g.previous = g.current
-	g.current = fresh
-	g.rmu.Unlock()
-
-	g.wmu.Lock()
-	g.write = fresh
-	g.wmu.Unlock()
-	return nil
-}
-
-type Key struct {
-	Label   []byte
-	Secret  []byte
-	Expires int64
+	h.wmu.Lock()
+	defer h.wmu.Unlock()
+	return string(Sign(h.write, encoded)), nil
 }
 
 // Validate return true if given bytes begin with hex-encoded
 // signature that matches HMAC sum of [Key.Label] followed
 // by the rest of the data.
-func (k *Key) Validate(b []byte) bool {
+func Validate(secret *secrets.Secret, b []byte) bool {
 	// if len(b) <= tokenTagSize {
 	// 	return false
 	// }
@@ -120,7 +70,7 @@ func (k *Key) Validate(b []byte) bool {
 	// 	return false
 	// }
 	// sha256 block size is 64, but signature length is 32 bytes
-	mac := hmac.New(sha256.New, k.Secret)
+	mac := hmac.New(sha256.New, secret.Entropy)
 	_, err := mac.Write(b[tokenSignatureSize:])
 	if err != nil {
 		return false
@@ -130,9 +80,9 @@ func (k *Key) Validate(b []byte) bool {
 	return hmac.Equal(b[:tokenSignatureSize], signature)
 }
 
-func (k *Key) Sign(b []byte) []byte {
-	mac := hmac.New(sha256.New, k.Secret)
-	_, err := mac.Write(k.Label)
+func Sign(secret *secrets.Secret, b []byte) []byte {
+	mac := hmac.New(sha256.New, secret.Entropy)
+	_, err := mac.Write(secret.ID)
 	if err != nil {
 		return nil
 	}
@@ -143,89 +93,33 @@ func (k *Key) Sign(b []byte) []byte {
 	signature := make([]byte, tokenSignatureSize) // 32 x 2 for hex
 	_ = hex.Encode(signature, mac.Sum(nil))       // H(key ∥ H(key ∥ message))
 	// panic(string(signature))
-	return slices.Concat(signature, k.Label, b)
-}
-
-func NewKey(d time.Duration) (k *Key, err error) {
-	k = &Key{
-		Label:   FastRandom(tokenLabelSize),
-		Secret:  make([]byte, tokenSignatureSize),
-		Expires: time.Now().Add(d).Unix(),
-	}
-	_, err = io.ReadAtLeast(rand.Reader, k.Secret[:], tokenSignatureSize)
-	if err != nil {
-		return nil, err
-	}
-	return k, nil
-}
-
-type hmacTokenizer struct {
-	wmu   *sync.Mutex
-	write *Key
-
-	rmu      *sync.Mutex
-	current  *Key
-	previous *Key
-}
-
-func NewTokenizer() Tokenizer {
-	key, err := NewKey(time.Second * 5) // TODO: fix.
-	if err != nil {
-		panic(err)
-	}
-	return &hmacTokenizer{
-		wmu:   &sync.Mutex{},
-		write: key,
-
-		rmu:      &sync.Mutex{},
-		current:  key,
-		previous: key,
-	}
-}
-
-func (h *hmacTokenizer) Encode(data any) (string, error) {
-	b := &bytes.Buffer{}
-	if err := gob.NewEncoder(b).Encode(data); err != nil {
-		return "", err
-	}
-	encoded := make([]byte, base64.URLEncoding.EncodedLen(b.Len()))
-	base64.URLEncoding.Encode(encoded, b.Bytes())
-
-	h.wmu.Lock()
-	defer h.wmu.Unlock()
-	return string(h.write.Sign(encoded)), nil
+	return slices.Concat(signature, secret.ID, b)
 }
 
 func (h *hmacTokenizer) Decode(data any, token string) (err error) {
 	b := []byte(token)
 	h.rmu.Lock()
-	if !h.current.Validate(b) && !h.previous.Validate(b) {
+	if !Validate(h.present, b) && !Validate(h.past, b) {
 		// TODO: // OPTIMIZE validation
 		return nil
 	}
 	h.rmu.Unlock()
 	b = b[tokenTagSize:] // chomp off tag
-	dbuf := make([]byte, base64.URLEncoding.DecodedLen(len(b)))
-	if _, err = base64.URLEncoding.Decode(dbuf, b); err != nil {
+	dbuf := make([]byte, base64.RawURLEncoding.DecodedLen(len(b)))
+	if _, err = base64.RawURLEncoding.Decode(dbuf, b); err != nil {
 		return err
 	}
 	return gob.NewDecoder(bytes.NewReader(dbuf)).Decode(data)
 }
 
-func (h *hmacTokenizer) Rotate(t time.Time) error {
-	fresh, err := NewKey(time.Second * 5) // TODO: update
-	if err != nil {
-		return err
-	}
-	// TODO: update KV store with fresh codec.
-
+func (h *hmacTokenizer) Rotate(present, past *secrets.Secret) error {
 	h.rmu.Lock()
-	h.previous = h.current
-	h.current = fresh
+	h.present = present
+	h.past = past
 	h.rmu.Unlock()
 
 	h.wmu.Lock()
-	h.write = fresh
+	h.write = present
 	h.wmu.Unlock()
 	return nil
 }

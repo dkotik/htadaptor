@@ -223,6 +223,13 @@ func WithPathValues(names ...string) Option {
 	}
 }
 
+func WithSessionValues(names ...string) Option {
+	return func(o *options) error {
+		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithSessionValues(names...))
+		return nil
+	}
+}
+
 func WithLogger(l Logger) Option {
 	return func(o *options) error {
 		if l == nil {

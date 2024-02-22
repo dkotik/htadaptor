@@ -5,7 +5,6 @@ with native key rotation support.
 package session
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -45,18 +44,18 @@ func New(withOptions ...Option) (func(http.Handler) http.Handler, error) {
 		}
 	}
 	tokenizer := options.Tokenizer
-	go func(ctx context.Context, tokenizer Tokenizer) {
-		t := time.NewTicker(options.Expiry * 9 / 10)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case at := <-t.C:
-				_ = tokenizer.Rotate(at)
-				// log.Printf("---------- rotated %x %x", &fresh, &dec.current)
-			}
-		}
-	}(options.RotationContext, tokenizer)
+	// go func(ctx context.Context, tokenizer Tokenizer) {
+	// 	t := time.NewTicker(options.Expiry * 9 / 10)
+	// 	for {
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			return
+	// 		case at := <-t.C:
+	// 			_ = tokenizer.Rotate(at)
+	// 			// log.Printf("---------- rotated %x %x", &fresh, &dec.current)
+	// 		}
+	// 	}
+	// }(options.RotationContext, tokenizer)
 	factory := options.Factory
 	cookieCodec := options.CookieCodec
 

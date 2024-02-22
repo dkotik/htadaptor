@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/dkotik/htadaptor/middleware/session/secrets"
 )
 
 type contextKeyType struct{}
@@ -103,7 +105,7 @@ func (c *sessionContext) ID() string {
 
 func (c *sessionContext) TraceID() string {
 	if c.traceID == "" {
-		c.traceID = string(FastRandom(8))
+		c.traceID = string(secrets.NewID(8))
 	}
 	return c.traceID
 }
