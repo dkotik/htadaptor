@@ -80,6 +80,10 @@ The order of extractors matters with the latter overriding the former. Request b
 - [Header](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithHeaderValues)
 - [Cookie](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithCookieValues)
 - [Session](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithSessionValues)
+- Request properties:
+    - `extract.NewHostExtractor`
+    - `extract.NewRemoteAddressExtractor`
+    - `extract.NewUserAgentExtractor`
 
 ## Credits
 
