@@ -85,6 +85,9 @@ func (c *sessionContext) readCookieToken() error {
 	if cookie == "" {
 		return nil
 	}
+	// defer func() {
+	// 	fmt.Printf("get: \n\n%+v\n\n", c.values)
+	// }()
 	return c.tokenizer.Decode(&c.values, cookie)
 }
 
@@ -129,13 +132,15 @@ func (c *sessionContext) SetUserID(id string) {
 }
 
 func (c *sessionContext) Expires() time.Time {
-	t, _ := c.values[expiresField].(int64)
-	return time.Unix(t, 0)
+	// type switch is really important
+	// JWT tokens for example use float64 for ext
+	return time.Unix(c.Int64("expires"), 0)
 }
 
 func (c *sessionContext) IsExpired() bool {
-	expires, ok := c.values[expiresField].(int64)
-	return !ok || expires <= time.Now().Unix()
+	// expires, ok := c.values[expiresField].(int64)
+	// return c.Expires().Before(time.Now()) // .Unix()
+	return c.Int64("expires") < time.Now().Unix()
 }
 
 func (c *sessionContext) IsNew() bool {

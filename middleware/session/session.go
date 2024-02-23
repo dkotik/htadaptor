@@ -23,6 +23,10 @@ type Session interface {
 	IsExpired() bool
 	IsNew() bool
 	Get(string) any
+	Int(string) int
+	Int64(string) int64
+	Float32(string) float32
+	Float64(string) float64
 	Set(string, any)
 	Reset()
 }

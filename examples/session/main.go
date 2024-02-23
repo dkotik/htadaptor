@@ -28,6 +28,8 @@ func main() {
 		// GorillaKit secure cookie is more tested than the default
 		// "github.com/dkotik/htadaptor/middleware/session/token/gorilla"
 		// session.WithTokenizer(gorilla.New("test")),
+
+		// Standard JWT is much more common for interop with other systems
 		// "github.com/dkotik/htadaptor/middleware/session/token/jwt"
 		session.WithTokenizer(jwt.New()),
 	)
@@ -41,12 +43,12 @@ func main() {
 
 	handler := sessionMiddleware(http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			var previous int64
-			current := time.Now().Unix()
+			var previous string
+			current := fmt.Sprintf("%d", time.Now().Unix())
 			var id string
 
 			err := session.Write(r.Context(), func(s session.Session) error {
-				previous, _ = s.Get("key").(int64)
+				previous, _ = s.Get("key").(string)
 				s.Set("key", current)
 				id = s.ID()
 				return nil
@@ -55,12 +57,12 @@ func main() {
 				panic(err)
 			}
 
-			fmt.Fprintf(w, "previous: %d; current: %d; id: %s", previous, current, id)
+			fmt.Fprintf(w, "previous: %s; current: %s; id: %s", previous, current, id)
 			logger.InfoContext(
 				r.Context(), // important for value injection
 				"demonstrating log context injection",
-				slog.Int64("previous", previous),
-				slog.Int64("current", current),
+				slog.String("previous", previous),
+				slog.String("current", current),
 			)
 		},
 	))

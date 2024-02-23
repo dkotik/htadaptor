@@ -33,8 +33,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/test/form", localizerContextMiddleware(htadaptor.Must(
 		feedback.New(feedback.Sender(
-			// in real application replace with adaptor to mail provider
 			func(ctx context.Context, r *feedback.Request) error {
+				// in real application replace with adaptor to mail provider
 				slog.Default().InfoContext(
 					ctx,
 					"received a feedback request",
@@ -54,7 +54,7 @@ func main() {
 	fmt.Printf(
 		`Listening at http://%[1]s/
 
-    Test URL Form Submission:
+    Test URL Form Submission with localization:
       curl --header "Accept-Language: ru-RU" -v "http://%[1]s/test/form?name=TestName&email=t@gmail.com&message=tryIt"
 `,
 		l.Addr(),

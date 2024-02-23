@@ -38,9 +38,9 @@ func New(withOptions ...secrets.Option) *Tokenizer {
 func (h *Tokenizer) Encode(data any) (string, error) {
 	claims := jwt.MapClaims(data.(map[string]any))
 	// panic(fmt.Sprintf("%+v", claims))
-	if exp, ok := claims["expires"].(int64); ok {
+	if exp, ok := claims["expires"]; ok { // do not type-cast
 		claims["exp"] = exp
-	} else if _, ok := claims["exp"].(int64); !ok {
+	} else if _, ok := claims["exp"]; !ok { // do not type-cast
 		return "", errors.New("token must include an `expires` or `exp` field")
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -74,7 +74,7 @@ func (h *Tokenizer) Decode(data any, tokenString string) (err error) {
 			}
 			return nil, fmt.Errorf("none of the keys matched key id: %s", id)
 		},
-		jwt.WithJSONNumber(),
+		// jwt.WithJSONNumber(), // bad
 		jwt.WithExpirationRequired(),
 		jwt.WithPaddingAllowed(),
 	)
@@ -85,6 +85,7 @@ func (h *Tokenizer) Decode(data any, tokenString string) (err error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		// panic(fmt.Sprintf("%+v", token.Claims))
 		// value := reflect.Indirect(reflect.ValueOf(data))
 		// value.Set(reflect.MakeMap(value.Type()))
 		//
@@ -96,16 +97,19 @@ func (h *Tokenizer) Decode(data any, tokenString string) (err error) {
 		//   return dec.err
 		// }
 
+		// gob.Register(json.Number("0"))
 		// b := &bytes.Buffer{}
 		// if err = gob.NewEncoder(b).Encode(claims); err != nil {
 		// 	return err
 		// }
-		// panic(string(b.Bytes()))
+		// // panic(string(b.Bytes()))
 		// if err = gob.NewDecoder(b).Decode(data); err != nil {
 		// 	return err
 		// }
-		// data = claims
+
 		*(data.(*map[string]any)) = claims
+		// data = claims
+		// fmt.Printf("\n\n%+v\n\n", data)
 		// fmt.Printf("\n\n%+v || %T\n\n", claims, claims["id"])
 		// result := make(map[string]any)
 		// for k, v := range claims {
