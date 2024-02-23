@@ -23,7 +23,7 @@ var voidErrorCases = []TestCaseJSON[errorResponse]{
 	{
 		Name:     "empty void request",
 		Request:  httptest.NewRequest(http.MethodGet, "/test/void", nil),
-		Response: &errorResponse{Error: "invalid request: UUID is empty"},
+		Response: &errorResponse{Error: "UUID is empty"},
 	},
 }
 

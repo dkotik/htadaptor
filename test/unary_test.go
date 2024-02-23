@@ -23,7 +23,7 @@ var unaryErrorCases = []TestCaseJSON[errorResponse]{
 	{
 		Name:     "empty unary request",
 		Request:  httptest.NewRequest(http.MethodGet, "/test/unary", nil),
-		Response: &errorResponse{Error: "invalid request: UUID is empty"},
+		Response: &errorResponse{Error: "UUID is empty"},
 	},
 }
 
