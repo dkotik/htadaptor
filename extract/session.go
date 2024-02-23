@@ -2,6 +2,7 @@ package extract
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -73,8 +74,12 @@ type singleSessionValue string
 
 func (e singleSessionValue) ExtractRequestValue(vs url.Values, r *http.Request) error {
 	desired := string(e)
-	if strValue, ok := session.Value(r.Context(), desired).(string); ok && len(strValue) > 0 {
-		vs[desired] = []string{strValue}
+	if value := session.Value(r.Context(), desired); value != nil {
+		if strValue, ok := value.(string); ok && len(strValue) > 0 {
+			vs[desired] = []string{strValue}
+		} else {
+			vs[desired] = []string{fmt.Sprintf("%s", value)}
+		}
 	} else {
 		delete(vs, desired) // important to prevent value ghosting
 	}
@@ -94,8 +99,12 @@ type multiSessionValue []string
 func (e multiSessionValue) ExtractRequestValue(vs url.Values, r *http.Request) error {
 	return session.Read(r.Context(), func(s session.Session) error {
 		for _, desired := range e {
-			if strValue, ok := s.Get(desired).(string); ok && len(strValue) > 0 {
-				vs[desired] = []string{strValue}
+			if value := s.Get(desired); value != nil {
+				if strValue, ok := value.(string); ok && len(strValue) > 0 {
+					vs[desired] = []string{strValue}
+				} else {
+					vs[desired] = []string{fmt.Sprintf("%s", value)}
+				}
 			} else {
 				delete(vs, desired) // important to prevent value ghosting
 			}
