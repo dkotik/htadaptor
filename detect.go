@@ -21,7 +21,7 @@ var (
 	contextType     = reflect.TypeOf((*context.Context)(nil)).Elem()
 	errorType       = reflect.TypeOf((*error)(nil)).Elem()
 	validatableType = reflect.TypeOf((*interface {
-		Validate() error
+		Validate(context.Context) error
 	})(nil)).Elem()
 )
 

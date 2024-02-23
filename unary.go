@@ -72,11 +72,13 @@ func (a *UnaryFuncAdaptor[T, V, O]) executeDomainCall(
 	if err = a.decoder.Decode(request, r); err != nil {
 		return NewDecodingError(err)
 	}
-	if err = request.Validate(); err != nil {
+
+	ctx := r.Context()
+	if err = request.Validate(ctx); err != nil {
 		return NewInvalidRequestError(err)
 	}
 
-	response, err := a.domainCall(r.Context(), request)
+	response, err := a.domainCall(ctx, request)
 	if err != nil {
 		return err
 	}

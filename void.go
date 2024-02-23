@@ -62,10 +62,12 @@ func (a *VoidFuncAdaptor[T, V]) executeDomainCall(
 	if err := a.decoder.Decode(request, r); err != nil {
 		return NewDecodingError(err)
 	}
-	if err = request.Validate(); err != nil {
+
+	ctx := r.Context()
+	if err = request.Validate(ctx); err != nil {
 		return NewInvalidRequestError(err)
 	}
-	if err = a.domainCall(r.Context(), request); err != nil {
+	if err = a.domainCall(ctx, request); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusNoContent)

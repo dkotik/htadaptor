@@ -10,6 +10,7 @@ Each input requires implementation of [Validatable] for safety. Validation error
 package htadaptor
 
 import (
+	"context"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -35,6 +36,16 @@ import (
 // 		}
 // 	}, nil
 // }
+
+// Validatable constrains a domain request. Validation errors are
+// wrapped as [InvalidRequestError] by the adapter. [context.Context]
+// is essential for passing locale information that can be
+// retrieved using [LanguageFromContext] inside the validation
+// method and other similar uses.
+type Validatable[T any] interface {
+	*T
+	Validate(context.Context) error
+}
 
 type Decoder interface {
 	Decode(any, *http.Request) error

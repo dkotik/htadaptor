@@ -5,6 +5,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -20,7 +21,7 @@ type testRequest struct {
 	SomeValue string
 }
 
-func (t *testRequest) Validate() error {
+func (t *testRequest) Validate(ctx context.Context) error {
 	if t.UUID == "" {
 		return errors.New("UUID is empty")
 	}

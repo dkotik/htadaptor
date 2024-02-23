@@ -18,7 +18,7 @@ type rawRequest struct {
 	Agent   string
 }
 
-func (r *rawRequest) Validate() error {
+func (r *rawRequest) Validate(ctx context.Context) error {
 	if len(r.Host) < 1 {
 		return errors.New("host is required")
 	}

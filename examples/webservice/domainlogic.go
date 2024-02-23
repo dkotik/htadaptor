@@ -14,7 +14,7 @@ type OrderRequest struct {
 	Quantity uint8
 }
 
-func (o *OrderRequest) Validate() error {
+func (o *OrderRequest) Validate(ctx context.Context) error {
 	if o.Item == "" {
 		return errors.New("cannot order an empty item")
 	}
