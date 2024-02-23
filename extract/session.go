@@ -15,9 +15,46 @@ var (
 	_ StringValueExtractor  = (multiSessionValue)(nil)
 )
 
+func IsSessionExtractor(extractor any) (ok bool) {
+	_, ok = extractor.(multiSessionValue)
+	if ok {
+		return true
+	}
+	_, ok = extractor.(singleSessionValue)
+	return ok
+}
+
+func AreSessionExtractorsLast(extractors ...RequestValueExtractor) bool {
+	seenSessionExtractor := false
+	for _, extractor := range extractors {
+		switch v := extractor.(type) {
+		case Sequence: // nest in
+			if AreSessionExtractorsLast(v...) {
+				seenSessionExtractor = true
+			} else {
+				return false
+			}
+		case multiSessionValue, singleSessionValue:
+			seenSessionExtractor = true
+		default:
+			if seenSessionExtractor {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // NewSessionValueExtractor is a [Extractor] extractor that pulls
 // out [session.Session] values by key name from an [http.Request]
 // context.
+//
+// To prevent session values from accidental insecure overrides
+// two constraints are enforced:
+//
+// 1. Session value extractors must be at the end of extractor lists.
+// 2. If session value is empty, any other values with the same name
+// are removed.
 func NewSessionValueExtractor(keys ...string) (Extractor, error) {
 	total := len(keys)
 	if total == 0 {
@@ -38,6 +75,8 @@ func (e singleSessionValue) ExtractRequestValue(vs url.Values, r *http.Request) 
 	desired := string(e)
 	if strValue, ok := session.Value(r.Context(), desired).(string); ok && len(strValue) > 0 {
 		vs[desired] = []string{strValue}
+	} else {
+		delete(vs, desired) // important to prevent value ghosting
 	}
 	return nil
 }
@@ -57,6 +96,8 @@ func (e multiSessionValue) ExtractRequestValue(vs url.Values, r *http.Request) e
 		for _, desired := range e {
 			if strValue, ok := s.Get(desired).(string); ok && len(strValue) > 0 {
 				vs[desired] = []string{strValue}
+			} else {
+				delete(vs, desired) // important to prevent value ghosting
 			}
 		}
 		return nil

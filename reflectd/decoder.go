@@ -5,6 +5,7 @@ package reflectd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -43,11 +44,15 @@ func NewDecoder(withOptions ...Option) (_ *Decoder, err error) {
 					return err
 				}
 			}
+			if !extract.AreSessionExtractorsLast(o.Extractors...) {
+				return errors.New("security failure: all session value extractors must be at the end of the list to prevent other kinds of extractors from overriding their trusted values even when nested")
+			}
 			return nil
 		},
 	)...)(o); err != nil {
 		return nil, fmt.Errorf("cannot initialize a decoder: %w", err)
 	}
+
 	return &Decoder{
 		// schema:      o.Schema,
 		readLimit:   o.ReadLimit,

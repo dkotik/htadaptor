@@ -81,6 +81,17 @@ func (f StringValueExtractorFunc) ExtractStringValue(r *http.Request) (string, e
 	return f(r)
 }
 
+type Sequence []RequestValueExtractor
+
+func (s Sequence) ExtractRequestValue(vs url.Values, r *http.Request) (err error) {
+	for _, extractor := range s {
+		if err = extractor.ExtractRequestValue(vs, r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Join unites several extractors into one.
 // Returns <nil> if no extractors are given.
 func Join(exs ...RequestValueExtractor) RequestValueExtractor {
@@ -90,16 +101,7 @@ func Join(exs ...RequestValueExtractor) RequestValueExtractor {
 	case 1:
 		return exs[0]
 	default:
-		return RequestValueExtractorFunc(
-			func(vs url.Values, r *http.Request) (err error) {
-				for _, extractor := range exs {
-					if err = extractor.ExtractRequestValue(vs, r); err != nil {
-						return err
-					}
-				}
-				return nil
-			},
-		)
+		return Sequence(exs)
 	}
 }
 
