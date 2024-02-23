@@ -16,7 +16,8 @@ import (
 )
 
 type testRequest struct {
-	UUID string
+	UUID      string
+	SomeValue string
 }
 
 func (t *testRequest) Validate() error {

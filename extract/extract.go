@@ -16,6 +16,11 @@ import (
 	"strings"
 )
 
+type Association struct {
+	RequestName string
+	SchemaName  string
+}
+
 // NoValueError indicates that none of the required values
 // from a list of possible value names were extracted.
 type NoValueError []string

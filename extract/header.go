@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"strings"
 )
 
 var (
-	_ RequestValueExtractor = (singleHeader)("")
-	_ StringValueExtractor  = (singleHeader)("")
+	_ RequestValueExtractor = (*singleHeader)(nil)
+	_ StringValueExtractor  = (*singleHeader)(nil)
 	_ RequestValueExtractor = (multiHeader)(nil)
 	_ StringValueExtractor  = (multiHeader)(nil)
 )
@@ -24,44 +25,49 @@ func NewHeaderValueExtractor(headerNames ...string) (Extractor, error) {
 	if err := uniqueNonEmptyValueNames(headerNames); err != nil {
 		return nil, err
 	}
-	if total == 1 {
-		return singleHeader(headerNames[0]), nil
+
+	r := strings.NewReplacer("-", "")
+	associations := make([]Association, total)
+	for i, h := range headerNames {
+		associations[i].RequestName = h
+		associations[i].SchemaName = r.Replace(h)
 	}
-	return multiHeader(headerNames), nil
+	if total == 1 {
+		return singleHeader(associations[0]), nil
+	}
+	return multiHeader(associations), nil
 }
 
-type singleHeader string
+type singleHeader Association
 
 func (e singleHeader) ExtractRequestValue(vs url.Values, r *http.Request) error {
-	desired := string(e)
 	valueSet := textproto.MIMEHeader(r.Header)
 	// found := r.Header.Values(desired)
-	found := valueSet.Values(desired)
+	found := valueSet.Values(e.RequestName)
 	if len(found) > 0 {
-		vs[desired] = found
+		vs[e.SchemaName] = found
 	}
 	return nil
 }
 
 func (e singleHeader) ExtractStringValue(r *http.Request) (string, error) {
-	desired := string(e)
 	valueSet := textproto.MIMEHeader(r.Header)
 	// found := r.Header.Values(desired)
-	found := valueSet.Values(desired)
+	found := valueSet.Values(e.RequestName)
 	if last := len(found); last > 0 {
 		return found[last-1], nil
 	}
-	return "", NoValueError{desired}
+	return "", NoValueError{e.RequestName}
 }
 
-type multiHeader []string
+type multiHeader []Association
 
 func (e multiHeader) ExtractRequestValue(vs url.Values, r *http.Request) error {
 	valueSet := textproto.MIMEHeader(r.Header)
 	for _, desired := range e {
-		found := valueSet.Values(desired)
+		found := valueSet.Values(desired.RequestName)
 		if len(found) > 0 {
-			vs[desired] = found
+			vs[desired.SchemaName] = found
 		}
 	}
 	return nil
@@ -70,10 +76,10 @@ func (e multiHeader) ExtractRequestValue(vs url.Values, r *http.Request) error {
 func (e multiHeader) ExtractStringValue(r *http.Request) (string, error) {
 	valueSet := textproto.MIMEHeader(r.Header)
 	for _, desired := range e {
-		found := valueSet.Values(desired)
+		found := valueSet.Values(desired.RequestName)
 		if last := len(found); last > 0 {
 			return found[last-1], nil
 		}
 	}
-	return "", NoValueError(e)
+	return "", NoValueError{e[0].RequestName} // TODO: change to work with [Association].
 }

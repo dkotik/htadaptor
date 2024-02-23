@@ -17,7 +17,7 @@ func TestEnsureSessionExtractorsAreLast(t *testing.T) {
 		{
 			Sequence: []RequestValueExtractor{
 				singleSessionValue("test"),
-				singleHeader("test"),
+				singleQuery("test"),
 				multiSessionValue([]string{"test"}),
 			},
 			Expected: false,
@@ -27,9 +27,9 @@ func TestEnsureSessionExtractorsAreLast(t *testing.T) {
 				singleCookie("test"),
 				Join(
 					singleSessionValue("test"),
-					singleHeader("test"),
+					singleQuery("test"),
 				),
-				singleHeader("test"),
+				singleQuery("test"),
 				multiSessionValue([]string{"test"}),
 			},
 			Expected: false,
