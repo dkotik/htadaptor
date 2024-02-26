@@ -4,18 +4,30 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 
 	"github.com/dkotik/htadaptor"
 )
 
-type FastFileSystemFile struct {
+type FastFile struct {
 	contentType string
 	contents    []byte
 }
 
-func (f *FastFileSystemFile) HandleError(
+func NewFastFileFromTemplate(t *template.Template, data any) (*FastFile, error) {
+	b := &bytes.Buffer{}
+	if err := t.Execute(b, data); err != nil {
+		return nil, err
+	}
+	return &FastFile{
+		contentType: http.DetectContentType(b.Bytes()),
+		contents:    b.Bytes(),
+	}, nil
+}
+
+func (f *FastFile) HandleError(
 	w http.ResponseWriter,
 	r *http.Request,
 	err error,
@@ -24,7 +36,7 @@ func (f *FastFileSystemFile) HandleError(
 	return nil
 }
 
-func (f *FastFileSystemFile) ServeHTTP(
+func (f *FastFile) ServeHTTP(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -33,7 +45,7 @@ func (f *FastFileSystemFile) ServeHTTP(
 }
 
 type fastFileSystem struct {
-	Index       map[string]*FastFileSystemFile
+	Index       map[string]*FastFile
 	Fallthrough http.Handler
 }
 
@@ -48,15 +60,15 @@ func (f *fastFileSystem) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewFastFileSystemFile serves a single file from memory without logging.
-func NewFastFileSystemFile(contents []byte) *FastFileSystemFile {
-	return &FastFileSystemFile{
+func NewFastFileSystemFile(contents []byte) *FastFile {
+	return &FastFile{
 		contentType: http.DetectContentType(contents),
 		contents:    contents,
 	}
 }
 
 type fastFileSystemOptions struct {
-	Index       map[string]*FastFileSystemFile
+	Index       map[string]*FastFile
 	Fallthrough http.Handler
 }
 
@@ -64,7 +76,7 @@ type FastFileSystemOption func(*fastFileSystemOptions) error
 
 func NewFastFileSystem(withOptions ...FastFileSystemOption) (_ http.Handler, err error) {
 	o := &fastFileSystemOptions{
-		Index: make(map[string]*FastFileSystemFile),
+		Index: make(map[string]*FastFile),
 	}
 	for _, option := range append(
 		withOptions,
@@ -103,7 +115,7 @@ func WithFastFileSystemFile(
 		}
 		b := make([]byte, len(contents))
 		copy(b, contents)
-		o.Index[path] = &FastFileSystemFile{
+		o.Index[path] = &FastFile{
 			contentType: http.DetectContentType(contents),
 			contents:    b,
 		}
@@ -138,7 +150,7 @@ func WithDefaultFastFileSystemFallthrough() FastFileSystemOption {
 			return fmt.Errorf("unable to render error message: %w", err)
 		}
 		return WithFastFileSystemFallthrough(
-			&FastFileSystemFile{
+			&FastFile{
 				contentType: "text/html",
 				contents:    b.Bytes(),
 			},

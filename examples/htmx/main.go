@@ -24,6 +24,7 @@ func main() {
 	}
 	defer l.Close()
 
+	// see examples/form for an interactive HTMX component
 	greetingTemplate, err := template.New("greeting").Parse(`
     <h1>Hello {{ .Name }}!</h1>
     <p>Enjoy this HTMX component!</p>

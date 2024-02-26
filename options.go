@@ -129,8 +129,9 @@ func WithDefaultErrorHandler() Option {
 			return WithErrorHandler(defaultErrorHandlerJSON)(o)
 		case "text/html":
 			defaultErrorHandlerHTMLSetup.Do(func() {
-				defaultErrorHandlerHTML = NewErrorHandler(
-					NewTemplateEncoder(DefaultErrorTemplate()))
+				defaultErrorHandlerHTML = NewErrorHandlerFromTemplate(DefaultErrorTemplate())
+				// NewErrorHandler(
+				// 	NewTemplateEncoder(DefaultErrorTemplate()))
 			})
 			return WithErrorHandler(defaultErrorHandlerHTML)(o)
 		default:

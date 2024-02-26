@@ -1,4 +1,3 @@
-// TODO: move this into root package.
 package staticfs
 
 import (

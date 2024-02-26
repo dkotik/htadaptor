@@ -53,8 +53,17 @@ type Request struct {
 }
 
 func (r *Request) Validate(ctx context.Context) error {
+	l := htadaptor.LocalizerFromContext(ctx)
+	if l == nil {
+		return errors.New("there is no localizer in context")
+	}
+	// separating localized validation, because HTMX handler may
+	// call it directly
+	return r.ValidateWithLocale(l)
+}
+
+func (r *Request) ValidateWithLocale(l *i18n.Localizer) error {
 	if len(r.Name) < 4 {
-		l := htadaptor.LocalizerFromContext(ctx)
 		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: MsgRequired,
 			TemplateData: map[string]any{
@@ -65,7 +74,6 @@ func (r *Request) Validate(ctx context.Context) error {
 		}))
 	}
 	if len(r.Email) < 4 {
-		l := htadaptor.LocalizerFromContext(ctx)
 		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: MsgRequired,
 			TemplateData: map[string]any{
@@ -76,13 +84,11 @@ func (r *Request) Validate(ctx context.Context) error {
 		}))
 	}
 	if !reValidEmail.MatchString(r.Email) {
-		l := htadaptor.LocalizerFromContext(ctx)
 		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: MsgEmailError,
 		}))
 	}
 	if len(r.Message) < 4 {
-		l := htadaptor.LocalizerFromContext(ctx)
 		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
 			MessageID: MsgRequired,
 			TemplateData: map[string]any{

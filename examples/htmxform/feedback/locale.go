@@ -12,6 +12,7 @@ const (
 	MsgEmailError = "emailError"
 	MsgMessage    = "message"
 	MsgRequired   = "required"
+	MsgSend       = "send"
 	MsgSent       = "sent"
 	MsgError      = "error"
 )
@@ -24,6 +25,7 @@ func LoadEnglish(b *i18n.Bundle) error {
 		{ID: MsgEmailError, Other: "Invalid electronic mail address."},
 		{ID: MsgMessage, Other: "Message"},
 		{ID: MsgRequired, Other: "Field \"{{.Field}}\" is required."},
+		{ID: MsgSend, Other: "Send"},
 		{ID: MsgSent, Other: "Thank you! We will follow up with you soon."},
 		{ID: MsgError, Other: "Cannot accept this message: {{.Error}}."},
 	}...)
@@ -37,6 +39,7 @@ func LoadRussian(b *i18n.Bundle) error {
 		{ID: MsgEmailError, Other: "Ложный адрес электронной почты."},
 		{ID: MsgMessage, Other: "Сообщение"},
 		{ID: MsgRequired, Other: "Поле \"{{.Field}}\" необходимо."},
+		{ID: MsgSend, Other: "Send"},
 		{ID: MsgSent, Other: "Спасибо! Мы вскоре с вами свяжемся."},
 		{ID: MsgError, Other: "Невозможно отправить: {{.Error}}."},
 	}...)

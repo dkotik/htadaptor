@@ -1,0 +1,46 @@
+{{ define `page` }}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ .Title }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  </head>
+  <body>
+    {{ template `form` . }}
+  </body>
+</html>
+{{ end }}
+
+{{ define `form` }}
+{{ if ne .Success ""}}
+  <h1>Success!</h1>
+  <p>{{ .Success }}</p>
+{{ else }}
+<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="{{ .FormTarget }}">
+  <fieldset style="white-space: pre;">
+    <label for="name">{{ .NameLabel }} &nbsp;*</label>
+    <input type="text" name="name" value="{{ .Request.Name }}">
+
+    <label for="email">{{ .EmailLabel }} &nbsp;*</label>
+    <input type="text" name="email" value="{{ .Request.Email }}">
+
+    <label for="phone">{{ .PhoneLabel }}</label>
+    <input type="text" name="phone" value="{{ .Request.Phone }}">
+
+    <label for="message">{{ .MessageLabel }} &nbsp;*</label>
+    <textarea name="message" style="min-height: 6rem;">{{ .Request.Message }}</textarea>
+
+    {{- with .Error -}}
+      <p style="color: red;">{{.}}</p>
+    {{- end -}}
+
+    <button type="submit">{{ .SendLabel }}</button>
+  </fieldset>
+</form>
+{{ end }}
+{{ end }}
+
+{{ define `validationFailed` }}
+  <p>Validation failed: {{ .Error }}.</p>
+{{ end }}

@@ -11,7 +11,7 @@ var (
 	_ StringValueExtractor  = (agent)("")
 )
 
-// NewUserAgentExtractor pulls host name an [http.Request].
+// NewUserAgentExtractor pulls host name from an [http.Request].
 func NewUserAgentExtractor(fieldName string) (Extractor, error) {
 	if len(fieldName) < 1 {
 		return nil, errors.New("field name is required")
