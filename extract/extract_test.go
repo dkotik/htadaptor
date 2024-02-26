@@ -1,7 +1,4 @@
-/*
-Package test ensures that all htadaptor components work.
-*/
-package test
+package extract_test
 
 import (
 	"bytes"

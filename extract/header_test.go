@@ -1,4 +1,4 @@
-package test
+package extract_test
 
 import (
 	"context"
@@ -9,23 +9,24 @@ import (
 	"github.com/dkotik/htadaptor"
 )
 
-func TestCookieValue(t *testing.T) {
+func TestHeaderValue(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.Handle("/test/cookie", htadaptor.Must(
+	mux.Handle("/test/header", htadaptor.Must(
 		htadaptor.NewUnaryFuncAdaptor(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
+				if r.SomeValue != "test value" {
+					t.Fatal("request header with dash failed to decode in request")
+				}
 				return &testResponse{
 					Value: r.UUID,
 				}, nil
 			},
-			htadaptor.WithCookieValues("UUID"),
+			htadaptor.WithHeaderValues("UUID", "Some-Value"),
 		),
 	))
-	req := httptest.NewRequest(http.MethodGet, "/test/cookie", nil)
-	req.AddCookie(&http.Cookie{
-		Name:  "UUID",
-		Value: "testUUID",
-	})
+	req := httptest.NewRequest(http.MethodGet, "/test/header", nil)
+	req.Header.Add("UUID", "testUUID")
+	req.Header.Add("Some-Value", "test value")
 
 	validateHandler(t, mux, []*testCase{
 		{

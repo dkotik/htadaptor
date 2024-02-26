@@ -1,4 +1,4 @@
-package test
+package extract_test
 
 import (
 	"context"
@@ -16,6 +16,7 @@ type rawRequest struct {
 	Host    string
 	Address string
 	Agent   string
+	Method  string
 }
 
 func (r *rawRequest) Validate(ctx context.Context) error {
@@ -27,6 +28,9 @@ func (r *rawRequest) Validate(ctx context.Context) error {
 	}
 	if len(r.Agent) < 1 {
 		return errors.New("agent is required")
+	}
+	if len(r.Method) < 1 {
+		return errors.New("method is required")
 	}
 	return nil
 }
@@ -44,6 +48,10 @@ func TestRawRequestValues(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	methodExtractor, err := extract.NewMethodExtractor("method")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/test/raw", htadaptor.Must(
@@ -55,6 +63,7 @@ func TestRawRequestValues(t *testing.T) {
 				hostExtractor,
 				addresExtractor,
 				agentExtractor,
+				methodExtractor,
 			),
 		),
 	))

@@ -1,4 +1,4 @@
-package test
+package extract_test
 
 import (
 	"context"
