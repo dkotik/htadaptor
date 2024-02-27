@@ -28,14 +28,37 @@ func (r *formRequest) Validate(ctx context.Context) error {
 }
 
 type formResponse struct {
-	FormTarget       string
 	feedback.Request // embed request to inject form values into form
+	NameLabel        string
+	PhoneLabel       string
+	EmailLabel       string
+	MessageLabel     string
+	SendLabel        string
 	Success          string
 	Error            error
-	Localizer        *i18n.Localizer
 }
 
-func NewFormHandler(formTarget string, sender feedback.Sender) http.Handler {
+func newFormResponse(l *i18n.Localizer) formResponse {
+	return formResponse{
+		NameLabel: l.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: feedback.MsgName,
+		}),
+		PhoneLabel: l.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: feedback.MsgPhone,
+		}),
+		EmailLabel: l.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: feedback.MsgEmail,
+		}),
+		MessageLabel: l.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: feedback.MsgMessage,
+		}),
+		SendLabel: l.MustLocalize(&i18n.LocalizeConfig{
+			MessageID: feedback.MsgSend,
+		}),
+	}
+}
+
+func NewFormHandler(sender feedback.Sender) http.Handler {
 	if sender == nil {
 		panic("cannot use a <nil> sender")
 	}
@@ -44,15 +67,12 @@ func NewFormHandler(formTarget string, sender feedback.Sender) http.Handler {
 		func(ctx context.Context, r *formRequest) (*formResponse, error) {
 			// localizer is passed through context using
 			// acceptlanguage middleware all the same
-			l := htadaptor.LocalizerFromContext(ctx)
-			if l == nil {
+			l, ok := htadaptor.LocalizerFromContext(ctx)
+			if !ok {
 				return nil, errors.New("there is no localizer in context")
 			}
-			f := &formResponse{
-				FormTarget: formTarget,
-				Request:    r.Request,
-				Localizer:  l,
-			}
+			f := newFormResponse(l)
+			f.Request = r.Request
 
 			// validation fed into template instead of
 			// responding with 422 to display HTMX cleanly
@@ -65,38 +85,8 @@ func NewFormHandler(formTarget string, sender feedback.Sender) http.Handler {
 					MessageID: feedback.MsgSent,
 				})
 			}
-			return f, nil
+			return &f, nil
 		},
 		htadaptor.WithTemplate(templates.Lookup("form")),
 	))
-}
-
-func (r *formResponse) NameLabel() (string, error) {
-	return r.Localizer.Localize(&i18n.LocalizeConfig{
-		MessageID: feedback.MsgName,
-	})
-}
-
-func (r *formResponse) EmailLabel() (string, error) {
-	return r.Localizer.Localize(&i18n.LocalizeConfig{
-		MessageID: feedback.MsgEmail,
-	})
-}
-
-func (r *formResponse) PhoneLabel() (string, error) {
-	return r.Localizer.Localize(&i18n.LocalizeConfig{
-		MessageID: feedback.MsgPhone,
-	})
-}
-
-func (r *formResponse) MessageLabel() (string, error) {
-	return r.Localizer.Localize(&i18n.LocalizeConfig{
-		MessageID: feedback.MsgMessage,
-	})
-}
-
-func (r *formResponse) SendLabel() (string, error) {
-	return r.Localizer.Localize(&i18n.LocalizeConfig{
-		MessageID: feedback.MsgSend,
-	})
 }

@@ -13,6 +13,35 @@ import (
 	"net/http"
 )
 
+// Error extends the [error] interface to include HTTP status code.
+type Error interface {
+	error
+	HyperTextStatusCode() int
+}
+
+// AdaptorError signals the internal failure of an adaptor operation.
+type AdaptorError uint
+
+const (
+	ErrUnknown AdaptorError = iota
+	ErrNoStringValue
+)
+
+// Error satisfies [error] interface.
+func (e AdaptorError) Error() string {
+	switch e {
+	case ErrNoStringValue:
+		return "string value could not be recovered from decode"
+	default:
+		return "unknown adaptor error"
+	}
+}
+
+// HyperTextStatusCode satisfies [Error] interface.
+func (e AdaptorError) HyperTextStatusCode() int {
+	return http.StatusInternalServerError
+}
+
 var (
 	//go:embed error.html
 	defaultErrorTemplateSource []byte
@@ -76,11 +105,6 @@ func NewErrorHandlerFromTemplate(t *template.Template) ErrorHandlerFunc {
 			Message:    err.Error(),
 		}))
 	}
-}
-
-type Error interface {
-	error
-	HyperTextStatusCode() int
 }
 
 func GetHyperTextStatusCode(err error) int {

@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// NewVoidFuncAdaptor creates a new adaptor for a
+// function that takes a decoded request and returns nothing.
 func NewVoidFuncAdaptor[
 	T any,
 	V Validatable[T],
@@ -44,6 +46,8 @@ func NewVoidFuncAdaptor[
 	}, nil
 }
 
+// VoidStringFuncAdaptor calls a domain function with decoded
+// request without returning no response other than an error.
 type VoidFuncAdaptor[
 	T any,
 	V Validatable[T],

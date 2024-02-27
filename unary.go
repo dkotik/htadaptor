@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// NewUnaryFuncAdaptor creates a new adaptor for a
+// function that takes a validatable struct and returns a struct.
 func NewUnaryFuncAdaptor[
 	T any,
 	V Validatable[T],
@@ -51,6 +53,9 @@ func NewUnaryFuncAdaptor[
 	}, nil
 }
 
+// UnaryFuncAdaptor extracts a struct from request
+// and calls a domain function with it expecting
+// a struct response.
 type UnaryFuncAdaptor[
 	T any,
 	V Validatable[T],

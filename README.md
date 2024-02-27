@@ -7,7 +7,9 @@
 
 Package `htadaptor` provides convenient generic domain logic adaptors for HTTP handlers. It eliminates boiler plate code, increases security by enforcing read limits and struct validation, and reduces bugs by providing a more intuitive request data parsing API than the standard library.
 
-Why do you need this package? An HTTP request contains at least five various sources of input that your HTTP handlers may consider: URL path, URL query, headers, cookies, and the request body. Much of the code that you have to write [manually](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/) is wrestling those inputs into a struct. `htadaptor` can do all of it for you:
+## Why do you need this package?
+
+An HTTP request contains at least five various sources of input that your HTTP handlers may consider: URL path, URL query, headers, cookies, and the request body. Much of the code that you have to write [manually](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/) is wrestling those inputs into a struct. `htadaptor` can do all of it for you:
 
 ```go
 myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
@@ -16,7 +18,7 @@ myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
     // ... myInputStruct is passed in already validated
     // ... the fields of myInputStruct will be populated with
     // ... the contents of `request.Body` with overrides
-    //     from sources the below in their given order:
+    //     from sources below in their given order:
   },
   htadaptor.WithPathValues("slug"),           // (1) URL routing path
   htadaptor.WithQueryValues("search"),        // (2) URL query
@@ -26,7 +28,7 @@ myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
 ))
 ```
 
-Adaptors address all common function signatures of domain logic calls that operate on a request struct and return a response struct:
+The adaptors address common function signatures of domain logic calls that operate on a request struct and return a response struct with **contextual awareness** all the way through the call stack including the `slog.Logger`:
 
 <!-- TODO: add FS adaptor -->
 
@@ -80,7 +82,7 @@ The order of extractors matters with the latter overriding the former. Request b
 - [Header](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithHeaderValues)
 - [Cookie](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithCookieValues)
 - [Session](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithSessionValues)
-- Request properties:
+- Request properties can also be included into deserialization:
     - `extract.NewMethodExtractor`
     - `extract.NewHostExtractor`
     - `extract.NewRemoteAddressExtractor`

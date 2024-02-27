@@ -11,29 +11,24 @@ import (
 )
 
 type page struct {
+	Title        string
 	formResponse // for labels
 }
 
-func (p *page) Title() (string, error) {
-	return p.formResponse.Localizer.Localize(&i18n.LocalizeConfig{
-		MessageID: feedback.MsgSend,
-	})
-}
-
-func NewIndexHandler(formTarget string) http.Handler {
+func NewIndexHandler() http.Handler {
 	return htadaptor.Must(htadaptor.NewNullaryFuncAdaptor(
 		func(ctx context.Context) (*page, error) {
 			// localizer is passed through context using
 			// acceptlanguage middleware all the same
-			l := htadaptor.LocalizerFromContext(ctx)
-			if l == nil {
+			l, ok := htadaptor.LocalizerFromContext(ctx)
+			if !ok {
 				return nil, errors.New("there is no localizer in context")
 			}
 			return &page{
-				formResponse: formResponse{
-					FormTarget: formTarget,
-					Localizer:  l,
-				},
+				Title: l.MustLocalize(&i18n.LocalizeConfig{
+					MessageID: feedback.MsgSend,
+				}),
+				formResponse: newFormResponse(l),
 			}, nil
 		},
 		htadaptor.WithTemplate(templates.Lookup("page")),

@@ -7,7 +7,6 @@ package acceptlanguage
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/dkotik/htadaptor"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -15,9 +14,9 @@ import (
 )
 
 type localizer struct {
-	next                  http.Handler
-	bundle                *i18n.Bundle
-	globalAcceptLanguages string
+	next   http.Handler
+	bundle *i18n.Bundle
+	// globalAcceptLanguages string
 }
 
 func (l *localizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -27,23 +26,24 @@ func (l *localizer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			i18n.NewLocalizer(
 				l.bundle,
 				r.Header.Get("Accept-Language"),
-				l.globalAcceptLanguages, // inefficient, but cannot change API
+				// l.globalAcceptLanguages, // inefficient, but cannot change API
 			),
 		),
 	))
 }
 
-func New(b *i18n.Bundle, preferred ...language.Tag) htadaptor.Middleware {
-	tags := make([]string, len(preferred))
-	for i, tag := range preferred {
-		tags[i] = tag.String()
-	}
-	globalAcceptLanguages := strings.Join(tags, ";")
+func New(b *i18n.Bundle) htadaptor.Middleware {
+	// , preferred ...language.Tag
+	// tags := make([]string, len(preferred))
+	// for i, tag := range preferred {
+	// 	tags[i] = tag.String()
+	// }
+	// globalAcceptLanguages := strings.Join(tags, ";")
 	return func(next http.Handler) http.Handler {
 		return &localizer{
-			next:                  next,
-			bundle:                b,
-			globalAcceptLanguages: globalAcceptLanguages,
+			next:   next,
+			bundle: b,
+			// globalAcceptLanguages: globalAcceptLanguages,
 		}
 	}
 }

@@ -69,6 +69,7 @@ func TestRawRequestValues(t *testing.T) {
 	))
 	req := httptest.NewRequest(http.MethodGet, "/test/raw", nil)
 	req.Header.Set("User-Agent", "Testing User Agent")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
 	mux.ServeHTTP(w, req)

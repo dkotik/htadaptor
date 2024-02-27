@@ -92,6 +92,7 @@ func NewTemplateEncoder(t *template.Template) Encoder {
 	return &templateEncoder{t}
 }
 
+// Must panics if an [http.Handler] was created with an error.
 func Must(h http.Handler, err error) http.Handler {
 	if err != nil {
 		panic(err)

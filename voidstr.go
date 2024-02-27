@@ -9,6 +9,8 @@ import (
 	"github.com/dkotik/htadaptor/extract"
 )
 
+// NewVoidStringFuncAdaptor creates a new adaptor for a
+// function that takes a string and returns nothing.
 func NewVoidStringFuncAdaptor(
 	domainCall func(context.Context, string) error,
 	stringExtractor extract.StringValueExtractor,
@@ -42,6 +44,9 @@ func NewVoidStringFuncAdaptor(
 	}, nil
 }
 
+// VoidStringFuncAdaptor extracts a string value from request
+// and calls a domain function with it without expecting no response
+// other than an error value.
 type VoidStringFuncAdaptor struct {
 	domainCall      func(context.Context, string) error
 	stringExtractor extract.StringValueExtractor

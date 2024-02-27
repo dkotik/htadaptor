@@ -1,7 +1,4 @@
-/*
-Package test provides tooling and routines for building and running htadaptor tests.
-*/
-package test
+package htadaptor_test
 
 import (
 	"bytes"
@@ -16,16 +13,17 @@ import (
 	"testing"
 )
 
-type TestCaseJSON[T any] struct {
+type testCaseJSON[T any] struct {
 	Name     string
 	Request  *http.Request
 	Response *T
 }
 
-func TestJSON[T any](t *testing.T, h http.Handler, cases []TestCaseJSON[T]) {
+func runCasesJSON[T any](t *testing.T, h http.Handler, cases []testCaseJSON[T]) {
 	for _, tc := range cases {
 		t.Run(tc.Name,
 			func(t *testing.T) {
+				tc.Request.Header.Set("Content-Type", "application/json")
 				data, code, header := CaptureResponse(h, tc.Request)
 				if len(data) < 1 && tc.Response == nil {
 					if code != http.StatusNoContent {

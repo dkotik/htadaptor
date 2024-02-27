@@ -25,8 +25,13 @@ func New(send Sender, withOptions ...htadaptor.Option) (http.Handler, error) {
 	}
 	return htadaptor.NewUnaryFuncAdaptor(
 		func(ctx context.Context, r *Request) (p *Response, err error) {
+			l, ok := htadaptor.LocalizerFromContext(ctx)
+			if !ok {
+				return nil, errors.New("there is no localizer in context")
+			}
+
 			if err = send(ctx, r); err != nil {
-				return nil, fmt.Errorf(htadaptor.LocalizerFromContext(ctx).MustLocalize(&i18n.LocalizeConfig{
+				return nil, fmt.Errorf(l.MustLocalize(&i18n.LocalizeConfig{
 					MessageID: MsgError,
 					TemplateData: map[string]any{
 						"Error": "%w",
@@ -34,7 +39,7 @@ func New(send Sender, withOptions ...htadaptor.Option) (http.Handler, error) {
 				}), err)
 			}
 			return &Response{
-				Message: htadaptor.LocalizerFromContext(ctx).MustLocalize(
+				Message: l.MustLocalize(
 					&i18n.LocalizeConfig{
 						MessageID: MsgSent,
 					},
@@ -53,8 +58,8 @@ type Request struct {
 }
 
 func (r *Request) Validate(ctx context.Context) error {
-	l := htadaptor.LocalizerFromContext(ctx)
-	if l == nil {
+	l, ok := htadaptor.LocalizerFromContext(ctx)
+	if !ok {
 		return errors.New("there is no localizer in context")
 	}
 	// separating localized validation, because HTMX handler may

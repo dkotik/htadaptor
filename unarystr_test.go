@@ -1,4 +1,4 @@
-package test
+package htadaptor_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/dkotik/htadaptor/extract"
 )
 
-var unaryStringCases = []TestCaseJSON[testResponse]{
+var unaryStringCases = []testCaseJSON[testResponse]{
 	{
 		Name:     "simple unary string request",
 		Request:  httptest.NewRequest(http.MethodGet, "/test/unarystr", nil),
@@ -18,7 +18,7 @@ var unaryStringCases = []TestCaseJSON[testResponse]{
 	},
 }
 
-// var unaryStringErrorCases = []TestCaseJSON[errorResponse]{
+// var unaryStringErrorCases = []testCaseJSON[errorResponse]{
 // 	{
 // 		Name:     "empty unary string request",
 // 		Request:  httptest.NewRequest(http.MethodGet, "/test/unarystr", nil),
@@ -43,6 +43,6 @@ func TestUnaryStringRequest(t *testing.T) {
 		),
 	))
 
-	TestJSON(t, mux, unaryStringCases)
-	// TestJSON(t, mux, unaryStringErrorCases)
+	runCasesJSON(t, mux, unaryStringCases)
+	// runCasesJSON(t, mux, unaryStringErrorCases)
 }

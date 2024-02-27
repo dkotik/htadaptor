@@ -1,4 +1,4 @@
-package test
+package htadaptor_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/dkotik/htadaptor"
 )
 
-var unaryCases = []TestCaseJSON[testResponse]{
+var unaryCases = []testCaseJSON[testResponse]{
 	{
 		Name: "simple unary request",
 		Request: NewPostRequestJSON("/test/unary", &testRequest{
@@ -19,7 +19,7 @@ var unaryCases = []TestCaseJSON[testResponse]{
 	},
 }
 
-var unaryErrorCases = []TestCaseJSON[errorResponse]{
+var unaryErrorCases = []testCaseJSON[errorResponse]{
 	{
 		Name:     "empty unary request",
 		Request:  httptest.NewRequest(http.MethodGet, "/test/unary", nil),
@@ -39,6 +39,6 @@ func TestUnaryRequest(t *testing.T) {
 		),
 	))
 
-	TestJSON(t, mux, unaryCases)
-	TestJSON(t, mux, unaryErrorCases)
+	runCasesJSON(t, mux, unaryCases)
+	runCasesJSON(t, mux, unaryErrorCases)
 }

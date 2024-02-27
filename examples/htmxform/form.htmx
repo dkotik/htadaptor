@@ -17,7 +17,7 @@
   <h1>Success!</h1>
   <p>{{ .Success }}</p>
 {{ else }}
-<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="{{ .FormTarget }}">
+<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="">
   <fieldset style="white-space: pre;">
     <label for="name">{{ .NameLabel }} &nbsp;*</label>
     <input type="text" name="name" value="{{ .Request.Name }}">

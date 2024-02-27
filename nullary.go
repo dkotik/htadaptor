@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// NewNullaryFuncAdaptor creates a new adaptor for a
+// function that takes no input and returns a struct.
 func NewNullaryFuncAdaptor[O any](
 	domainCall func(context.Context) (O, error),
 	withOptions ...Option,
@@ -41,6 +43,8 @@ func NewNullaryFuncAdaptor[O any](
 	}, nil
 }
 
+// NullaryFuncAdaptor calls a domain function with no input
+// and returns a response struct.
 type NullaryFuncAdaptor[O any] struct {
 	domainCall   func(context.Context) (O, error)
 	encoder      Encoder

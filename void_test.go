@@ -1,4 +1,4 @@
-package test
+package htadaptor_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/dkotik/htadaptor"
 )
 
-var voidCases = []TestCaseJSON[testResponse]{
+var voidCases = []testCaseJSON[testResponse]{
 	{
 		Name: "simple void request",
 		Request: NewPostRequestJSON("/test/void", &testRequest{
@@ -19,7 +19,7 @@ var voidCases = []TestCaseJSON[testResponse]{
 	},
 }
 
-var voidErrorCases = []TestCaseJSON[errorResponse]{
+var voidErrorCases = []testCaseJSON[errorResponse]{
 	{
 		Name:     "empty void request",
 		Request:  httptest.NewRequest(http.MethodGet, "/test/void", nil),
@@ -37,6 +37,6 @@ func TestVoidRequest(t *testing.T) {
 		),
 	))
 
-	TestJSON(t, mux, voidCases)
-	TestJSON(t, mux, voidErrorCases)
+	runCasesJSON(t, mux, voidCases)
+	runCasesJSON(t, mux, voidErrorCases)
 }

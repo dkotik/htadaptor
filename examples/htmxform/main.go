@@ -26,11 +26,10 @@ func main() {
 	feedback.LoadEnglish(bundle)
 	feedback.LoadRussian(bundle)
 
-	formEndpoint := "/api/v1/feedback.htmx"
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/feedback.json", NewHandlerJSON(mailer))
-	mux.Handle("POST "+formEndpoint, NewFormHandler(formEndpoint, mailer))
-	mux.Handle("/", NewIndexHandler(formEndpoint))
+	mux.Handle("POST /{$}", NewFormHandler(mailer))
+	mux.Handle("/{$}", NewIndexHandler())
 
 	fmt.Printf(
 		`Listening at http://%[1]s/

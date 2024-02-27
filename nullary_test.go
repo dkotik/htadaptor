@@ -1,4 +1,4 @@
-package test
+package htadaptor_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/dkotik/htadaptor"
 )
 
-var nullaryCases = []TestCaseJSON[testResponse]{
+var nullaryCases = []testCaseJSON[testResponse]{
 	{
 		Name:     "simple nullary request",
 		Request:  httptest.NewRequest(http.MethodGet, "/test/nullary", nil),
@@ -29,5 +29,5 @@ func TestNullaryRequest(t *testing.T) {
 		),
 	))
 
-	TestJSON(t, mux, nullaryCases)
+	runCasesJSON(t, mux, nullaryCases)
 }

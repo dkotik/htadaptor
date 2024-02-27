@@ -47,6 +47,7 @@ func validateHandler(t *testing.T, h http.Handler, cases []*testCase) {
 
 func validateResponse(t *testing.T, h http.Handler, c *testCase) {
 	w := httptest.NewRecorder()
+	c.Request.Header.Set("Content-Type", "application/json")
 	h.ServeHTTP(w, c.Request)
 	res := w.Result()
 	defer res.Body.Close()

@@ -9,8 +9,8 @@ import (
 	"github.com/dkotik/htadaptor/extract"
 )
 
-var ErrNoStringValue = errors.New("empty value")
-
+// NewUnaryStringFuncAdaptor creates a new adaptor for a
+// function that takes a string and returns a struct.
 func NewUnaryStringFuncAdaptor[O any](
 	domainCall func(context.Context, string) (O, error),
 	stringExtractor extract.StringValueExtractor,
@@ -51,6 +51,9 @@ func NewUnaryStringFuncAdaptor[O any](
 	}, nil
 }
 
+// UnaryStringFuncAdaptor extracts a string value from request
+// and calls a domain function with it expecting
+// a struct response.
 type UnaryStringFuncAdaptor[O any] struct {
 	domainCall      func(context.Context, string) (O, error)
 	stringExtractor extract.StringValueExtractor

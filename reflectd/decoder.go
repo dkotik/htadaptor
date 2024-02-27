@@ -4,12 +4,9 @@ Package reflectd provides configurable HTTP form body to struct decoder that dep
 package reflectd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"mime"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 
@@ -27,7 +24,7 @@ type Decoder struct {
 	// schema      *schema.Decoder
 	readLimit   int64
 	memoryLimit int64
-	extractor   extract.RequestValueExtractor
+	extractors  []extract.RequestValueExtractor
 }
 
 func NewDecoder(withOptions ...Option) (_ *Decoder, err error) {
@@ -57,95 +54,46 @@ func NewDecoder(withOptions ...Option) (_ *Decoder, err error) {
 		// schema:      o.Schema,
 		readLimit:   o.ReadLimit,
 		memoryLimit: o.MemoryLimit,
-		extractor:   extract.Join(o.Extractors...),
+		extractors:  o.Extractors,
 	}, nil
 }
 
-func (d *Decoder) Decode(v any, r *http.Request) (err error) {
-	values := make(url.Values)
-	if d.extractor != nil {
-		if err = d.extractor.ExtractRequestValue(values, r); err != nil {
+func (d *Decoder) applyExtractors(values url.Values, r *http.Request) (err error) {
+	for _, extractor := range d.extractors {
+		if err = extractor.ExtractRequestValue(values, r); err != nil {
 			return err
 		}
 	}
+	return nil
+}
 
-	if r.Body == nil {
-		return structSchema.Decode(v, values) // body is empty
-	}
+func (d *Decoder) Decode(v any, r *http.Request) (err error) {
 	ct := r.Header.Get("Content-Type")
-	if ct == "" {
-		return structSchema.Decode(v, values) // unspecified content type
+	switch ct {
+	case "application/x-www-form-urlencoded":
+		return d.DecodeURLEncoded(v, r)
+	case "application/json":
+		return d.DecodeJSON(v, r)
 	}
+
 	ct, params, err := mime.ParseMediaType(ct)
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
-	lr := io.LimitReader(r.Body, d.readLimit)
-
 	switch ct {
-	case "application/x-www-form-urlencoded":
-		b, err := io.ReadAll(r.Body)
-		if err != nil {
-			return err
-		}
-		more, err := url.ParseQuery(string(b))
-		if err != nil {
-			return err
-		}
-		mergeURLValues(values, more)
-		return structSchema.Decode(v, values)
-	case "multipart/form-data":
-		fallthrough
-	case "multipart/mixed":
+	case "multipart/form-data", "multipart/mixed":
 		boundary, ok := params[`boundary`]
 		if !ok {
 			return http.ErrMissingBoundary
 		}
-		// TODO: use mime.Form.Files to inject files
-		// TODO: mime.Form has Clear method that removes temp files?
-		// TODO: mime.Form could be thrown into a GC channel for
-		// batch processing.
-		// TODO: or can just start a context-waiting goRoutine.
-		more, err := ParseMultiPartBody(lr, boundary, d.memoryLimit)
-		if err != nil {
-			return err
-		}
-		mergeURLValues(values, more)
-		return structSchema.Decode(v, values)
-	case "application/json":
-		if len(values) > 0 {
-			if err = structSchema.Decode(v, values); err != nil {
-				return err
-			}
-		}
-		return json.NewDecoder(lr).Decode(&v)
+		return d.DecodeMultiPart(v, r, boundary)
 	default:
 		return fmt.Errorf("content type %q is not supported", ct)
 	}
 }
 
-func ParseMultiPartBody(r io.Reader, boundary string, memoryLimit int64) (url.Values, error) {
-	form, err := multipart.NewReader(r, boundary).ReadForm(memoryLimit)
-	if err != nil {
-		return nil, err
-	}
-	values := make(url.Values)
-	for k, v := range form.Value {
-		values[k] = append(values[k], v...)
-	}
-	// TODO: clean up form when context expires.
-	// _ = context.AfterFunc(ctx, func() {
-	//   if err := form.Clean(); err != nil {
-	//     warn...
-	//   }
-	// })
-	// TODO: attachments can be injected using form.File: map[string][]*FileHeader.
-	return values, nil
-}
-
-func mergeURLValues(b, a url.Values) {
-	for key, valueSet := range a {
-		b[key] = valueSet
-	}
-}
+// func mergeURLValues(b, a url.Values) {
+// 	for key, valueSet := range a {
+// 		b[key] = valueSet
+// 	}
+// }
