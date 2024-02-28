@@ -68,6 +68,14 @@ func (d *Decoder) applyExtractors(values url.Values, r *http.Request) (err error
 }
 
 func (d *Decoder) Decode(v any, r *http.Request) (err error) {
+	if r.Method == http.MethodGet || r.Body == nil {
+		values := make(url.Values)
+		if err = d.applyExtractors(values, r); err != nil {
+			return err
+		}
+		return structSchema.Decode(v, values)
+	}
+
 	ct := r.Header.Get("Content-Type")
 	switch ct {
 	case "application/x-www-form-urlencoded":
