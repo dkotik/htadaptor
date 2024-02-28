@@ -63,7 +63,7 @@ func (e singleQuery) ExtractStringValue(r *http.Request) (string, error) {
 			}
 		}
 	}
-	return "", NoValueError{desired}
+	return "", ErrNoStringValue
 }
 
 type multiQuery []string
@@ -102,5 +102,5 @@ func (e multiQuery) ExtractStringValue(r *http.Request) (string, error) {
 			}
 		}
 	}
-	return "", NoValueError(e)
+	return "", ErrNoStringValue
 }

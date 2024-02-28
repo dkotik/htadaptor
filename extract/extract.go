@@ -13,36 +13,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 type Association struct {
 	RequestName string
 	SchemaName  string
-}
-
-// NoValueError indicates that none of the required values
-// from a list of possible value names were extracted.
-type NoValueError []string
-
-func (e NoValueError) Error() string {
-	switch len(e) {
-	case 0:
-		return "request does not include required value"
-	case 1:
-		return fmt.Sprintf("request requires %q value", e[0])
-	default:
-		b := strings.Builder{}
-		b.WriteString("request requires any of ")
-		for _, name := range e {
-			b.WriteRune('"')
-			b.WriteString(name)
-			b.WriteRune('"')
-			b.WriteRune(',')
-			b.WriteRune(' ')
-		}
-		return b.String()[:b.Len()-2] + " values"
-	}
 }
 
 // Extractor pulls values from an [http.Request]

@@ -34,5 +34,5 @@ func (a agent) ExtractStringValue(r *http.Request) (string, error) {
 	if len(agent) > 0 {
 		return r.Host, nil
 	}
-	return "", NoValueError{string(a)}
+	return "", ErrNoStringValue
 }

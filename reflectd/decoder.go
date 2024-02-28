@@ -88,7 +88,7 @@ func (d *Decoder) Decode(v any, r *http.Request) (err error) {
 		}
 		return d.DecodeMultiPart(v, r, boundary)
 	default:
-		return fmt.Errorf("content type %q is not supported", ct)
+		return extract.ErrUnsupportedMediaType
 	}
 }
 

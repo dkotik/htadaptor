@@ -57,7 +57,7 @@ func (e singleHeader) ExtractStringValue(r *http.Request) (string, error) {
 	if last := len(found); last > 0 {
 		return found[last-1], nil
 	}
-	return "", NoValueError{e.RequestName}
+	return "", ErrNoStringValue
 }
 
 type multiHeader []Association
@@ -81,5 +81,5 @@ func (e multiHeader) ExtractStringValue(r *http.Request) (string, error) {
 			return found[last-1], nil
 		}
 	}
-	return "", NoValueError{e[0].RequestName} // TODO: change to work with [Association].
+	return "", ErrNoStringValue // TODO: change to work with [Association].
 }

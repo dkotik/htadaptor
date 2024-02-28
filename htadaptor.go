@@ -1,9 +1,9 @@
 /*
 Package htadaptor provides generic domain logic adaptors for HTTP handlers. Adaptors come in three flavors:
 
-1. UnaryFunc: func(context, inputStruct) (outputStruct, error)
-2. NullaryFunc: func(context) (outputStruct, error)
-3. VoidFunc: func(context, inputStruct) error
+ 1. UnaryFunc: func(context, inputStruct) (outputStruct, error)
+ 2. NullaryFunc: func(context) (outputStruct, error)
+ 3. VoidFunc: func(context, inputStruct) error
 
 Each input requires implementation of [Validatable] for safety. Validation errors are decorated with the correct [http.StatusUnprocessableEntity] status code.
 */

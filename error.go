@@ -19,29 +19,6 @@ type Error interface {
 	HyperTextStatusCode() int
 }
 
-// AdaptorError signals the internal failure of an adaptor operation.
-type AdaptorError uint
-
-const (
-	ErrUnknown AdaptorError = iota
-	ErrNoStringValue
-)
-
-// Error satisfies [error] interface.
-func (e AdaptorError) Error() string {
-	switch e {
-	case ErrNoStringValue:
-		return "string value could not be recovered from decode"
-	default:
-		return "unknown adaptor error"
-	}
-}
-
-// HyperTextStatusCode satisfies [Error] interface.
-func (e AdaptorError) HyperTextStatusCode() int {
-	return http.StatusInternalServerError
-}
-
 var (
 	//go:embed error.html
 	defaultErrorTemplateSource []byte
@@ -140,12 +117,16 @@ type DecodingError struct {
 	error
 }
 
-func NewDecodingError(fromError error) *DecodingError {
+func NewDecodingError(fromError error) Error {
+	underlying, ok := fromError.(Error)
+	if ok {
+		return underlying
+	}
 	return &DecodingError{fromError}
 }
 
 func (e *DecodingError) Error() string {
-	return "unable to decode request: " + e.error.Error()
+	return e.error.Error()
 }
 
 func (e *DecodingError) Unwrap() error {
@@ -160,7 +141,11 @@ type EncodingError struct {
 	error
 }
 
-func NewEncodingError(fromError error) *EncodingError {
+func NewEncodingError(fromError error) Error {
+	underlying, ok := fromError.(Error)
+	if ok {
+		return underlying
+	}
 	return &EncodingError{fromError}
 }
 

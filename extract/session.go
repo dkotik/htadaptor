@@ -91,7 +91,7 @@ func (e singleSessionValue) ExtractStringValue(r *http.Request) (string, error) 
 	if strValue, ok := session.Value(r.Context(), desired).(string); ok && len(strValue) > 0 {
 		return strValue, nil
 	}
-	return "", NoValueError{desired}
+	return "", ErrNoStringValue
 }
 
 type multiSessionValue []string
@@ -121,7 +121,7 @@ func (e multiSessionValue) ExtractStringValue(r *http.Request) (result string, e
 				return nil
 			}
 		}
-		return NoValueError(e)
+		return ErrNoStringValue
 	})
 	return result, err
 }

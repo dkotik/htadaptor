@@ -30,5 +30,5 @@ func (a address) ExtractStringValue(r *http.Request) (string, error) {
 	if len(r.RemoteAddr) > 0 {
 		return r.Host, nil
 	}
-	return "", NoValueError{string(a)}
+	return "", ErrNoStringValue
 }

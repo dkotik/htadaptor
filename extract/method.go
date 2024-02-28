@@ -34,5 +34,5 @@ func (m methodExtractor) ExtractStringValue(r *http.Request) (string, error) {
 	if len(method) > 0 {
 		return r.Host, nil
 	}
-	return "", NoValueError{string(m)}
+	return "", ErrNoStringValue
 }

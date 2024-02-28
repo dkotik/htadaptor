@@ -49,7 +49,7 @@ func (e singleCookie) ExtractStringValue(r *http.Request) (string, error) {
 			return cookie.Value, nil
 		}
 	}
-	return "", NoValueError{desired}
+	return "", ErrNoStringValue
 }
 
 type multiCookie []string
@@ -74,5 +74,5 @@ func (e multiCookie) ExtractStringValue(r *http.Request) (string, error) {
 			}
 		}
 	}
-	return "", NoValueError(e)
+	return "", ErrNoStringValue
 }

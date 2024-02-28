@@ -47,7 +47,7 @@ func (e singlePath) ExtractStringValue(r *http.Request) (string, error) {
 	if value := r.PathValue(desired); value != "" {
 		return value, nil
 	}
-	return "", NoValueError{desired}
+	return "", ErrNoStringValue
 }
 
 type multiPath []string
@@ -70,5 +70,5 @@ func (e multiPath) ExtractStringValue(r *http.Request) (string, error) {
 			return value, nil
 		}
 	}
-	return "", NoValueError(e)
+	return "", ErrNoStringValue
 }

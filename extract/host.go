@@ -26,5 +26,5 @@ func (h *host) ExtractStringValue(r *http.Request) (string, error) {
 	if len(r.Host) > 0 {
 		return r.Host, nil
 	}
-	return "", NoValueError{"host"}
+	return "", ErrNoStringValue
 }
