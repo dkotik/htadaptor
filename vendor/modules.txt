@@ -10,6 +10,9 @@ github.com/gorilla/securecookie
 # github.com/lmittmann/tint v1.0.4
 ## explicit; go 1.21
 github.com/lmittmann/tint
+# github.com/mitchellh/hashstructure/v2 v2.0.2
+## explicit; go 1.14
+github.com/mitchellh/hashstructure/v2
 # github.com/nicksnyder/go-i18n/v2 v2.4.0
 ## explicit; go 1.18
 github.com/nicksnyder/go-i18n/v2/i18n
