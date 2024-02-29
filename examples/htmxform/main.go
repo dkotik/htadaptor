@@ -5,14 +5,29 @@ feedback form with validation and localization.
 package main
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 
+	"github.com/dkotik/htadaptor"
 	"github.com/dkotik/htadaptor/examples/htmxform/feedback"
 	"github.com/dkotik/htadaptor/middleware/acceptlanguage"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
+)
+
+// in real application replace with adaptor to mail provider
+var mailer = feedback.Sender(
+	func(ctx context.Context, r *feedback.Letter) error {
+		slog.Default().InfoContext(
+			ctx,
+			"received a feedback request",
+			slog.Any("request", r),
+		)
+		return nil
+	},
 )
 
 func main() {
@@ -23,13 +38,20 @@ func main() {
 	defer l.Close()
 
 	bundle := i18n.NewBundle(language.English)
-	feedback.LoadEnglish(bundle)
-	feedback.LoadRussian(bundle)
+	feedback.AddRussian(bundle)
 
 	mux := http.NewServeMux()
-	mux.Handle("/api/v1/feedback.json", NewHandlerJSON(mailer))
-	mux.Handle("POST /{$}", NewFormHandler(mailer))
-	mux.Handle("/{$}", NewIndexHandler())
+	mux.Handle("/api/v1/feedback.json", htadaptor.Must(feedback.NewJSON(
+		mailer,
+		htadaptor.WithQueryValues(
+			// alternative query values to form body for testing
+			"name",
+			"email",
+			"phone",
+			"message",
+		),
+	)))
+	mux.Handle("/{$}", htadaptor.Must(feedback.New(mailer)))
 
 	fmt.Printf(
 		`Listening at http://%[1]s/

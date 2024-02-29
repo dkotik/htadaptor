@@ -6,8 +6,6 @@ package feedback
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -17,95 +15,110 @@ import (
 
 var reValidEmail = regexp.MustCompile(`^[^\@]+\@[^\@]+\.\w+$`)
 
-type Sender func(context.Context, *Request) error
+type Sender func(context.Context, *Letter) error
 
-func New(send Sender, withOptions ...htadaptor.Option) (http.Handler, error) {
-	if send == nil {
-		return nil, errors.New("cannot use a <nil> feedback sender")
-	}
-	return htadaptor.NewUnaryFuncAdaptor(
-		func(ctx context.Context, r *Request) (p *Response, err error) {
-			l, ok := htadaptor.LocalizerFromContext(ctx)
-			if !ok {
-				return nil, errors.New("there is no localizer in context")
-			}
-
-			if err = send(ctx, r); err != nil {
-				return nil, fmt.Errorf(l.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: MsgError,
-					TemplateData: map[string]any{
-						"Error": "%w",
-					},
-				}), err)
-			}
-			return &Response{
-				Message: l.MustLocalize(
-					&i18n.LocalizeConfig{
-						MessageID: MsgSent,
-					},
-				),
-			}, nil
-		},
-		withOptions...,
-	)
-}
-
-type Request struct {
+type Letter struct {
 	Name    string
 	Phone   string
 	Email   string
 	Message string
 }
 
-func (r *Request) Validate(ctx context.Context) error {
-	l, ok := htadaptor.LocalizerFromContext(ctx)
+func (l *Letter) Validate(ctx context.Context) error {
+	locale, ok := htadaptor.LocalizerFromContext(ctx)
 	if !ok {
 		return errors.New("there is no localizer in context")
 	}
 	// separating localized validation, because HTMX handler may
 	// call it directly
-	return r.ValidateWithLocale(l)
+	return l.ValidateWithLocale(locale)
 }
 
-func (r *Request) ValidateWithLocale(l *i18n.Localizer) error {
-	if len(r.Name) < 4 {
-		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: MsgRequired,
-			TemplateData: map[string]any{
-				"Field": strings.ToLower(l.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: MsgName,
-				})),
-			},
-		}))
+func newRequiredError(field string, l *i18n.Localizer) error {
+	msg, err := l.Localize(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "Required",
+			Other: "Please provide {{.Field}}.",
+		},
+		TemplateData: map[string]any{
+			"Field": strings.ToLower(field),
+		},
+	})
+	if err != nil {
+		return err
 	}
-	if len(r.Email) < 4 {
-		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: MsgRequired,
-			TemplateData: map[string]any{
-				"Field": strings.ToLower(l.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: MsgEmail,
-				})),
-			},
-		}))
+	return errors.New(msg)
+}
+
+func (l *Letter) ValidateWithLocale(locale *i18n.Localizer) error {
+	if len(l.Name) < 4 {
+		field, err := l.nameLabel(locale)
+		if err != nil {
+			return err
+		}
+		return newRequiredError(field, locale)
 	}
-	if !reValidEmail.MatchString(r.Email) {
-		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: MsgEmailError,
-		}))
+	if len(l.Email) < 4 {
+		field, err := l.emailLabel(locale)
+		if err != nil {
+			return err
+		}
+		return newRequiredError(field, locale)
 	}
-	if len(r.Message) < 4 {
-		return errors.New(l.MustLocalize(&i18n.LocalizeConfig{
-			MessageID: MsgRequired,
-			TemplateData: map[string]any{
-				"Field": strings.ToLower(l.MustLocalize(&i18n.LocalizeConfig{
-					MessageID: MsgMessage,
-				})),
+	if !reValidEmail.MatchString(l.Email) {
+		errorMessage, err := locale.Localize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "EmailFormatError",
+				Other: "Invalid electronic mail address.",
 			},
-		}))
+		})
+		if err != nil {
+			return err
+		}
+		return errors.New(errorMessage)
+	}
+	if len(l.Message) < 4 {
+		field, err := l.messageLabel(locale)
+		if err != nil {
+			return err
+		}
+		return newRequiredError(field, locale)
 	}
 	return nil
 }
 
-type Response struct {
-	Message string `json:"message"` // to lower case
+func (l *Letter) nameLabel(locale *i18n.Localizer) (string, error) {
+	return locale.Localize(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "Name",
+			Other: "Your Name",
+		},
+	})
+}
+
+func (l *Letter) phoneLabel(locale *i18n.Localizer) (string, error) {
+	return locale.Localize(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "Phone",
+			Other: "Phone Number",
+		},
+	})
+}
+
+func (l *Letter) emailLabel(locale *i18n.Localizer) (string, error) {
+	return locale.Localize(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "Email",
+			Other: "Email Address",
+		},
+	})
+}
+
+func (l *Letter) messageLabel(locale *i18n.Localizer) (string, error) {
+	return locale.Localize(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "Message",
+			Other: "Message",
+		},
+	})
 }

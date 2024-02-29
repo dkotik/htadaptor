@@ -120,6 +120,9 @@ type DecodingError struct {
 func NewDecodingError(fromError error) Error {
 	underlying, ok := fromError.(Error)
 	if ok {
+		// the underlying error has a more precise HTTP
+		// status code than http.StatusUnprocessableEntity
+		// which will be assigned by [DecodingError]
 		return underlying
 	}
 	return &DecodingError{fromError}

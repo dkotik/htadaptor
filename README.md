@@ -94,3 +94,5 @@ The core idea was sparked in conversations with members of the Ardan Labs team. 
 
 - Generic REST Controllers: <https://github.com/dolanor/rip/>
 - Baby API: <https://github.com/calvinmclean/babyapi>
+
+<!-- BabyAPI is doesn't really gel naturally with standard library by requiring their own primitives - this just returns http.Handler. Dolanor's REST controllers are similar, but he tries to implement the entire REST interface, which is way more magic. This doesn't care about REST -  that is the mux's problem, htadaptor just wraps Handlers. -->
