@@ -81,28 +81,12 @@ func (f *formResponse) Success() (string, error) {
 	})
 }
 
-type formHandler struct {
-	get  http.Handler
-	post http.Handler
-}
-
-func (h *formHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		h.get.ServeHTTP(w, r)
-	case http.MethodPost:
-		h.post.ServeHTTP(w, r)
-	default:
-		h.get.ServeHTTP(w, r)
-	}
-}
-
-func New(sender Sender) (http.Handler, error) {
+func New(sender Sender) (get, post http.Handler, err error) {
 	if sender == nil {
-		return nil, errors.New("cannot use a <nil> feedback sender")
+		return nil, nil, errors.New("cannot use a <nil> feedback sender")
 	}
 
-	get, err := htadaptor.NewNullaryFuncAdaptor(
+	get, err = htadaptor.NewNullaryFuncAdaptor(
 		func(ctx context.Context) (*formResponse, error) {
 			// localizer is passed through context using
 			// acceptlanguage middleware all the same
@@ -117,10 +101,10 @@ func New(sender Sender) (http.Handler, error) {
 		htadaptor.WithTemplate(templates.Lookup("page")),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create get handler: %w", err)
+		return nil, nil, fmt.Errorf("unable to create get handler: %w", err)
 	}
 
-	post, err := htadaptor.NewUnaryFuncAdaptor(
+	post, err = htadaptor.NewUnaryFuncAdaptor(
 		func(ctx context.Context, r *formRequest) (*formResponse, error) {
 			// localizer is passed through context using
 			// acceptlanguage middleware
@@ -144,11 +128,8 @@ func New(sender Sender) (http.Handler, error) {
 		htadaptor.WithTemplate(templates.Lookup("form")),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create post handler: %w", err)
+		return nil, nil, fmt.Errorf("unable to create post handler: %w", err)
 	}
 
-	return &formHandler{
-		get:  get,
-		post: post,
-	}, nil
+	return get, post, nil
 }

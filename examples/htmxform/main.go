@@ -51,7 +51,12 @@ func main() {
 			"message",
 		),
 	)))
-	mux.Handle("/{$}", htadaptor.Must(feedback.New(mailer)))
+	getForm, postForm, err := feedback.New(mailer)
+	if err != nil {
+		panic(err)
+	}
+	mux.Handle("GET /{$}", getForm)
+	mux.Handle("POST /{$}", postForm)
 
 	fmt.Printf(
 		`Listening at http://%[1]s/
