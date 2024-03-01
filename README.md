@@ -14,7 +14,7 @@ An HTTP request contains at least five various sources of input that your HTTP h
 ```go
 myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
   // your domain function call
-  func(ctx context.Context, myInputStruct) (myOutputStruct, error) {
+  func(context.Context, *myInputStruct) (*myOutputStruct, error) {
     // ... myInputStruct is passed in already validated
     // ... the fields of myInputStruct will be populated with
     // ... the contents of `request.Body` with overrides
@@ -34,16 +34,16 @@ The adaptors address common function signatures of domain logic calls that opera
 
 | Struct Adaptor | Parameter Values     | Return Values |
 |----------------|----------------------|--------------:|
-| [UnaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#UnaryFuncAdaptor)      | context, inputStruct |    any, error |
-| [NullaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NullaryFuncAdaptor)    | context              |    any, error |
-| [VoidFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#VoidFuncAdaptor)       | context, inputStruct |         error |
+| [UnaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewUnaryFuncAdaptor)      | context, inputStruct |    any, error |
+| [NullaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewNullaryFuncAdaptor)    | context              |    any, error |
+| [VoidFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewVoidFuncAdaptor)       | context, inputStruct |         error |
 
 Each inputStruct must implement `htadaptor.Validatable` for safety. String adaptors are best when only one request value is needed:
 
 | String Adaptor  | Parameter Values     | Return Values |
 |-----------------|----------------------|--------------:|
-| [UnaryStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#UnaryStringFuncAdaptor) | context, string      |    any, error |
-| [VoidStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#VoidStringFuncAdaptor)  | context, string      |         error |
+| [UnaryStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewUnaryStringFuncAdaptor) | context, string      |    any, error |
+| [VoidStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewVoidStringFuncAdaptor)  | context, string      |         error |
 
 ## Installation
 
@@ -60,7 +60,7 @@ mux.Handle("/api/v1/order", htadaptor.Must(
 ))
 ```
 
-See `examples` folder for most common project uses.
+See [examples](https://github.com/dkotik/htadaptor/tree/main/examples) folder for common project uses.
 
 ## Adaptor Options
 
