@@ -46,6 +46,8 @@ type methodMux struct {
 	allowed string
 }
 
+// NewMethodMux returns a handler that satisfies REST
+// interface expectations.
 func NewMethodMux(ms *MethodSwitch) http.Handler {
 	if ms == nil {
 		return &getPostMux{}

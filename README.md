@@ -95,7 +95,9 @@ The core idea was sparked in conversations with members of the Ardan Labs team. 
 
 - [danielgtaylor/huma](https://github.com/danielgtaylor/huma) with REST and RPC
 - [dolanor/rip](https://github.com/dolanor/rip/) with REST
-- [calvinmclean/babyapi](https://github.com/calvinmclean/babyapi)
 - [matt1484/chimera](https://github.com/matt1484/chimera) for Chi
+- [calvinmclean/babyapi](https://github.com/calvinmclean/babyapi)
+
+How is `htadaptor` different from the other generic HTTP adaptors? It is more terse due to focusing on wrapping `http.Handlers` from the standard library. It is expected that the REST interface will be handled separately by either `http.Mux` or a [helper](https://pkg.go.dev/github.com/dkotik/htadaptor#NewMethodMux).
 
 <!-- BabyAPI is doesn't really gel naturally with standard library by requiring their own primitives - this just returns http.Handler. Dolanor's REST controllers are similar, but he tries to implement the entire REST interface, which is way more magic. This doesn't care about REST -  that is the mux's problem, htadaptor just wraps Handlers. -->
