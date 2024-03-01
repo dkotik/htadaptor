@@ -77,7 +77,7 @@ See `examples` folder for most common project uses.
 The order of extractors matters with the latter overriding the former. Request body is always processed first.
 
 - [Path](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithPathValues)
-- [Chi Path](https://pkg.go.dev/github.com/dkotik/htadaptor/chivalues#New)
+- [Chi Path](https://pkg.go.dev/github.com/dkotik/htadaptor/extract/chivalues#New)
 - [Query](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithQueryValues)
 - [Header](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithHeaderValues)
 - [Cookie](https://pkg.go.dev/github.com/dkotik/htadaptor/reflectd#WithCookieValues)

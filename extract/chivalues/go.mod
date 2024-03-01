@@ -1,4 +1,4 @@
-module github.com/dkotik/htadaptor/chivalues
+module github.com/dkotik/htadaptor/extract/chivalues
 
 go 1.21.0
 
