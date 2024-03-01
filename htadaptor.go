@@ -59,10 +59,10 @@ func (f DecoderFunc) Decoder(v any, r *http.Request) error {
 
 type Encoder interface {
 	ContentType() string
-	Encode(http.ResponseWriter, any) error
+	Encode(http.ResponseWriter, *http.Request, any) error
 }
 
-func writeEncoderContentType(w http.ResponseWriter, e Encoder) {
+func setEncoderContentType(w http.ResponseWriter, e Encoder) {
 	w.Header().Set("content-type", e.ContentType())
 }
 
@@ -72,7 +72,10 @@ func (e *JSONEncoder) ContentType() string {
 	return "application/json"
 }
 
-func (e *JSONEncoder) Encode(w http.ResponseWriter, v any) error {
+func (e *JSONEncoder) Encode(w http.ResponseWriter, r *http.Request, v any) error {
+	if r.Method == http.MethodPost {
+		w.WriteHeader(http.StatusCreated)
+	}
 	return json.NewEncoder(w).Encode(v)
 }
 
@@ -84,7 +87,10 @@ func (e *templateEncoder) ContentType() string {
 	return "text/html"
 }
 
-func (e *templateEncoder) Encode(w http.ResponseWriter, v any) error {
+func (e *templateEncoder) Encode(w http.ResponseWriter, r *http.Request, v any) error {
+	if r.Method == http.MethodPost {
+		w.WriteHeader(http.StatusCreated)
+	}
 	return e.Template.Execute(w, v)
 }
 

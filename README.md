@@ -96,6 +96,7 @@ The core idea was sparked in conversations with members of the Ardan Labs team. 
 
 - [danielgtaylor/huma](https://github.com/danielgtaylor/huma) with REST and RPC
 - [dolanor/rip](https://github.com/dolanor/rip/) with REST
+- [go-fuego/fuego](https://github.com/go-fuego/fuego) with OpenAPI
 - [matt1484/chimera](https://github.com/matt1484/chimera) for Chi
 - [calvinmclean/babyapi](https://github.com/calvinmclean/babyapi)
 

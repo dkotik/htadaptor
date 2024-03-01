@@ -51,9 +51,9 @@ func (e ErrorHandlerFunc) HandleError(w http.ResponseWriter, r *http.Request, er
 
 func NewErrorHandler(encoder Encoder) ErrorHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, err error) error {
-		writeEncoderContentType(w, encoder)
+		setEncoderContentType(w, encoder)
 		w.WriteHeader(GetHyperTextStatusCode(err))
-		return errors.Join(err, encoder.Encode(w, struct {
+		return errors.Join(err, encoder.Encode(w, r, struct {
 			Error string `json:"error"`
 		}{
 			Error: err.Error(),

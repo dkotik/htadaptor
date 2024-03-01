@@ -60,8 +60,8 @@ func (a *NullaryFuncAdaptor[O]) executeDomainCall(
 	if err != nil {
 		return err
 	}
-	writeEncoderContentType(w, a.encoder)
-	if err = a.encoder.Encode(w, response); err != nil {
+	setEncoderContentType(w, a.encoder)
+	if err = a.encoder.Encode(w, r, response); err != nil {
 		return NewEncodingError(err)
 	}
 	return nil
