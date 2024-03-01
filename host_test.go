@@ -11,27 +11,35 @@ func TestHostMuxCreation(t *testing.T) {
 		io.WriteString(w, "Hello world!")
 	})
 
-	mux := NewHostMux(map[string]http.Handler{
-		"one":   testHostHandler,
-		"two":   testHostHandler,
-		"three": testHostHandler,
-	})
-	_, ok := mux.(*listHostMux)
+	hosts := []HostMuxAssociation{
+		{Name: "one", Handler: testHostHandler},
+		{Name: "two", Handler: testHostHandler},
+		{Name: "three", Handler: testHostHandler},
+	}
+
+	mux, err := NewHostMux(hosts...)
+	_, ok := mux.(listHostMux)
 	if !ok {
 		t.Fatal("created mux is not a listHostMux")
 	}
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	mux = NewHostMux(map[string]http.Handler{
-		"one":   testHostHandler,
-		"two":   testHostHandler,
-		"three": testHostHandler,
-		"4":     testHostHandler,
-		"5":     testHostHandler,
-		"6":     testHostHandler,
-		"7":     testHostHandler,
-		"8":     testHostHandler,
-		"9":     testHostHandler,
-	})
+	hosts = append(hosts, []HostMuxAssociation{
+		{Name: "1", Handler: testHostHandler},
+		{Name: "2", Handler: testHostHandler},
+		{Name: "3", Handler: testHostHandler},
+		{Name: "4", Handler: testHostHandler},
+		{Name: "5", Handler: testHostHandler},
+		{Name: "6", Handler: testHostHandler},
+		{Name: "7", Handler: testHostHandler},
+	}...)
+
+	mux, err = NewHostMux(hosts...)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	_, ok = mux.(mapHostMux)
 	if !ok {

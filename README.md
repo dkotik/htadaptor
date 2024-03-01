@@ -87,6 +87,7 @@ The order of extractors matters with the latter overriding the former. Request b
     - `extract.NewHostExtractor`
     - `extract.NewRemoteAddressExtractor`
     - `extract.NewUserAgentExtractor`
+- Or, make your own by implementing [Extractor](https://pkg.go.dev/github.com/dkotik/htadaptor/extract#Extractor) interface.
 
 ## Credits
 
