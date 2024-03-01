@@ -38,7 +38,9 @@ func main() {
 	defer l.Close()
 
 	bundle := i18n.NewBundle(language.English)
-	feedback.AddRussian(bundle)
+	if err = feedback.AddLocalizationMessages(bundle); err != nil {
+		panic(err)
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/feedback.json", htadaptor.Must(feedback.NewJSON(

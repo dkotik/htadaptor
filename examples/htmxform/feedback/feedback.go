@@ -37,8 +37,9 @@ func (l *Letter) Validate(ctx context.Context) error {
 func newRequiredError(field string, l *i18n.Localizer) error {
 	msg, err := l.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
-			ID:    "Required",
-			Other: "Please provide {{.Field}}.",
+			ID:          "Required",
+			Description: "Displayed when validation failed because of a missing field.",
+			Other:       "Please provide {{.Field}}.",
 		},
 		TemplateData: map[string]any{
 			"Field": strings.ToLower(field),

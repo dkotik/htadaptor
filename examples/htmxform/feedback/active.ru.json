@@ -1,0 +1,39 @@
+{
+  "Email": {
+    "hash": "sha1-09ba557fd106f1019ec6739113e3e28dea4bd9a6",
+    "other": "Адрес Электронной Почты"
+  },
+  "EmailFormatError": {
+    "hash": "sha1-ef98f54fc407e12b7f73c3dbd5d33b562cf03ed7",
+    "other": "Ложный адрес электронной почты."
+  },
+  "Message": {
+    "hash": "sha1-68f4145fee7dde76afceb910165924ad14cf0d00",
+    "other": "Сообщение"
+  },
+  "Name": {
+    "hash": "sha1-f48db7e9d3ef7a054e72ceb44729864e1ad32437",
+    "other": "Ваше Имя"
+  },
+  "PageTitle": {
+    "hash": "sha1-3e31059cf3965951047c43897d7327c877eff51c",
+    "other": "Обратная Связь"
+  },
+  "Phone": {
+    "hash": "sha1-ab25d61bb12492027e2633997eea946c0f65a6b7",
+    "other": "Номер Телефона"
+  },
+  "Required": {
+    "description": "Displayed when validation failed because of a missing field.",
+    "hash": "sha1-3a959ee7e30bc5cf96e584bae70c6524e4d0fa6e",
+    "other": "Пожалуйста заполните {{.Field}}."
+  },
+  "Send": {
+    "hash": "sha1-9bc2575c3930437e80555f78757b783c842e8e66",
+    "other": "Send"
+  },
+  "Sent": {
+    "hash": "sha1-b065927b66745eb927a2a144454303ef3f01a794",
+    "other": "Невозможно отправить: {{.Error}}."
+  }
+}

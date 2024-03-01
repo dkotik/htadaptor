@@ -1,0 +1,14 @@
+{
+  "Email": "Email Address",
+  "EmailFormatError": "Invalid electronic mail address.",
+  "Message": "Message",
+  "Name": "Your Name",
+  "PageTitle": "Provide Feedback",
+  "Phone": "Phone Number",
+  "Required": {
+    "description": "Displayed when validation failed because of a missing field.",
+    "other": "Please provide {{.Field}}."
+  },
+  "Send": "Send",
+  "Sent": "Thank you! We will follow up with you soon."
+}
