@@ -24,8 +24,8 @@
     "other": "Номер Телефона"
   },
   "Required": {
-    "description": "Displayed when validation failed because of a missing field.",
-    "hash": "sha1-3a959ee7e30bc5cf96e584bae70c6524e4d0fa6e",
+    "description": "Displayed when validation failed because of a missing input field.",
+    "hash": "sha1-d723800cb159f6b3677022069b7ed4678f47c174",
     "other": "Пожалуйста заполните {{.Field}}."
   },
   "Send": {

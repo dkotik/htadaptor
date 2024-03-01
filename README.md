@@ -9,7 +9,7 @@ Package `htadaptor` provides convenient generic domain logic adaptors for HTTP h
 
 ## Why do you need this package?
 
-An HTTP request contains at least five various sources of input that your HTTP handlers may consider: URL path, URL query, headers, cookies, and the request body. Much of the code that you have to write [manually](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/) is wrestling those inputs into a struct. `htadaptor` can do all of it for you:
+An HTTP request contains at least five various sources of input that your HTTP handlers may consider: URL path, URL query, headers, cookies, and the request body. Much of the code that you have to write manually is wrestling those inputs into a struct. Willem Schots wrote an excellent [explanation here](https://www.willem.dev/articles/generic-http-handlers). `htadaptor` can do all of it for you:
 
 ```go
 myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
@@ -92,7 +92,10 @@ The order of extractors matters with the latter overriding the former. Request b
 
 The core idea was sparked in conversations with members of the Ardan Labs team. Package includes reflection schema decoder from Gorilla toolkit. Similar projects:
 
-- Generic REST Controllers: <https://github.com/dolanor/rip/>
-- Baby API: <https://github.com/calvinmclean/babyapi>
+
+- [danielgtaylor/huma](https://github.com/danielgtaylor/huma) with REST and RPC
+- [dolanor/rip](https://github.com/dolanor/rip/) with REST
+- [calvinmclean/babyapi](https://github.com/calvinmclean/babyapi)
+- [matt1484/chimera](https://github.com/matt1484/chimera) for Chi
 
 <!-- BabyAPI is doesn't really gel naturally with standard library by requiring their own primitives - this just returns http.Handler. Dolanor's REST controllers are similar, but he tries to implement the entire REST interface, which is way more magic. This doesn't care about REST -  that is the mux's problem, htadaptor just wraps Handlers. -->

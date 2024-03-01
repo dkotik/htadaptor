@@ -6,7 +6,7 @@
   "PageTitle": "Provide Feedback",
   "Phone": "Phone Number",
   "Required": {
-    "description": "Displayed when validation failed because of a missing field.",
+    "description": "Displayed when validation failed because of a missing input field.",
     "other": "Please provide {{.Field}}."
   },
   "Send": "Send",
