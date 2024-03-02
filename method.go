@@ -46,8 +46,10 @@ type methodMux struct {
 	allowed string
 }
 
-// NewMethodMux returns a handler that satisfies REST
-// interface expectations.
+// NewMethodMux returns a handler that is able to satisfy REST
+// interface expectations. It does not modify response status codes,
+// but they can be updated using [WithStatusCode] option for
+// individual handlers.
 func NewMethodMux(ms *MethodSwitch) http.Handler {
 	if ms == nil {
 		return &getPostMux{}

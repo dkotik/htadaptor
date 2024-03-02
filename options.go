@@ -20,6 +20,7 @@ type options struct {
 	Decoder        Decoder
 	DecoderOptions []reflectd.Option
 	Encoder        Encoder
+	StatusCode     int
 	ErrorHandler   ErrorHandler
 	Logger         Logger
 }
@@ -70,6 +71,23 @@ func WithEncoder(e Encoder) Option {
 	}
 }
 
+// WithStatusCode applies [NewStatusCodeEncoder] to the
+// handler encoder to override the default [http.StatusOK]
+// success code.
+func WithStatusCode(statusCode int) Option {
+	return func(o *options) error {
+		if statusCode < 1 {
+			return errors.New("invalid status code")
+		}
+		if o.StatusCode != 0 {
+			return errors.New("response status code is already set")
+		}
+		// status code is applied inside [WithDefaultEncoder]
+		o.StatusCode = statusCode
+		return nil
+	}
+}
+
 func WithTemplate(t *template.Template) Option {
 	return func(o *options) error {
 		if t == nil {
@@ -87,11 +105,19 @@ var (
 func WithDefaultEncoder() Option {
 	return func(o *options) error {
 		if o.Encoder != nil {
+			if o.StatusCode != 0 {
+				o.Encoder = NewStatusCodeEncoder(o.Encoder, o.StatusCode)
+			}
 			return nil
 		}
 		defaultEncoderSetup.Do(func() {
 			defaultEncoder = &JSONEncoder{}
 		})
+		if o.StatusCode != 0 {
+			return WithEncoder(
+				NewStatusCodeEncoder(defaultEncoder, o.StatusCode),
+			)(o)
+		}
 		return WithEncoder(defaultEncoder)(o)
 	}
 }

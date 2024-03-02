@@ -73,9 +73,6 @@ func (e *JSONEncoder) ContentType() string {
 }
 
 func (e *JSONEncoder) Encode(w http.ResponseWriter, r *http.Request, v any) error {
-	if r.Method == http.MethodPost {
-		w.WriteHeader(http.StatusCreated)
-	}
 	return json.NewEncoder(w).Encode(v)
 }
 
@@ -104,6 +101,34 @@ func Must(h http.Handler, err error) http.Handler {
 		panic(err)
 	}
 	return h
+}
+
+type statusCodeEncoder struct {
+	Encoder
+	statusCode int
+}
+
+// NewStatusCodeEncoder returns an encoder that writes header
+// first with a given status code before calling the next
+// encoder. This replaces the default [http.StatusOK]
+// with a different status code like [http.StatusCreated].
+func NewStatusCodeEncoder(
+	next Encoder,
+	statusCode int,
+) Encoder {
+	return &statusCodeEncoder{
+		Encoder:    next,
+		statusCode: statusCode,
+	}
+}
+
+func (e *statusCodeEncoder) Encode(
+	w http.ResponseWriter,
+	r *http.Request,
+	v any,
+) error {
+	w.WriteHeader(e.statusCode)
+	return e.Encoder.Encode(w, r, v)
 }
 
 // Middleware modifies an [http.Handler].
