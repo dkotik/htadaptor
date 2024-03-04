@@ -16,6 +16,7 @@ func NewNullaryFuncAdaptor[O any](
 	o := &options{}
 	err := WithOptions(append(
 		withOptions,
+		WithDefaultStatusCode(),
 		func(o *options) (err error) {
 			if err = o.Validate(); err != nil {
 				return err
@@ -37,6 +38,7 @@ func NewNullaryFuncAdaptor[O any](
 
 	return &NullaryFuncAdaptor[O]{
 		domainCall:   domainCall,
+		statusCode:   o.StatusCode,
 		encoder:      o.Encoder,
 		errorHandler: o.ErrorHandler,
 		logger:       o.Logger,
@@ -47,6 +49,7 @@ func NewNullaryFuncAdaptor[O any](
 // and returns a response struct.
 type NullaryFuncAdaptor[O any] struct {
 	domainCall   func(context.Context) (O, error)
+	statusCode   int
 	encoder      Encoder
 	errorHandler ErrorHandler
 	logger       Logger
@@ -60,8 +63,7 @@ func (a *NullaryFuncAdaptor[O]) executeDomainCall(
 	if err != nil {
 		return err
 	}
-	setEncoderContentType(w, a.encoder)
-	if err = a.encoder.Encode(w, r, response); err != nil {
+	if err = a.encoder.Encode(w, r, a.statusCode, response); err != nil {
 		return NewEncodingError(err)
 	}
 	return nil

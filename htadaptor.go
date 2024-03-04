@@ -58,36 +58,30 @@ func (f DecoderFunc) Decoder(v any, r *http.Request) error {
 }
 
 type Encoder interface {
-	ContentType() string
-	Encode(http.ResponseWriter, *http.Request, any) error
+	Encode(http.ResponseWriter, *http.Request, int, any) error
 }
 
-func setEncoderContentType(w http.ResponseWriter, e Encoder) {
-	w.Header().Set("content-type", e.ContentType())
+type EncoderFunc func(http.ResponseWriter, *http.Request, int, any) error
+
+func (f EncoderFunc) Encode(w http.ResponseWriter, r *http.Request, code int, v any) error {
+	return f(w, r, code, v)
 }
 
-type JSONEncoder struct{}
-
-func (e *JSONEncoder) ContentType() string {
-	return "application/json"
-}
-
-func (e *JSONEncoder) Encode(w http.ResponseWriter, r *http.Request, v any) error {
-	return json.NewEncoder(w).Encode(v)
-}
+var JSONEncoder = EncoderFunc(
+	func(w http.ResponseWriter, r *http.Request, code int, v any) error {
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(code)
+		return json.NewEncoder(w).Encode(v)
+	},
+)
 
 type templateEncoder struct {
 	*template.Template
 }
 
-func (e *templateEncoder) ContentType() string {
-	return "text/html"
-}
-
-func (e *templateEncoder) Encode(w http.ResponseWriter, r *http.Request, v any) error {
-	if r.Method == http.MethodPost {
-		w.WriteHeader(http.StatusCreated)
-	}
+func (e *templateEncoder) Encode(w http.ResponseWriter, r *http.Request, code int, v any) error {
+	w.Header().Set("content-type", "text/html; charset=utf-8")
+	w.WriteHeader(code)
 	return e.Template.Execute(w, v)
 }
 
@@ -101,34 +95,6 @@ func Must(h http.Handler, err error) http.Handler {
 		panic(err)
 	}
 	return h
-}
-
-type statusCodeEncoder struct {
-	Encoder
-	statusCode int
-}
-
-// NewStatusCodeEncoder returns an encoder that writes header
-// first with a given status code before calling the next
-// encoder. This replaces the default [http.StatusOK]
-// with a different status code like [http.StatusCreated].
-func NewStatusCodeEncoder(
-	next Encoder,
-	statusCode int,
-) Encoder {
-	return &statusCodeEncoder{
-		Encoder:    next,
-		statusCode: statusCode,
-	}
-}
-
-func (e *statusCodeEncoder) Encode(
-	w http.ResponseWriter,
-	r *http.Request,
-	v any,
-) error {
-	w.WriteHeader(e.statusCode)
-	return e.Encoder.Encode(w, r, v)
 }
 
 // Middleware modifies an [http.Handler].

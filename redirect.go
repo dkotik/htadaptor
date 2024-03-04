@@ -28,6 +28,7 @@ func (t *temporaryRedirectEncoder) ContentType() string {
 func (t *temporaryRedirectEncoder) Encode(
 	w http.ResponseWriter,
 	r *http.Request,
+	code int,
 	v any,
 ) error {
 	location, ok := v.(string)
@@ -56,6 +57,7 @@ func (t *permanentRedirectEncoder) ContentType() string {
 func (t *permanentRedirectEncoder) Encode(
 	w http.ResponseWriter,
 	r *http.Request,
+	code int,
 	v any,
 ) error {
 	location, ok := v.(string)

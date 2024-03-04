@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"html/template"
 	"log/slog"
+	"mime"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 
 	"github.com/dkotik/htadaptor/extract"
@@ -88,6 +91,15 @@ func WithStatusCode(statusCode int) Option {
 	}
 }
 
+func WithDefaultStatusCode() Option {
+	return func(o *options) error {
+		if o.StatusCode < 1 {
+			o.StatusCode = http.StatusOK
+		}
+		return nil
+	}
+}
+
 func WithTemplate(t *template.Template) Option {
 	return func(o *options) error {
 		if t == nil {
@@ -97,28 +109,12 @@ func WithTemplate(t *template.Template) Option {
 	}
 }
 
-var (
-	defaultEncoder      Encoder
-	defaultEncoderSetup sync.Once
-)
-
 func WithDefaultEncoder() Option {
 	return func(o *options) error {
 		if o.Encoder != nil {
-			if o.StatusCode != 0 {
-				o.Encoder = NewStatusCodeEncoder(o.Encoder, o.StatusCode)
-			}
 			return nil
 		}
-		defaultEncoderSetup.Do(func() {
-			defaultEncoder = &JSONEncoder{}
-		})
-		if o.StatusCode != 0 {
-			return WithEncoder(
-				NewStatusCodeEncoder(defaultEncoder, o.StatusCode),
-			)(o)
-		}
-		return WithEncoder(defaultEncoder)(o)
+		return WithEncoder(JSONEncoder)(o)
 	}
 }
 
@@ -143,14 +139,27 @@ var (
 )
 
 func WithDefaultErrorHandler() Option {
-	return func(o *options) error {
+	return func(o *options) (err error) {
 		if o.ErrorHandler != nil {
 			return nil
 		}
-		switch o.Encoder.ContentType() {
+
+		// capture encoder content type
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+		if err = o.Encoder.Encode(w, r, http.StatusOK, nil); err != nil {
+			return fmt.Errorf("assigned encoder failed to encode <nil>: %w", err)
+		}
+		contentType, _, err := mime.ParseMediaType(
+			w.Result().Header.Get("content-type"))
+		if err != nil {
+			return fmt.Errorf("unable to parse content type of the encoded response: %w", err)
+		}
+
+		switch contentType {
 		case "application/json":
 			defaultErrorHandlerJSONSetup.Do(func() {
-				defaultErrorHandlerJSON = NewErrorHandler(&JSONEncoder{})
+				defaultErrorHandlerJSON = NewErrorHandler(JSONEncoder)
 			})
 			return WithErrorHandler(defaultErrorHandlerJSON)(o)
 		case "text/html":

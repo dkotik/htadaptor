@@ -19,6 +19,7 @@ func NewUnaryStringFuncAdaptor[O any](
 	o := &options{}
 	err := WithOptions(append(
 		withOptions,
+		WithDefaultStatusCode(),
 		func(o *options) (err error) {
 			if err = o.Validate(); err != nil {
 				return err
@@ -45,6 +46,7 @@ func NewUnaryStringFuncAdaptor[O any](
 	return &UnaryStringFuncAdaptor[O]{
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,
+		statusCode:      o.StatusCode,
 		encoder:         o.Encoder,
 		errorHandler:    o.ErrorHandler,
 		logger:          o.Logger,
@@ -57,6 +59,7 @@ func NewUnaryStringFuncAdaptor[O any](
 type UnaryStringFuncAdaptor[O any] struct {
 	domainCall      func(context.Context, string) (O, error)
 	stringExtractor extract.StringValueExtractor
+	statusCode      int
 	encoder         Encoder
 	errorHandler    ErrorHandler
 	logger          Logger
@@ -74,8 +77,7 @@ func (a *UnaryStringFuncAdaptor[O]) executeDomainCall(
 	if err != nil {
 		return err
 	}
-	setEncoderContentType(w, a.encoder)
-	if err = a.encoder.Encode(w, r, response); err != nil {
+	if err = a.encoder.Encode(w, r, a.statusCode, response); err != nil {
 		return NewEncodingError(err)
 	}
 	return nil

@@ -20,6 +20,7 @@ func NewUnaryFuncAdaptor[
 	o := &options{}
 	err := WithOptions(append(
 		withOptions,
+		WithDefaultStatusCode(),
 		func(o *options) (err error) {
 			if err = o.Validate(); err != nil {
 				return err
@@ -46,6 +47,7 @@ func NewUnaryFuncAdaptor[
 
 	return &UnaryFuncAdaptor[T, V, O]{
 		domainCall:   domainCall,
+		statusCode:   o.StatusCode,
 		decoder:      o.Decoder,
 		encoder:      o.Encoder,
 		errorHandler: o.ErrorHandler,
@@ -62,6 +64,7 @@ type UnaryFuncAdaptor[
 	O any,
 ] struct {
 	domainCall   func(context.Context, V) (O, error)
+	statusCode   int
 	decoder      Decoder
 	encoder      Encoder
 	errorHandler ErrorHandler
@@ -87,8 +90,7 @@ func (a *UnaryFuncAdaptor[T, V, O]) executeDomainCall(
 	if err != nil {
 		return err
 	}
-	setEncoderContentType(w, a.encoder)
-	if err = a.encoder.Encode(w, r, response); err != nil {
+	if err = a.encoder.Encode(w, r, a.statusCode, response); err != nil {
 		return NewEncodingError(err)
 	}
 	return nil
