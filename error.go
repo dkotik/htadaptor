@@ -94,23 +94,6 @@ type InvalidRequestError struct {
 	error
 }
 
-// TODO: add slog.LogValue with more details including "request validation failed"
-func NewInvalidRequestError(fromError error) *InvalidRequestError {
-	return &InvalidRequestError{fromError}
-}
-
-func (e *InvalidRequestError) Error() string {
-	return e.error.Error()
-}
-
-func (e *InvalidRequestError) Unwrap() error {
-	return e.error
-}
-
-func (e *InvalidRequestError) HyperTextStatusCode() int {
-	return http.StatusUnprocessableEntity
-}
-
 type DecodingError struct {
 	error
 }

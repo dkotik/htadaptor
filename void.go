@@ -69,7 +69,7 @@ func (a *VoidFuncAdaptor[T, V]) executeDomainCall(
 
 	ctx := r.Context()
 	if err = request.Validate(ctx); err != nil {
-		return NewInvalidRequestError(err)
+		return err
 	}
 	if err = a.domainCall(ctx, request); err != nil {
 		return err

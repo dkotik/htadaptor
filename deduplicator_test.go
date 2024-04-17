@@ -17,7 +17,7 @@ func TestDeduplicator(t *testing.T) {
 			t.Error(err)
 		}
 		if expect != ok {
-			t.Errorf("deduplication expection was not met: %v vs %v", expect, ok)
+			t.Errorf("expectation not met: %v vs %v", expect, ok)
 		}
 	}
 

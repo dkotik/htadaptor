@@ -83,7 +83,7 @@ func (a *UnaryFuncAdaptor[T, V, O]) executeDomainCall(
 
 	ctx := r.Context()
 	if err = request.Validate(ctx); err != nil {
-		return NewInvalidRequestError(err)
+		return err
 	}
 
 	response, err := a.domainCall(ctx, request)
