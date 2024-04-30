@@ -18,11 +18,11 @@ var (
 	// read https://github.com/golang/go/issues/35427
 	// to understand how this magic works =>
 	// the pointer to interface is important
-	contextType     = reflect.TypeOf((*context.Context)(nil)).Elem()
-	errorType       = reflect.TypeOf((*error)(nil)).Elem()
-	validatableType = reflect.TypeOf((*interface {
-		Validate(context.Context) error
-	})(nil)).Elem()
+	contextType = reflect.TypeOf((*context.Context)(nil)).Elem()
+	errorType   = reflect.TypeOf((*error)(nil)).Elem()
+	// validatableType = reflect.TypeOf((*interface {
+	// 	Validate(context.Context) error
+	// })(nil)).Elem()
 )
 
 func Detect(f any) (FuncType, error) {
@@ -58,9 +58,9 @@ func Detect(f any) (FuncType, error) {
 		if last.Kind() != reflect.Pointer {
 			return 0, errors.New("last parameter must be a pointer")
 		}
-		if !last.Implements(validatableType) {
-			return 0, errors.New("last parameter must implement Validatable interface")
-		}
+		// if !last.Implements(validatableType) {
+		// 	return 0, errors.New("last parameter must implement Validatable interface")
+		// }
 		if resultCount == 2 {
 			return FuncTypeUnary, nil
 		}

@@ -9,11 +9,7 @@ import (
 
 // NewUnaryFuncAdaptor creates a new adaptor for a
 // function that takes a validatable struct and returns a struct.
-func NewUnaryFuncAdaptor[
-	T any,
-	V Validatable[T],
-	O any,
-](
+func NewUnaryFuncAdaptor[T any, V *T, O any](
 	domainCall func(context.Context, V) (O, error),
 	withOptions ...Option,
 ) (*UnaryFuncAdaptor[T, V, O], error) {
@@ -58,11 +54,7 @@ func NewUnaryFuncAdaptor[
 // UnaryFuncAdaptor extracts a struct from request
 // and calls a domain function with it expecting
 // a struct response.
-type UnaryFuncAdaptor[
-	T any,
-	V Validatable[T],
-	O any,
-] struct {
+type UnaryFuncAdaptor[T any, V *T, O any] struct {
 	domainCall   func(context.Context, V) (O, error)
 	statusCode   int
 	decoder      Decoder
@@ -82,10 +74,11 @@ func (a *UnaryFuncAdaptor[T, V, O]) executeDomainCall(
 	}
 
 	ctx := r.Context()
-	if err = request.Validate(ctx); err != nil {
-		return err
+	if validatable, ok := any(request).(Validatable); ok {
+		if err = validatable.Validate(ctx); err != nil {
+			return err
+		}
 	}
-
 	response, err := a.domainCall(ctx, request)
 	if err != nil {
 		return err

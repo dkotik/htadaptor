@@ -98,6 +98,7 @@ type DecodingError struct {
 	error
 }
 
+// TODO: deprecate - there is no benefit to wrapping the error!
 func NewDecodingError(fromError error) Error {
 	underlying, ok := fromError.(Error)
 	if ok {

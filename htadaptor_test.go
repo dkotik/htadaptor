@@ -20,9 +20,11 @@ type testCaseJSON[T any] struct {
 }
 
 func runCasesJSON[T any](t *testing.T, h http.Handler, cases []testCaseJSON[T]) {
+	t.Helper()
 	for _, tc := range cases {
 		t.Run(tc.Name,
 			func(t *testing.T) {
+				t.Helper()
 				tc.Request.Header.Set("Content-Type", "application/json")
 				data, code, header := CaptureResponse(h, tc.Request)
 				if len(data) < 1 && tc.Response == nil {

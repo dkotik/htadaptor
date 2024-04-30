@@ -29,8 +29,6 @@ func ContextWithLanguage(parent context.Context, t language.Tag) context.Context
 // LocalizerFromContext raises request-scoped localizer.
 // Warning: localizer will be <nil> if it was not set
 // using [ContextWithLocalizer].
-//
-// TODO: remove in favor of https://github.com/nicksnyder/go-i18n/pull/323.
 func LocalizerFromContext(ctx context.Context) (l *i18n.Localizer, ok bool) {
 	l, ok = ctx.Value(localizerContextKey).(*i18n.Localizer)
 	return

@@ -5,7 +5,7 @@ Package htadaptor provides generic domain logic adaptors for HTTP handlers. Adap
  2. NullaryFunc: func(context) (outputStruct, error)
  3. VoidFunc: func(context, inputStruct) error
 
-Each input requires implementation of [Validatable] for safety. Validation errors are decorated with the correct [http.StatusUnprocessableEntity] status code.
+Validation errors are decorated with the correct [http.StatusUnprocessableEntity] status code.
 */
 package htadaptor
 
@@ -42,10 +42,21 @@ import (
 // is essential for passing locale information that can be
 // retrieved using [LanguageFromContext] inside the validation
 // method and other similar uses.
+//
+// DEPRECATED: will be removed from 1.0 release.
+type Validatable interface {
+	Validate(context.Context) error
+}
+
+/*
+Used this neat trick before to enforce pointer type on Validatable,
+which also made it possible to pass to a Decoder by reference.
+
 type Validatable[T any] interface {
 	*T
 	Validate(context.Context) error
 }
+*/
 
 type Decoder interface {
 	Decode(any, *http.Request) error
