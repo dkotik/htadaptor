@@ -16,27 +16,6 @@ import (
 	"net/http"
 )
 
-// func New(withOptions ...Option) (func(any) (http.Handler, error), error) {
-// 	return func(domainCall any) (http.Handler, error) {
-// 		funcType, err := Detect(domainCall)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		switch funcType {
-// 		case FuncTypeUnary:
-// 			return &UnaryFuncAdaptor{
-// 				domainCall:   domainCall,
-// 				decoder:      o.Decoder,
-// 				encoder:      o.Encoder,
-// 				errorHandler: o.ErrorHandler,
-// 				logger:       o.Logger,
-// 			}, nil
-// 		default:
-// 			return nil, fmt.Errorf("unknown domain function type: %d", funcType)
-// 		}
-// 	}, nil
-// }
-
 // Validatable constrains a domain request. Validation errors are
 // wrapped as [InvalidRequestError] by the adapter. [context.Context]
 // is essential for passing locale information that can be

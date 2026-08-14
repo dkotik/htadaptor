@@ -47,7 +47,6 @@ func NewUnaryFuncAdaptor[T any, V *T, O any](
 		decoder:      o.Decoder,
 		encoder:      o.Encoder,
 		errorHandler: o.ErrorHandler,
-		logger:       o.Logger,
 	}, nil
 }
 
@@ -60,7 +59,6 @@ type UnaryFuncAdaptor[T any, V *T, O any] struct {
 	decoder      Decoder
 	encoder      Encoder
 	errorHandler ErrorHandler
-	logger       Logger
 }
 
 func (a *UnaryFuncAdaptor[T, V, O]) executeDomainCall(
@@ -98,5 +96,4 @@ func (a *UnaryFuncAdaptor[T, V, O]) ServeHTTP(
 	if err != nil {
 		err = a.errorHandler.HandleError(w, r, err)
 	}
-	a.logger.LogRequest(r, err)
 }

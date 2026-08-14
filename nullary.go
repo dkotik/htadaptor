@@ -41,7 +41,6 @@ func NewNullaryFuncAdaptor[O any](
 		statusCode:   o.StatusCode,
 		encoder:      o.Encoder,
 		errorHandler: o.ErrorHandler,
-		logger:       o.Logger,
 	}, nil
 }
 
@@ -52,7 +51,6 @@ type NullaryFuncAdaptor[O any] struct {
 	statusCode   int
 	encoder      Encoder
 	errorHandler ErrorHandler
-	logger       Logger
 }
 
 func (a *NullaryFuncAdaptor[O]) executeDomainCall(
@@ -78,5 +76,4 @@ func (a *NullaryFuncAdaptor[O]) ServeHTTP(
 	if err != nil {
 		err = a.errorHandler.HandleError(w, r, err)
 	}
-	a.logger.LogRequest(r, err)
 }

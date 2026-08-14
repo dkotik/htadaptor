@@ -71,7 +71,6 @@ See [examples](https://github.com/dkotik/htadaptor/tree/main/examples) folder fo
     - [WithMemoryLimit](https://pkg.go.dev/github.com/dkotik/htadaptor#WithMemoryLimit)
     - [WithExtractors](https://pkg.go.dev/github.com/dkotik/htadaptor#WithExtractors)
 - [WithEncoder](https://pkg.go.dev/github.com/dkotik/htadaptor#WithEncoder)
-- [WithLogger](https://pkg.go.dev/github.com/dkotik/htadaptor#WithLogger)
 - [WithErrorHandler](https://pkg.go.dev/github.com/dkotik/htadaptor#WithErrorHandler)
 
 ## Extractors

@@ -39,7 +39,6 @@ func NewVoidFuncAdaptor[T any, V *T](
 		domainCall:   domainCall,
 		decoder:      o.Decoder,
 		errorHandler: o.ErrorHandler,
-		logger:       o.Logger,
 	}, nil
 }
 
@@ -49,7 +48,6 @@ type VoidFuncAdaptor[T any, V *T] struct {
 	domainCall   func(context.Context, V) error
 	decoder      Decoder
 	errorHandler ErrorHandler
-	logger       Logger
 }
 
 func (a *VoidFuncAdaptor[T, V]) executeDomainCall(
@@ -83,5 +81,4 @@ func (a *VoidFuncAdaptor[T, V]) ServeHTTP(
 	if err != nil {
 		err = a.errorHandler.HandleError(w, r, err)
 	}
-	a.logger.LogRequest(r, err)
 }

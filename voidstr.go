@@ -40,7 +40,6 @@ func NewVoidStringFuncAdaptor(
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,
 		errorHandler:    o.ErrorHandler,
-		logger:          o.Logger,
 	}, nil
 }
 
@@ -51,7 +50,6 @@ type VoidStringFuncAdaptor struct {
 	domainCall      func(context.Context, string) error
 	stringExtractor extract.StringValueExtractor
 	errorHandler    ErrorHandler
-	logger          Logger
 }
 
 func (a *VoidStringFuncAdaptor) executeDomainCall(
@@ -78,5 +76,4 @@ func (a *VoidStringFuncAdaptor) ServeHTTP(
 	if err != nil {
 		err = a.errorHandler.HandleError(w, r, err)
 	}
-	a.logger.LogRequest(r, err)
 }

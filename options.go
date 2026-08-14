@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log/slog"
 	"mime"
 	"net/http"
 	"net/http/httptest"
@@ -25,7 +24,6 @@ type options struct {
 	Encoder        Encoder
 	StatusCode     int
 	ErrorHandler   ErrorHandler
-	Logger         Logger
 }
 
 func (o *options) Validate() (err error) {
@@ -41,7 +39,6 @@ func (o *options) Validate() (err error) {
 	return WithOptions(
 		WithDefaultEncoder(),
 		WithDefaultErrorHandler(),
-		WithDefaultLogger(),
 	)(o)
 }
 
@@ -263,39 +260,5 @@ func WithSessionValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithSessionValues(names...))
 		return nil
-	}
-}
-
-func WithLogger(l Logger) Option {
-	return func(o *options) error {
-		if l == nil {
-			return errors.New("cannot use a <nil> logger")
-		}
-		if o.Logger != nil {
-			return errors.New("adaptor logger is already set")
-		}
-		o.Logger = l
-		return nil
-	}
-}
-
-var (
-	defaultLogger      Logger
-	defaultLoggerSetup sync.Once
-)
-
-func WithDefaultLogger() Option {
-	return func(o *options) error {
-		if o.Logger != nil {
-			return nil
-		}
-		defaultLoggerSetup.Do(func() {
-			defaultLogger = &SlogLogger{
-				Logger:  slog.Default(),
-				Success: slog.LevelDebug,
-				Error:   slog.LevelError,
-			}
-		})
-		return WithLogger(defaultLogger)(o)
 	}
 }
