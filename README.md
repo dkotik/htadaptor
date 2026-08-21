@@ -1,11 +1,7 @@
 # Hyper Text Adaptors
 
 [![https://pkg.go.dev/github.com/dkotik/htadaptor](https://pkg.go.dev/badge/github.com/dkotik/htadaptor.svg)](https://pkg.go.dev/github.com/dkotik/htadaptor)
-[![https://github.com/dkotik/htadaptor/actions?query=workflow:test](https://github.com/dkotik/htadaptor/workflows/test/badge.svg?branch=main&event=push)](https://github.com/dkotik/htadaptor/actions?query=workflow:test)
-[![https://coveralls.io/github/dkotik/htadaptor](https://coveralls.io/repos/github/dkotik/htadaptor/badge.svg?branch=main)](https://coveralls.io/github/dkotik/htadaptor)
-[![https://goreportcard.com/report/github.com/dkotik/htadaptor](https://goreportcard.com/badge/github.com/dkotik/htadaptor)](https://goreportcard.com/report/github.com/dkotik/htadaptor)
-
-**NB:** Go v1.27 allows generic parameters on in methods, which can simplify this package. It will be simplified in 2026.
+[![https://coveralls.io/github/dkotik/htadaptor](https://coveralls.io/repos/github.com/dkotik/htadaptor/badge.svg?branch=main)](https://coveralls.io/github.com/dkotik/htadaptor)
 
 Package `htadaptor` provides convenient generic domain logic adaptors for HTTP handlers. It eliminates boiler plate code, increases security by enforcing read limits and struct validation, and reduces bugs by providing a more intuitive request data parsing API than the standard library.
 
