@@ -7,8 +7,28 @@ import (
 	"net/http"
 )
 
+// AdaptVoidFunc creates a new adaptor for a
+// function that takes a decoded request and returns nothing.
+func (a *Adaptor) AdaptVoidFunc[T any, V *T](
+	domainCall func(context.Context, V) error,
+) http.Handler {
+	a.panicIfUninitialized()
+	if domainCall == nil {
+		panic("nil domain call")
+	}
+	return &VoidFuncAdaptor[T, V]{
+		domainCall: domainCall,
+		// statusCode:   a.statusCode,
+		// encoder:      a.encoder,
+		decoder:      a.decoder,
+		errorHandler: a.errorHandler,
+	}
+}
+
 // NewVoidFuncAdaptor creates a new adaptor for a
 // function that takes a decoded request and returns nothing.
+//
+// DEPRECATED: Use [Adaptor.AdaptVoidFunc] instead.
 func NewVoidFuncAdaptor[T any, V *T](
 	domainCall func(context.Context, V) error,
 	withOptions ...Option,

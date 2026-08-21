@@ -36,16 +36,22 @@ func main() {
 	defer l.Close()
 
 	mux := http.NewServeMux()
-	mux.Handle("/test/header", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
+	adaptor, err := htadaptor.New(
+		htadaptor.WithHeaderValues("UUID"),
+	)
+	if err != nil {
+		panic(err)
+	}
+	mux.Handle(
+		"/test/header",
+		adaptor.AdaptFunc(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
 				return &testResponse{
 					Value: r.UUID,
 				}, nil
 			},
-			htadaptor.WithHeaderValues("UUID"),
 		),
-	))
+	)
 
 	fmt.Printf(
 		`Listening at http://%[1]s/

@@ -19,15 +19,19 @@ var nullaryCases = []testCaseJSON[testResponse]{
 
 func TestNullaryRequest(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.Handle("/test/nullary", htadaptor.Must(
-		htadaptor.NewNullaryFuncAdaptor(
+	adaptor, err := htadaptor.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	mux.Handle("/test/nullary",
+		adaptor.AdaptNullaryFunc(
 			func(ctx context.Context) (*testResponse, error) {
 				return &testResponse{
 					Value: "testUUID",
 				}, nil
 			},
 		),
-	))
+	)
 
 	runCasesJSON(t, mux, nullaryCases)
 }

@@ -7,8 +7,27 @@ import (
 	"net/http"
 )
 
+// AdaptNullaryFunc creates a new adaptor for a
+// function that takes no input and returns a struct.
+func (a *Adaptor) AdaptNullaryFunc[O any](
+	domainCall func(context.Context) (O, error),
+) http.Handler {
+	a.panicIfUninitialized()
+	if domainCall == nil {
+		panic("nil domain call")
+	}
+	return &NullaryFuncAdaptor[O]{
+		domainCall:   domainCall,
+		statusCode:   a.statusCode,
+		encoder:      a.encoder,
+		errorHandler: a.errorHandler,
+	}
+}
+
 // NewNullaryFuncAdaptor creates a new adaptor for a
 // function that takes no input and returns a struct.
+//
+// DEPRECATED: Use [Adaptor.AdaptNullaryFunc] instead.
 func NewNullaryFuncAdaptor[O any](
 	domainCall func(context.Context) (O, error),
 	withOptions ...Option,

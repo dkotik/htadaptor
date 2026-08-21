@@ -9,8 +9,32 @@ import (
 	"github.com/dkotik/htadaptor/extract"
 )
 
+// AdaptStringFunc creates a new adaptor for a
+// function that takes a string and returns a struct.
+func (a *Adaptor) AdaptStringFunc[O any](
+	domainCall func(context.Context, string) (O, error),
+	stringExtractor extract.StringValueExtractor,
+) http.Handler {
+	a.panicIfUninitialized()
+	if domainCall == nil {
+		panic("nil domain call")
+	}
+	if stringExtractor == nil {
+		panic("nil string extractor")
+	}
+	return &UnaryStringFuncAdaptor[O]{
+		domainCall:      domainCall,
+		stringExtractor: stringExtractor,
+		statusCode:      a.statusCode,
+		encoder:         a.encoder,
+		errorHandler:    a.errorHandler,
+	}
+}
+
 // NewUnaryStringFuncAdaptor creates a new adaptor for a
 // function that takes a string and returns a struct.
+//
+// DEPRECATED: Use [Adaptor.AdaptStringFunc] instead.
 func NewUnaryStringFuncAdaptor[O any](
 	domainCall func(context.Context, string) (O, error),
 	stringExtractor extract.StringValueExtractor,

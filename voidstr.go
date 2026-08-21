@@ -9,8 +9,30 @@ import (
 	"github.com/dkotik/htadaptor/extract"
 )
 
+// AdaptStringFunc creates a new adaptor for a
+// function that takes a string and returns nothing.
+func (a *Adaptor) AdaptVoidStringFunc(
+	domainCall func(context.Context, string) error,
+	stringExtractor extract.StringValueExtractor,
+) http.Handler {
+	a.panicIfUninitialized()
+	if domainCall == nil {
+		panic("nil domain call")
+	}
+	if stringExtractor == nil {
+		panic("nil string extractor")
+	}
+	return &VoidStringFuncAdaptor{
+		domainCall:      domainCall,
+		stringExtractor: stringExtractor,
+		errorHandler:    a.errorHandler,
+	}
+}
+
 // NewVoidStringFuncAdaptor creates a new adaptor for a
 // function that takes a string and returns nothing.
+//
+// DEPRECATED: Use [Adaptor.AdaptVoidStringFunc] instead.
 func NewVoidStringFuncAdaptor(
 	domainCall func(context.Context, string) error,
 	stringExtractor extract.StringValueExtractor,

@@ -29,13 +29,17 @@ var voidErrorCases = []testCaseJSON[errorResponse]{
 
 func TestVoidRequest(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.Handle("/test/void", htadaptor.Must(
-		htadaptor.NewVoidFuncAdaptor(
+	adaptor, err := htadaptor.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	mux.Handle("/test/void",
+		adaptor.AdaptVoidFunc(
 			func(ctx context.Context, r *testRequest) error {
 				return nil
 			},
 		),
-	))
+	)
 
 	runCasesJSON(t, mux, voidCases)
 	runCasesJSON(t, mux, voidErrorCases)

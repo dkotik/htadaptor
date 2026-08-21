@@ -7,8 +7,28 @@ import (
 	"net/http"
 )
 
+// AdaptFunc creates a new adaptor for a
+// function that takes a validatable struct and returns a struct.
+func (a *Adaptor) AdaptFunc[T any, V *T, O any](
+	domainCall func(context.Context, V) (O, error),
+) http.Handler {
+	a.panicIfUninitialized()
+	if domainCall == nil {
+		panic("nil domain call")
+	}
+	return &UnaryFuncAdaptor[T, V, O]{
+		domainCall:   domainCall,
+		statusCode:   a.statusCode,
+		encoder:      a.encoder,
+		decoder:      a.decoder,
+		errorHandler: a.errorHandler,
+	}
+}
+
 // NewUnaryFuncAdaptor creates a new adaptor for a
 // function that takes a validatable struct and returns a struct.
+//
+// DEPRECATED: Use [Adaptor.AdaptFunc] instead.
 func NewUnaryFuncAdaptor[T any, V *T, O any](
 	domainCall func(context.Context, V) (O, error),
 	withOptions ...Option,
@@ -66,7 +86,6 @@ func (a *UnaryFuncAdaptor[T, V, O]) executeDomainCall(
 	r *http.Request,
 ) (err error) {
 	var request V = new(T)
-	// request := new(V)
 	if err = a.decoder.Decode(request, r); err != nil {
 		return NewDecodingError(err)
 	}

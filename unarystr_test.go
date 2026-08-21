@@ -28,8 +28,12 @@ var unaryStringCases = []testCaseJSON[testResponse]{
 
 func TestUnaryStringRequest(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.Handle("/test/unarystr", htadaptor.Must(
-		htadaptor.NewUnaryStringFuncAdaptor(
+	adaptor, err := htadaptor.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	mux.Handle("/test/unarystr",
+		adaptor.AdaptStringFunc(
 			func(ctx context.Context, s string) (*testResponse, error) {
 				return &testResponse{
 					Value: s,
@@ -41,7 +45,7 @@ func TestUnaryStringRequest(t *testing.T) {
 				},
 			),
 		),
-	))
+	)
 
 	runCasesJSON(t, mux, unaryStringCases)
 	// runCasesJSON(t, mux, unaryStringErrorCases)

@@ -28,16 +28,30 @@ var unaryErrorCases = []testCaseJSON[errorResponse]{
 }
 
 func TestUnaryRequest(t *testing.T) {
+	// t.Skip("decoder behaves strangely")
 	mux := http.NewServeMux()
-	mux.Handle("/test/unary", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
-			func(ctx context.Context, r *testRequest) (*testResponse, error) {
-				return &testResponse{
+	adaptor, err := htadaptor.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	mux.Handle("/test/unary",
+		adaptor.AdaptFunc(
+			func(ctx context.Context, r *testRequest) (testResponse, error) {
+				return testResponse{
 					Value: r.UUID,
 				}, nil
 			},
 		),
-	))
+	)
+	// mux.Handle("/test/unary/value",
+	// 	adaptor.AdaptFunc(
+	// 		func(ctx context.Context, r testRequest) (testResponse, error) {
+	// 			return testResponse{
+	// 				Value: r.UUID,
+	// 			}, nil
+	// 		},
+	// 	),
+	// )
 
 	runCasesJSON(t, mux, unaryCases)
 	runCasesJSON(t, mux, unaryErrorCases)

@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"reflect"
 )
 
 // Validatable constrains a domain request. Validation errors are
@@ -99,4 +100,76 @@ func ApplyMiddleware(h http.Handler, mws ...Middleware) http.Handler {
 		h = mws[i](h)
 	}
 	return h
+}
+
+type Adaptor struct {
+	statusCode   int
+	decoder      Decoder
+	encoder      Encoder
+	errorHandler ErrorHandler
+}
+
+func (a *Adaptor) panicIfUninitialized() {
+	if a == nil || a.statusCode == 0 {
+		panic("generic hyper text adaptor is not initialized with New() function")
+	}
+}
+
+// New initializes a generic hyper text [Adaptor] with the given options.
+func New(withOptions ...Option) (*Adaptor, error) {
+	o := &options{}
+	err := WithOptions(append(
+		withOptions,
+		WithDefaultStatusCode(),
+		func(o *options) (err error) {
+			if o.Encoder == nil {
+				if err = WithDefaultEncoder()(o); err != nil {
+					return err
+				}
+			}
+			if o.Decoder == nil && len(o.DecoderOptions) == 0 {
+				if err = WithDefaultDecoder()(o); err != nil {
+					return err
+				}
+			}
+			if o.ErrorHandler == nil {
+				if err = WithDefaultErrorHandler()(o); err != nil {
+					return err
+				}
+			}
+			if err = o.Validate(); err != nil {
+				return err
+			}
+			return nil
+		},
+	)...)(o)
+	if err != nil {
+		return nil, err
+	}
+	return &Adaptor{
+		statusCode:   o.StatusCode,
+		decoder:      o.Decoder,
+		encoder:      o.Encoder,
+		errorHandler: o.ErrorHandler,
+	}, nil
+}
+
+func ensureValuePointer(v any) any {
+	rv := reflect.ValueOf(v)
+
+	// If it is already a pointer, return it as-is
+	if rv.Kind() == reflect.Ptr {
+		return v
+	}
+
+	// If it's not a pointer, create a new pointer and populate it
+	// ptr := reflect.New(rv.Type())
+	// ptr.Elem().Set(rv)
+	// return ptr.Interface()
+	return reflect.PointerTo(rv.Type())
+}
+
+func isPointer(v any) bool {
+	rv := reflect.ValueOf(v)
+	return rv.Kind() == reflect.Ptr
 }

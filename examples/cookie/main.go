@@ -35,17 +35,23 @@ func main() {
 	}
 	defer l.Close()
 
+	adaptor, err := htadaptor.New(
+		htadaptor.WithCookieValues("UUID"),
+	)
+	if err != nil {
+		panic(err)
+	}
 	mux := http.NewServeMux()
-	mux.Handle("/test/cookie", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
+	mux.Handle(
+		"/test/cookie",
+		adaptor.AdaptFunc(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
 				return &testResponse{
 					Value: r.UUID,
 				}, nil
 			},
-			htadaptor.WithCookieValues("UUID"),
 		),
-	))
+	)
 
 	fmt.Printf(
 		`Listening at http://%[1]s/

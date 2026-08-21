@@ -34,16 +34,22 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/test/htmx", htadaptor.Must(
-		htadaptor.NewNullaryFuncAdaptor(
+	adaptor, err := htadaptor.New(
+		htadaptor.WithTemplate(greetingTemplate),
+	)
+	if err != nil {
+		panic(err)
+	}
+	mux.Handle(
+		"/test/htmx",
+		adaptor.AdaptNullaryFunc(
 			func(ctx context.Context) (*testResponse, error) {
 				return &testResponse{
 					Name: "Guest",
 				}, nil
 			},
-			htadaptor.WithTemplate(greetingTemplate),
 		),
-	))
+	)
 
 	fmt.Printf(
 		`Listening at http://%[1]s/
