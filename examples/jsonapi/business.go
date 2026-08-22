@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"log/slog"
 )
 
 type OrderRequest struct {
@@ -30,6 +28,12 @@ func (o *OnlineStore) Order(ctx context.Context, r *OrderRequest) (bool, error) 
 	if r.Number != 1 {
 		return false, errors.New("order number extracted from URL path must be 1")
 	}
+	if r.Item == "" {
+		return false, errors.New("cannot order an empty item")
+	}
+	if r.Quantity == 0 {
+		return false, errors.New("cannot order zero items")
+	}
 	return true, nil
 }
 
@@ -48,14 +52,4 @@ func (o *OnlineStore) GetPrice(ctx context.Context, item string) (float64, error
 
 func (o *OnlineStore) GetInventory(ctx context.Context) ([]string, error) {
 	return []string{"shirt", "pants", "hat"}, nil
-}
-
-func (o *OnlineStore) Record(ctx context.Context, r *OrderRequest) error {
-	slog.InfoContext(
-		ctx,
-		"received order",
-		slog.String("item", r.Item),
-		slog.Any("quantity", r.Quantity),
-	)
-	return nil
 }

@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/dkotik/htadaptor"
@@ -28,35 +26,25 @@ type testResponse struct {
 	Value string
 }
 
-func main() {
-	l, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
+func newPathHandler() (http.Handler, error) {
 	adaptor := htadaptor.New()
-
-	mux := http.NewServeMux()
-	mux.Handle("/test/{UUID}", htadaptor.Must(
-		adaptor.AdaptFunc(
-			func(ctx context.Context, r *testRequest) (*testResponse, error) {
-				return &testResponse{
-					Value: r.UUID,
-				}, nil
-			},
-			htadaptor.WithPathValues("UUID"),
-		),
-	))
-
-	fmt.Printf(
-		`Listening at http://%[1]s/
-
-    Test URL Path Value Extraction:
-      curl -v http://%[1]s/test/testUUID
-`,
-		l.Addr(),
+	return adaptor.AdaptFunc(
+		func(ctx context.Context, r *testRequest) (*testResponse, error) {
+			return &testResponse{
+				Value: r.UUID,
+			}, nil
+		},
+		htadaptor.WithPathValues("UUID"),
 	)
+}
 
-	http.Serve(l, mux)
+const handlerPath = "/test/{UUID}"
+
+func main() {
+	mux := http.NewServeMux()
+	mux.Handle(
+		handlerPath,
+		htadaptor.Must(newPathHandler()),
+	)
+	http.ListenAndServe(":0", mux)
 }

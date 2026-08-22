@@ -8,7 +8,7 @@ import (
 
 // AdaptVoidFunc creates a new adaptor for a
 // function that takes a decoded request and returns nothing.
-func (a Adaptor) AdaptVoidFunc[T any, V *T](
+func (a Adaptor) AdaptVoidFunc[T any, V Validatable[T]](
 	domainCall func(context.Context, V) error,
 	withOptions ...Option,
 ) (http.Handler, error) {
@@ -30,7 +30,7 @@ func (a Adaptor) AdaptVoidFunc[T any, V *T](
 
 // VoidStringFuncAdaptor calls a domain function with decoded
 // request without returning no response other than an error.
-type VoidFuncAdaptor[T any, V *T] struct {
+type VoidFuncAdaptor[T any, V Validatable[T]] struct {
 	domainCall   func(context.Context, V) error
 	decoder      Decoder
 	errorHandler ErrorHandler
@@ -46,10 +46,8 @@ func (a *VoidFuncAdaptor[T, V]) executeDomainCall(
 	}
 
 	ctx := r.Context()
-	if validatable, ok := any(request).(Validatable); ok {
-		if err = validatable.Validate(ctx); err != nil {
-			return err
-		}
+	if err = request.Validate(ctx); err != nil {
+		return err
 	}
 	if err = a.domainCall(ctx, request); err != nil {
 		return err

@@ -26,20 +26,13 @@ import (
 // retrieved using [LanguageFromContext] inside the validation
 // method and other similar uses.
 //
-// DEPRECATED: will be removed from 1.0 release.
-type Validatable interface {
-	Validate(context.Context) error
-}
-
-/*
-Used this neat trick before to enforce pointer type on Validatable,
-which also made it possible to pass to a Decoder by reference.
-
+// Validatable is a generic interface that requires that the underlying
+// type T is a pointer type. This is enforced by the [*T] constraint and
+// is critical for type reflection to work correctly on struct fields.
 type Validatable[T any] interface {
 	*T
 	Validate(context.Context) error
 }
-*/
 
 type Decoder interface {
 	Decode(any, *http.Request) error

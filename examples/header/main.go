@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/dkotik/htadaptor"
@@ -28,39 +26,27 @@ type testResponse struct {
 	Value string
 }
 
-func main() {
-	l, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
-	mux := http.NewServeMux()
+func newHeaderHandler() (http.Handler, error) {
 	adaptor := htadaptor.New(
 		htadaptor.WithHeaderValues("UUID"),
 	)
 
+	return adaptor.AdaptFunc(
+		func(ctx context.Context, r *testRequest) (*testResponse, error) {
+			return &testResponse{
+				Value: r.UUID,
+			}, nil
+		},
+	)
+}
+
+const handlerPath = "/test/header"
+
+func main() {
+	mux := http.NewServeMux()
 	mux.Handle(
-		"/test/header",
-		htadaptor.Must(
-			adaptor.AdaptFunc(
-				func(ctx context.Context, r *testRequest) (*testResponse, error) {
-					return &testResponse{
-						Value: r.UUID,
-					}, nil
-				},
-			),
-		),
+		handlerPath,
+		htadaptor.Must(newHeaderHandler()),
 	)
-
-	fmt.Printf(
-		`Listening at http://%[1]s/
-
-    Test Header Value Extraction:
-      curl -v -H "UUID: testUUID" http://%[1]s/test/header
-`,
-		l.Addr(),
-	)
-
-	http.Serve(l, mux)
+	http.ListenAndServe(":0", mux)
 }

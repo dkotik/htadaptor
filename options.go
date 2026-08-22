@@ -27,7 +27,7 @@ func WithOptions(withOptions ...Option) Option {
 	return func(o *options) (err error) {
 		for _, option := range withOptions {
 			if option == nil {
-				return errors.New("cannot use a <nil> option")
+				return errors.New("cannot use a <nil> htadaptor option")
 			}
 			if err = option(o); err != nil {
 				return err
@@ -151,6 +151,7 @@ func WithDecoder(d Decoder) Option {
 		if d == nil {
 			return errors.New("cannot use a <nil> decoder")
 		}
+		o.DecoderOptions = nil
 		o.Decoder = d
 		return nil
 	}
@@ -158,6 +159,7 @@ func WithDecoder(d Decoder) Option {
 
 func WithDecoderOptions(withOptions ...reflectd.Option) Option {
 	return func(o *options) error {
+		o.Decoder = nil
 		o.DecoderOptions = append(o.DecoderOptions, withOptions...)
 		return nil
 	}
@@ -227,6 +229,7 @@ func WithPathValues(names ...string) Option {
 	}
 }
 
+// WithSessionValues is a convenience option that adds [reflectd.WithSessionValues] to the decoder options.
 func WithSessionValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithSessionValues(names...))

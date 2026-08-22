@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net"
 	"net/http"
 
 	"github.com/dkotik/htadaptor"
@@ -28,35 +26,25 @@ type testResponse struct {
 	Value string
 }
 
-func main() {
-	l, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
+const handlerPath = "/test/query"
 
+func newQueryHandler() (http.Handler, error) {
 	adaptor := htadaptor.New()
-
-	mux := http.NewServeMux()
-	mux.Handle("/test/query", htadaptor.Must(
-		adaptor.AdaptFunc(
-			func(ctx context.Context, r *testRequest) (*testResponse, error) {
-				return &testResponse{
-					Value: r.UUID,
-				}, nil
-			},
-			htadaptor.WithQueryValues("UUID"),
-		),
-	))
-
-	fmt.Printf(
-		`Listening at http://%[1]s/
-
-    Test URL Query Value Extraction:
-      curl -v "http://%[1]s/test/query?UUID=testUUID"
-`,
-		l.Addr(),
+	return adaptor.AdaptFunc(
+		func(ctx context.Context, r *testRequest) (*testResponse, error) {
+			return &testResponse{
+				Value: r.UUID,
+			}, nil
+		},
+		htadaptor.WithQueryValues("UUID"),
 	)
+}
 
-	http.Serve(l, mux)
+func main() {
+	mux := http.NewServeMux()
+	mux.Handle(
+		handlerPath,
+		htadaptor.Must(newQueryHandler()),
+	)
+	http.ListenAndServe(":0", mux)
 }

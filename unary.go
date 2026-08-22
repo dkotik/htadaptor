@@ -8,7 +8,7 @@ import (
 
 // AdaptFunc creates a new adaptor for a
 // function that takes a validatable struct and returns a struct.
-func (a Adaptor) AdaptFunc[T any, V *T, O any](
+func (a Adaptor) AdaptFunc[T any, V Validatable[T], O any](
 	domainCall func(context.Context, V) (O, error),
 	withOptions ...Option,
 ) (http.Handler, error) {
@@ -31,7 +31,7 @@ func (a Adaptor) AdaptFunc[T any, V *T, O any](
 // UnaryFuncAdaptor extracts a struct from request
 // and calls a domain function with it expecting
 // a struct response.
-type UnaryFuncAdaptor[T any, V *T, O any] struct {
+type UnaryFuncAdaptor[T any, V Validatable[T], O any] struct {
 	domainCall   func(context.Context, V) (O, error)
 	statusCode   int
 	decoder      Decoder
@@ -49,10 +49,8 @@ func (a *UnaryFuncAdaptor[T, V, O]) executeDomainCall(
 	}
 
 	ctx := r.Context()
-	if validatable, ok := any(request).(Validatable); ok {
-		if err = validatable.Validate(ctx); err != nil {
-			return err
-		}
+	if err = request.Validate(ctx); err != nil {
+		return err
 	}
 	response, err := a.domainCall(ctx, request)
 	if err != nil {
