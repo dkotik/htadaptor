@@ -3,58 +3,22 @@ package htadaptor
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
 // AdaptNullaryFunc creates a new adaptor for a
 // function that takes no input and returns a struct.
-func (a *Adaptor) AdaptNullaryFunc[O any](
-	domainCall func(context.Context) (O, error),
-) http.Handler {
-	a.panicIfUninitialized()
-	if domainCall == nil {
-		panic("nil domain call")
-	}
-	return &NullaryFuncAdaptor[O]{
-		domainCall:   domainCall,
-		statusCode:   a.statusCode,
-		encoder:      a.encoder,
-		errorHandler: a.errorHandler,
-	}
-}
-
-// NewNullaryFuncAdaptor creates a new adaptor for a
-// function that takes no input and returns a struct.
-//
-// DEPRECATED: Use [Adaptor.AdaptNullaryFunc] instead.
-func NewNullaryFuncAdaptor[O any](
+func (a Adaptor) AdaptNullaryFunc[O any](
 	domainCall func(context.Context) (O, error),
 	withOptions ...Option,
-) (*NullaryFuncAdaptor[O], error) {
-	o := &options{}
-	err := WithOptions(append(
-		withOptions,
-		WithDefaultStatusCode(),
-		func(o *options) (err error) {
-			if err = o.Validate(); err != nil {
-				return err
-			}
-			if o.Encoder == nil {
-				if err = WithDefaultEncoder()(o); err != nil {
-					return err
-				}
-			}
-			if domainCall == nil {
-				return errors.New("cannot use a <nil> domain call")
-			}
-			return nil
-		},
-	)...)(o)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize nullary adaptor: %w", err)
+) (http.Handler, error) {
+	if domainCall == nil {
+		return nil, errors.New("nil domain call")
 	}
-
+	o, err := a.initialize(withOptions)
+	if err != nil {
+		return nil, err
+	}
 	return &NullaryFuncAdaptor[O]{
 		domainCall:   domainCall,
 		statusCode:   o.StatusCode,

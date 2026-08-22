@@ -34,20 +34,19 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	adaptor, err := htadaptor.New(
-		htadaptor.WithTemplate(greetingTemplate),
-	)
-	if err != nil {
-		panic(err)
-	}
+	adaptor := htadaptor.New()
+
 	mux.Handle(
 		"/test/htmx",
-		adaptor.AdaptNullaryFunc(
-			func(ctx context.Context) (*testResponse, error) {
-				return &testResponse{
-					Name: "Guest",
-				}, nil
-			},
+		htadaptor.Must(
+			adaptor.AdaptNullaryFunc(
+				func(ctx context.Context) (*testResponse, error) {
+					return &testResponse{
+						Name: "Guest",
+					}, nil
+				},
+				htadaptor.WithTemplate(greetingTemplate),
+			),
 		),
 	)
 

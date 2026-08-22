@@ -1,7 +1,6 @@
 # Hyper Text Adaptors
 
 [![https://pkg.go.dev/github.com/dkotik/htadaptor](https://pkg.go.dev/badge/github.com/dkotik/htadaptor.svg)](https://pkg.go.dev/github.com/dkotik/htadaptor)
-[![https://coveralls.io/github/dkotik/htadaptor](https://coveralls.io/repos/github.com/dkotik/htadaptor/badge.svg?branch=main)](https://coveralls.io/github.com/dkotik/htadaptor)
 
 Package `htadaptor` provides convenient generic domain logic adaptors for HTTP handlers. It eliminates boiler plate code, increases security by enforcing read limits and struct validation, and reduces bugs by providing a more intuitive request data parsing API than the standard library.
 
@@ -10,7 +9,7 @@ Package `htadaptor` provides convenient generic domain logic adaptors for HTTP h
 An HTTP request contains at least five various sources of input that your HTTP handlers may consider: URL path, URL query, headers, cookies, and the request body. Much of the code that you have to write manually is wrestling those inputs into a struct. Willem Schots wrote an excellent [explanation here](https://www.willem.dev/articles/generic-http-handlers). `htadaptor` can do all of it for you:
 
 ```go
-myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
+myHandler := htadaptor.Must(htadaptor.New().AdaptFunc(
   // your domain function call
   func(context.Context, *myInputStruct) (*myOutputStruct, error) {
     // ... myInputStruct is passed in already validated
@@ -26,22 +25,22 @@ myHandler := htadaptor.Must(htadaptor.NewUnaryFuncAdaptor(
 ))
 ```
 
-The adaptors address common function signatures of domain logic calls that operate on a request struct and return a response struct with **contextual awareness** all the way through the call stack including the `slog.Logger`:
+The adaptors address common function signatures of domain logic calls that operate on a request struct and return a response struct with **contextual awareness** all the way through the call stack:
 
 <!-- TODO: add FS adaptor -->
 
 | Struct Adaptor | Parameter Values     | Return Values |
 |----------------|----------------------|--------------:|
-| [UnaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewUnaryFuncAdaptor)      | context, inputStruct |    any, error |
-| [NullaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewNullaryFuncAdaptor)    | context              |    any, error |
-| [VoidFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewVoidFuncAdaptor)       | context, inputStruct |         error |
+| [AdaptFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#Adaptor.AdaptFunc)      | context, inputStruct |    any, error |
+| [AdaptNullaryFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#Adaptor.AdaptNullaryFunc)    | context              |    any, error |
+| [AdaptVoidFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#Adaptor.AdaptVoidFunc)       | context, inputStruct |         error |
 
 String adaptors are best when only one request value is needed:
 
 | String Adaptor  | Parameter Values     | Return Values |
 |-----------------|----------------------|--------------:|
-| [UnaryStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewUnaryStringFuncAdaptor) | context, string      |    any, error |
-| [VoidStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#NewVoidStringFuncAdaptor)  | context, string      |         error |
+| [AdaptStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#Adaptor.AdaptStringFunc) | context, string      |    any, error |
+| [AdaptVoidStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#Adaptor.AdaptVoidStringFunc)  | context, string      |         error |
 
 ## Installation
 
@@ -54,7 +53,7 @@ go get github.com/dkotik/htadaptor@latest
 ```go
 mux := http.NewServeMux()
 mux.Handle("/api/v1/order", htadaptor.Must(
-  htadaptor.NewUnaryFuncAdaptor(myService.Order),
+  htadaptor.New().AdaptFunc(myService.Order),
 ))
 ```
 

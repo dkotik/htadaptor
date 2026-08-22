@@ -3,7 +3,6 @@ package htadaptor
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/dkotik/htadaptor/extract"
@@ -11,62 +10,21 @@ import (
 
 // AdaptStringFunc creates a new adaptor for a
 // function that takes a string and returns a struct.
-func (a *Adaptor) AdaptStringFunc[O any](
-	domainCall func(context.Context, string) (O, error),
-	stringExtractor extract.StringValueExtractor,
-) http.Handler {
-	a.panicIfUninitialized()
-	if domainCall == nil {
-		panic("nil domain call")
-	}
-	if stringExtractor == nil {
-		panic("nil string extractor")
-	}
-	return &UnaryStringFuncAdaptor[O]{
-		domainCall:      domainCall,
-		stringExtractor: stringExtractor,
-		statusCode:      a.statusCode,
-		encoder:         a.encoder,
-		errorHandler:    a.errorHandler,
-	}
-}
-
-// NewUnaryStringFuncAdaptor creates a new adaptor for a
-// function that takes a string and returns a struct.
-//
-// DEPRECATED: Use [Adaptor.AdaptStringFunc] instead.
-func NewUnaryStringFuncAdaptor[O any](
+func (a Adaptor) AdaptStringFunc[O any](
 	domainCall func(context.Context, string) (O, error),
 	stringExtractor extract.StringValueExtractor,
 	withOptions ...Option,
-) (*UnaryStringFuncAdaptor[O], error) {
-	o := &options{}
-	err := WithOptions(append(
-		withOptions,
-		WithDefaultStatusCode(),
-		func(o *options) (err error) {
-			if err = o.Validate(); err != nil {
-				return err
-			}
-
-			if o.Encoder == nil {
-				if err = WithDefaultEncoder()(o); err != nil {
-					return err
-				}
-			}
-			if domainCall == nil {
-				return errors.New("cannot use a <nil> domain call")
-			}
-			if stringExtractor == nil {
-				return errors.New("cannot use a <nil> string value extractor")
-			}
-			return nil
-		},
-	)...)(o)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize unary adaptor: %w", err)
+) (http.Handler, error) {
+	if domainCall == nil {
+		return nil, errors.New("nil domain call")
 	}
-
+	if stringExtractor == nil {
+		return nil, errors.New("nil string extractor")
+	}
+	o, err := a.initialize(withOptions)
+	if err != nil {
+		return nil, err
+	}
 	return &UnaryStringFuncAdaptor[O]{
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,

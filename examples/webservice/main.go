@@ -28,17 +28,19 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
+	adaptor := htadaptor.New()
+
 	domainLogic := &OnlineStore{}
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/order/{number}", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
+		adaptor.AdaptFunc(
 			domainLogic.Order,
 			htadaptor.WithPathValues("number"),
 		),
 	))
 
 	mux.Handle("/api/v1/price", htadaptor.Must(
-		htadaptor.NewUnaryStringFuncAdaptor(
+		adaptor.AdaptStringFunc(
 			domainLogic.GetPrice,
 			extract.StringValueExtractorFunc(
 				func(r *http.Request) (string, error) {
@@ -50,11 +52,11 @@ func main() {
 	))
 
 	mux.Handle("/api/v1/inventory", htadaptor.Must(
-		htadaptor.NewNullaryFuncAdaptor(domainLogic.GetInventory),
+		adaptor.AdaptNullaryFunc(domainLogic.GetInventory),
 	))
 
 	mux.Handle("/api/v1/record", htadaptor.Must(
-		htadaptor.NewVoidFuncAdaptor(domainLogic.Record),
+		adaptor.AdaptVoidFunc(domainLogic.Record),
 	))
 
 	fmt.Printf(

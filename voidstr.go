@@ -3,7 +3,6 @@ package htadaptor
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/dkotik/htadaptor/extract"
@@ -11,53 +10,21 @@ import (
 
 // AdaptStringFunc creates a new adaptor for a
 // function that takes a string and returns nothing.
-func (a *Adaptor) AdaptVoidStringFunc(
-	domainCall func(context.Context, string) error,
-	stringExtractor extract.StringValueExtractor,
-) http.Handler {
-	a.panicIfUninitialized()
-	if domainCall == nil {
-		panic("nil domain call")
-	}
-	if stringExtractor == nil {
-		panic("nil string extractor")
-	}
-	return &VoidStringFuncAdaptor{
-		domainCall:      domainCall,
-		stringExtractor: stringExtractor,
-		errorHandler:    a.errorHandler,
-	}
-}
-
-// NewVoidStringFuncAdaptor creates a new adaptor for a
-// function that takes a string and returns nothing.
-//
-// DEPRECATED: Use [Adaptor.AdaptVoidStringFunc] instead.
-func NewVoidStringFuncAdaptor(
+func (a Adaptor) AdaptVoidStringFunc(
 	domainCall func(context.Context, string) error,
 	stringExtractor extract.StringValueExtractor,
 	withOptions ...Option,
-) (*VoidStringFuncAdaptor, error) {
-	o := &options{}
-	err := WithOptions(append(
-		withOptions,
-		func(o *options) (err error) {
-			if err = o.Validate(); err != nil {
-				return err
-			}
-			if domainCall == nil {
-				return errors.New("cannot use a <nil> domain call")
-			}
-			if stringExtractor == nil {
-				return errors.New("cannot use a <nil> string value extractor")
-			}
-			return nil
-		},
-	)...)(o)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize void adaptor: %w", err)
+) (http.Handler, error) {
+	if domainCall == nil {
+		return nil, errors.New("nil domain call")
 	}
-
+	if stringExtractor == nil {
+		return nil, errors.New("nil string extractor")
+	}
+	o, err := a.initialize(withOptions)
+	if err != nil {
+		return nil, err
+	}
 	return &VoidStringFuncAdaptor{
 		domainCall:      domainCall,
 		stringExtractor: stringExtractor,

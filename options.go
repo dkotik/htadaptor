@@ -13,33 +13,12 @@ import (
 	"github.com/dkotik/htadaptor/reflectd"
 )
 
-// TODO: use Option interface that applies to various options structs?
-// TODO: put StringExtractor into common options to remove it as
-// parameter from unarystr.go and voidstr.go
-// TODO: allow options to overwrite previous sets? or use
-// WithDecoderOverride... option set to make override explicit?
 type options struct {
 	Decoder        Decoder
 	DecoderOptions []reflectd.Option
 	Encoder        Encoder
 	StatusCode     int
 	ErrorHandler   ErrorHandler
-}
-
-func (o *options) Validate() (err error) {
-	if len(o.DecoderOptions) > 0 {
-		if o.Decoder != nil {
-			return fmt.Errorf("option WithDecoder conflicts with %d decoder options; provide either a prepared decoder or options for preparing one, but not both", len(o.DecoderOptions))
-		}
-		o.Decoder, err = reflectd.NewDecoder(o.DecoderOptions...)
-		if err != nil {
-			return err
-		}
-	}
-	return WithOptions(
-		WithDefaultEncoder(),
-		WithDefaultErrorHandler(),
-	)(o)
 }
 
 type Option func(*options) error
@@ -58,22 +37,25 @@ func WithOptions(withOptions ...Option) Option {
 	}
 }
 
+// WithEncoder sets the response encoder for the handler.
+// It is often a template-based encoder such as [NewTemplateEncoder]
+// or an API view such as [JSONEncoder].
+//
+// This option overrides any previously set encoder.
 func WithEncoder(e Encoder) Option {
 	return func(o *options) error {
 		if e == nil {
 			return errors.New("cannot use a <nil> response encoder")
-		}
-		if o.Encoder != nil {
-			return errors.New("response encoder is already set")
 		}
 		o.Encoder = e
 		return nil
 	}
 }
 
-// WithStatusCode applies [NewStatusCodeEncoder] to the
-// handler encoder to override the default [http.StatusOK]
-// success code.
+// WithStatusCode applies HTTP status code to the
+// encoder set using [WithEncoder] option to override the
+// default [http.StatusOK] success code or any previously set
+// value.
 func WithStatusCode(statusCode int) Option {
 	return func(o *options) error {
 		if statusCode < 1 {
@@ -88,15 +70,10 @@ func WithStatusCode(statusCode int) Option {
 	}
 }
 
-func WithDefaultStatusCode() Option {
-	return func(o *options) error {
-		if o.StatusCode < 1 {
-			o.StatusCode = http.StatusOK
-		}
-		return nil
-	}
-}
-
+// WithTemplate is a convenient version of [WithEncoder] option that
+// applies [NewTemplateEncoder] to the given template.
+//
+// This option overrides any previously set encoder.
 func WithTemplate(t *template.Template) Option {
 	return func(o *options) error {
 		if t == nil {
@@ -119,9 +96,6 @@ func WithErrorHandler(h ErrorHandler) Option {
 	return func(o *options) error {
 		if h == nil {
 			return errors.New("cannot use a <nil> error handler")
-		}
-		if o.ErrorHandler != nil {
-			return errors.New("error handler is already set")
 		}
 		o.ErrorHandler = h
 		return nil
@@ -176,9 +150,6 @@ func WithDecoder(d Decoder) Option {
 	return func(o *options) error {
 		if d == nil {
 			return errors.New("cannot use a <nil> decoder")
-		}
-		if o.Decoder != nil {
-			return errors.New("decoder is already set")
 		}
 		o.Decoder = d
 		return nil

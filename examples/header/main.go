@@ -36,20 +36,20 @@ func main() {
 	defer l.Close()
 
 	mux := http.NewServeMux()
-	adaptor, err := htadaptor.New(
+	adaptor := htadaptor.New(
 		htadaptor.WithHeaderValues("UUID"),
 	)
-	if err != nil {
-		panic(err)
-	}
+
 	mux.Handle(
 		"/test/header",
-		adaptor.AdaptFunc(
-			func(ctx context.Context, r *testRequest) (*testResponse, error) {
-				return &testResponse{
-					Value: r.UUID,
-				}, nil
-			},
+		htadaptor.Must(
+			adaptor.AdaptFunc(
+				func(ctx context.Context, r *testRequest) (*testResponse, error) {
+					return &testResponse{
+						Value: r.UUID,
+					}, nil
+				},
+			),
 		),
 	)
 

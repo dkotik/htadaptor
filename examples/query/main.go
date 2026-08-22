@@ -35,9 +35,11 @@ func main() {
 	}
 	defer l.Close()
 
+	adaptor := htadaptor.New()
+
 	mux := http.NewServeMux()
 	mux.Handle("/test/query", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
+		adaptor.AdaptFunc(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
 				return &testResponse{
 					Value: r.UUID,

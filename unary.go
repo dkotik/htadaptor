@@ -3,69 +3,27 @@ package htadaptor
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
 // AdaptFunc creates a new adaptor for a
 // function that takes a validatable struct and returns a struct.
-func (a *Adaptor) AdaptFunc[T any, V *T, O any](
-	domainCall func(context.Context, V) (O, error),
-) http.Handler {
-	a.panicIfUninitialized()
-	if domainCall == nil {
-		panic("nil domain call")
-	}
-	return &UnaryFuncAdaptor[T, V, O]{
-		domainCall:   domainCall,
-		statusCode:   a.statusCode,
-		encoder:      a.encoder,
-		decoder:      a.decoder,
-		errorHandler: a.errorHandler,
-	}
-}
-
-// NewUnaryFuncAdaptor creates a new adaptor for a
-// function that takes a validatable struct and returns a struct.
-//
-// DEPRECATED: Use [Adaptor.AdaptFunc] instead.
-func NewUnaryFuncAdaptor[T any, V *T, O any](
+func (a Adaptor) AdaptFunc[T any, V *T, O any](
 	domainCall func(context.Context, V) (O, error),
 	withOptions ...Option,
-) (*UnaryFuncAdaptor[T, V, O], error) {
-	o := &options{}
-	err := WithOptions(append(
-		withOptions,
-		WithDefaultStatusCode(),
-		func(o *options) (err error) {
-			if err = o.Validate(); err != nil {
-				return err
-			}
-			if o.Encoder == nil {
-				if err = WithDefaultEncoder()(o); err != nil {
-					return err
-				}
-			}
-			if o.Decoder == nil {
-				if err = WithDefaultDecoder()(o); err != nil {
-					return err
-				}
-			}
-			if domainCall == nil {
-				return errors.New("cannot use a <nil> domain call")
-			}
-			return nil
-		},
-	)...)(o)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize unary adaptor: %w", err)
+) (http.Handler, error) {
+	if domainCall == nil {
+		return nil, errors.New("nil domain call")
 	}
-
+	o, err := a.initialize(withOptions)
+	if err != nil {
+		return nil, err
+	}
 	return &UnaryFuncAdaptor[T, V, O]{
 		domainCall:   domainCall,
 		statusCode:   o.StatusCode,
-		decoder:      o.Decoder,
 		encoder:      o.Encoder,
+		decoder:      o.Decoder,
 		errorHandler: o.ErrorHandler,
 	}, nil
 }

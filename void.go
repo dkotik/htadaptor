@@ -3,60 +3,26 @@ package htadaptor
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
 // AdaptVoidFunc creates a new adaptor for a
 // function that takes a decoded request and returns nothing.
-func (a *Adaptor) AdaptVoidFunc[T any, V *T](
+func (a Adaptor) AdaptVoidFunc[T any, V *T](
 	domainCall func(context.Context, V) error,
-) http.Handler {
-	a.panicIfUninitialized()
+	withOptions ...Option,
+) (http.Handler, error) {
 	if domainCall == nil {
-		panic("nil domain call")
+		return nil, errors.New("nil domain call")
+	}
+	o, err := a.initialize(withOptions)
+	if err != nil {
+		return nil, err
 	}
 	return &VoidFuncAdaptor[T, V]{
 		domainCall: domainCall,
 		// statusCode:   a.statusCode,
 		// encoder:      a.encoder,
-		decoder:      a.decoder,
-		errorHandler: a.errorHandler,
-	}
-}
-
-// NewVoidFuncAdaptor creates a new adaptor for a
-// function that takes a decoded request and returns nothing.
-//
-// DEPRECATED: Use [Adaptor.AdaptVoidFunc] instead.
-func NewVoidFuncAdaptor[T any, V *T](
-	domainCall func(context.Context, V) error,
-	withOptions ...Option,
-) (*VoidFuncAdaptor[T, V], error) {
-	o := &options{}
-	err := WithOptions(append(
-		withOptions,
-		func(o *options) (err error) {
-			if err = o.Validate(); err != nil {
-				return err
-			}
-			if o.Decoder == nil {
-				if err = WithDefaultDecoder()(o); err != nil {
-					return err
-				}
-			}
-			if domainCall == nil {
-				return errors.New("cannot use a <nil> domain call")
-			}
-			return nil
-		},
-	)...)(o)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize void adaptor: %w", err)
-	}
-
-	return &VoidFuncAdaptor[T, V]{
-		domainCall:   domainCall,
 		decoder:      o.Decoder,
 		errorHandler: o.ErrorHandler,
 	}, nil

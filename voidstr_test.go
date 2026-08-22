@@ -28,19 +28,18 @@ var voidStringCases = []testCaseJSON[testResponse]{
 
 func TestVoidStringRequest(t *testing.T) {
 	mux := http.NewServeMux()
-	adaptor, err := htadaptor.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	mux.Handle("/test/voidstr",
-		adaptor.AdaptVoidStringFunc(
-			func(ctx context.Context, s string) error {
-				return nil
-			},
-			extract.StringValueExtractorFunc(
-				func(r *http.Request) (string, error) {
-					return "test string", nil
+	mux.Handle(
+		"/test/voidstr",
+		htadaptor.Must(
+			htadaptor.New().AdaptVoidStringFunc(
+				func(ctx context.Context, s string) error {
+					return nil
 				},
+				extract.StringValueExtractorFunc(
+					func(r *http.Request) (string, error) {
+						return "test string", nil
+					},
+				),
 			),
 		),
 	)

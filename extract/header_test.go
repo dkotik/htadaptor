@@ -12,7 +12,7 @@ import (
 func TestHeaderValue(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/test/header", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
+		htadaptor.New().AdaptFunc(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
 				if r.SomeValue != "test value" {
 					t.Fatal("request header with dash failed to decode in request")

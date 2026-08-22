@@ -12,7 +12,7 @@ import (
 func TestURLPathValue(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/test/{UUID}", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
+		htadaptor.New().AdaptFunc(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
 				return &testResponse{
 					Value: r.UUID,

@@ -12,9 +12,12 @@ package htadaptor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"reflect"
+
+	"github.com/dkotik/htadaptor/reflectd"
 )
 
 // Validatable constrains a domain request. Validation errors are
@@ -103,33 +106,34 @@ func ApplyMiddleware(h http.Handler, mws ...Middleware) http.Handler {
 }
 
 type Adaptor struct {
-	statusCode   int
-	decoder      Decoder
-	encoder      Encoder
-	errorHandler ErrorHandler
+	options []Option
 }
 
-func (a *Adaptor) panicIfUninitialized() {
-	if a == nil || a.statusCode == 0 {
-		panic("generic hyper text adaptor is not initialized with New() function")
+func (a Adaptor) initialize(withOptions []Option) (o *options, err error) {
+	o = &options{
+		StatusCode: http.StatusOK,
 	}
-}
-
-// New initializes a generic hyper text [Adaptor] with the given options.
-func New(withOptions ...Option) (*Adaptor, error) {
-	o := &options{}
-	err := WithOptions(append(
+	if err = WithOptions(a.options...)(o); err != nil {
+		return o, fmt.Errorf("invalid core option: %w", err)
+	}
+	err = WithOptions(append(
 		withOptions,
-		WithDefaultStatusCode(),
 		func(o *options) (err error) {
 			if o.Encoder == nil {
 				if err = WithDefaultEncoder()(o); err != nil {
 					return err
 				}
 			}
-			if o.Decoder == nil && len(o.DecoderOptions) == 0 {
-				if err = WithDefaultDecoder()(o); err != nil {
-					return err
+			if o.Decoder == nil {
+				if len(o.DecoderOptions) == 0 {
+					if err = WithDefaultDecoder()(o); err != nil {
+						return err
+					}
+				} else {
+					o.Decoder, err = reflectd.NewDecoder(o.DecoderOptions...)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			if o.ErrorHandler == nil {
@@ -137,21 +141,18 @@ func New(withOptions ...Option) (*Adaptor, error) {
 					return err
 				}
 			}
-			if err = o.Validate(); err != nil {
-				return err
-			}
 			return nil
 		},
 	)...)(o)
-	if err != nil {
-		return nil, err
+	return o, err
+}
+
+// New initializes a generic hyper text [Adaptor] with the given options
+// that are used as the default options for the adapted domain calls.
+func New(withOptions ...Option) Adaptor {
+	return Adaptor{
+		options: withOptions,
 	}
-	return &Adaptor{
-		statusCode:   o.StatusCode,
-		decoder:      o.Decoder,
-		encoder:      o.Encoder,
-		errorHandler: o.ErrorHandler,
-	}, nil
 }
 
 func ensureValuePointer(v any) any {

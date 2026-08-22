@@ -12,7 +12,7 @@ import (
 func TestQueryValue(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/test/query", htadaptor.Must(
-		htadaptor.NewUnaryFuncAdaptor(
+		htadaptor.New().AdaptFunc(
 			func(ctx context.Context, r *testRequest) (*testResponse, error) {
 				return &testResponse{
 					Value: r.UUID,

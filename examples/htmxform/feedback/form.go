@@ -86,7 +86,9 @@ func New(sender Sender) (get, post http.Handler, err error) {
 		return nil, nil, errors.New("cannot use a <nil> feedback sender")
 	}
 
-	get, err = htadaptor.NewNullaryFuncAdaptor(
+	adaptor := htadaptor.New()
+
+	get, err = adaptor.AdaptNullaryFunc(
 		func(ctx context.Context) (*formResponse, error) {
 			// localizer is passed through context using
 			// acceptlanguage middleware all the same
@@ -104,7 +106,7 @@ func New(sender Sender) (get, post http.Handler, err error) {
 		return nil, nil, fmt.Errorf("unable to create get handler: %w", err)
 	}
 
-	post, err = htadaptor.NewUnaryFuncAdaptor(
+	post, err = adaptor.AdaptFunc(
 		func(ctx context.Context, r *formRequest) (*formResponse, error) {
 			// localizer is passed through context using
 			// acceptlanguage middleware

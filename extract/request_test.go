@@ -55,7 +55,7 @@ func TestRawRequestValues(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/test/raw", htadaptor.Must(
-		htadaptor.NewVoidFuncAdaptor(
+		htadaptor.New().AdaptVoidFunc(
 			func(ctx context.Context, r *rawRequest) error {
 				return nil
 			},
