@@ -1,0 +1,92 @@
+{{ define `page` }}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ .Title }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  </head>
+  <body>
+    {{ template `form` . }}
+  </body>
+</html>
+{{ end }}
+
+{{ define "input" }}
+<div class="field">
+  <label for="{{ .Name }}" class="label">
+    {{ .Label }}{{ if .Required }} &nbsp;*{{ end }}
+  </label>
+  <input
+    type="{{ .Type }}"
+    name="{{ .Name }}"
+    class="input"
+    value="{{ .Value }}"
+    hx-patch=""
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  />
+</div>
+{{ end }}
+
+{{ define "textarea" }}
+<div class="field">
+  <label for="{{ .Name }}" class="label">
+    {{ .Label }}{{ if .Required }} &nbsp;*{{ end }}
+  </label>
+  <textarea
+    name="{{ .Name }}"
+    class="input"
+    hx-patch=""
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  >{{ .Value }}</textarea>
+</div>
+{{ end }}
+
+{{ define `form` }}
+{{ if .Sent }}
+  <h1>Success!</h1>
+  <p>[{{ .Message.Value }}]</p>
+  <p>{{ .Sent }}</p>
+{{ else }}
+<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="">
+  <fieldset style="white-space: pre;">
+    <div class="field">
+      <label for="name" class="label">{{ .NameLabel }} &nbsp;*</label>
+      <input
+        type="text"
+        name="name"
+        class="input"
+        value="{{ .Letter.Name }}"
+        hx-patch=""
+        hx-trigger="blur, keyup changed delay:400ms"
+        hx-target="closest .field"
+        hx-swap="outerHTML"
+      >
+    </div>
+
+    <label for="email">{{ .EmailLabel }} &nbsp;*</label>
+    <input type="text" name="email" value="{{ .Letter.Email }}">
+
+    <label for="phone">{{ .PhoneLabel }}</label>
+    <input type="text" name="phone" value="{{ .Letter.Phone }}">
+
+    <label for="message">{{ .MessageLabel }} &nbsp;*</label>
+    <textarea name="message" style="min-height: 6rem;">{{ .Letter.Message }}</textarea>
+
+    {{- with .Error -}}
+      <p style="color: red;">{{.}}</p>
+    {{- end -}}
+
+    <p><button type="submit">{{ .SendLabel }}</button></p>
+  </fieldset>
+</form>
+{{ end }}
+{{ end }}
+
+{{ define `validationFailed` }}
+  <p>Validation failed: {{ .Error }}.</p>
+{{ end }}

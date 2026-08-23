@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/dkotik/htadaptor/extract"
 )
 
 // MethodSwitch provides method selections for [NewMethodMux].
@@ -133,4 +135,24 @@ func (m *getPostMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusMethodNotAllowed)
 	_, _ = io.WriteString(w, http.StatusText(http.StatusMethodNotAllowed))
+}
+
+type htmxSwitch struct {
+	Normal http.Handler
+	HTMX   http.Handler
+}
+
+func NewHTMXSwitch(normal, htmx http.Handler) htmxSwitch {
+	return htmxSwitch{
+		Normal: normal,
+		HTMX:   htmx,
+	}
+}
+
+func (s htmxSwitch) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get(extract.HeaderHTMXRequest) != "" {
+		s.HTMX.ServeHTTP(w, r)
+		return
+	}
+	s.Normal.ServeHTTP(w, r)
 }

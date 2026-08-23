@@ -12,7 +12,7 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-//go:embed form.htmx
+//go:embed form.html
 var htmx string
 
 var templates = template.Must(template.New("htmx").Parse(htmx))

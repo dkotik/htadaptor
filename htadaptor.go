@@ -66,15 +66,37 @@ type templateEncoder struct {
 	*template.Template
 }
 
+func NewTemplateEncoder(t *template.Template) Encoder {
+	return &templateEncoder{t}
+}
+
 func (e *templateEncoder) Encode(w http.ResponseWriter, r *http.Request, code int, v any) error {
 	w.Header().Set("content-type", "text/html; charset=utf-8")
 	w.WriteHeader(code)
 	return e.Template.Execute(w, v)
 }
 
-func NewTemplateEncoder(t *template.Template) Encoder {
-	return &templateEncoder{t}
-}
+// type TemplateMatcher interface {
+// 	MatchTemplate(any) *template.Template
+// }
+
+// type templateMatchingEncoder struct {
+// 	TemplateMatcher
+// }
+
+// func NewTemplateMatchingEncoder(m TemplateMatcher) Encoder {
+// 	return &templateMatchingEncoder{m}
+// }
+
+// func (e *templateMatchingEncoder) Encode(w http.ResponseWriter, r *http.Request, code int, v any) error {
+// 	t := e.MatchTemplate(v)
+// 	if t == nil {
+// 		return fmt.Errorf("no template matched for %v (%T)", v, v)
+// 	}
+// 	w.Header().Set("content-type", "text/html; charset=utf-8")
+// 	w.WriteHeader(code)
+// 	return t.Execute(w, v)
+// }
 
 // Must panics if an [http.Handler] was created with an error.
 func Must(h http.Handler, err error) http.Handler {

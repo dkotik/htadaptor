@@ -15,6 +15,17 @@ var (
 	_ StringValueExtractor  = (multiHeader)(nil)
 )
 
+const (
+	HeaderHTMXBoosted        = "HX-Boosted"
+	HeaderHTMXCurrentURL     = "HX-Current-URL"
+	HeaderHTMXHistoryRestore = "HX-History-Restore-Request"
+	HeaderHTMXPrompt         = "HX-Prompt"
+	HeaderHTMXRequest        = "HX-Request"
+	HeaderHTMXTarget         = "HX-Target"
+	HeaderHTMXTrigger        = "HX-Trigger"
+	HeaderHTMXTriggerName    = "HX-Trigger-Name"
+)
+
 // NewHeaderValueExtractor builds an [Extractor] that pulls
 // out [http.Header] values by name from an [http.Request].
 func NewHeaderValueExtractor(headerNames ...string) (Extractor, error) {
