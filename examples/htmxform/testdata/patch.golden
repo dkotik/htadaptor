@@ -1,0 +1,83 @@
+<div class="field">
+  <label for="name" class="label">
+    Your Name &nbsp;*
+  </label>
+  <input
+    type="text"
+    name="name"
+    class="input"
+    value=""
+    hx-patch=""
+    hx-params="name"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  />
+  
+  
+    <p class="help is-error">Name is required</p>
+  
+</div>
+
+==================
+
+<div class="field">
+  <label for="phone" class="label">
+    Phone Number
+  </label>
+  <input
+    type="phone"
+    name="phone"
+    class="input"
+    value=""
+    hx-patch=""
+    hx-params="phone"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  />
+  
+  
+</div>
+
+==================
+
+<div class="field">
+  <label for="email" class="label">
+    E-mail Address &nbsp;*
+  </label>
+  <input
+    type="email"
+    name="email"
+    class="input"
+    value=""
+    hx-patch=""
+    hx-params="email"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  />
+  
+  
+    <p class="help is-error">Email is required</p>
+  
+</div>
+
+==================
+
+<div class="field">
+  <label for="message" class="label">
+    Message &nbsp;*
+  </label>
+  <textarea
+    name="message"
+    class="input"
+    hx-patch=""
+    hx-params="message"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  ></textarea>
+  
+  
+</div>

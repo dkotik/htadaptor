@@ -2,11 +2,17 @@ package main
 
 import (
 	"context"
+	_ "embed" // for form.html template
 	"errors"
+	"html/template"
+	"net/http"
 
 	"github.com/dkotik/htadaptor"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
+
+//go:embed form.html
+var htmx string
 
 type Letter struct {
 	Name    string
@@ -29,6 +35,7 @@ type ContactForm struct {
 	Email   FormField
 	Message FormField
 	Send    string
+	Sent    string
 }
 
 func (f ContactForm) title() *i18n.LocalizeConfig {
@@ -81,11 +88,12 @@ func (f ContactForm) Get(ctx context.Context) (_ ContactForm, err error) {
 	return f, nil
 }
 
-type Sender func(context.Context, *Letter) error
+type Sender interface {
+	Send(ctx context.Context, l *Letter) error
+}
 
 type PostContactForm struct {
 	ContactForm
-	Sent   string
 	Sender Sender
 }
 
@@ -135,11 +143,51 @@ func (f PostContactForm) Post(ctx context.Context, l *Letter) (_ PostContactForm
 		if err != nil {
 			return f, err
 		}
-		err = f.Sender(ctx, l)
+		err = f.Sender.Send(ctx, l)
 		if err != nil {
 			f.Sent = ""
 			return f, err
 		}
 	}
 	return f, nil
+}
+
+func NewContactForm(s Sender) (http.Handler, error) {
+	tmpl, err := template.New("").Parse(htmx)
+	if err != nil {
+		return nil, err
+	}
+	adaptor := htadaptor.New()
+	get, err := adaptor.AdaptNullaryFunc(
+		func(ctx context.Context) (ContactForm, error) {
+			return ContactForm{}.Get(ctx)
+		},
+		htadaptor.WithTemplate(tmpl.Lookup("page")),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	post, err := adaptor.AdaptFunc(
+		func(ctx context.Context, l *Letter) (PostContactForm, error) {
+			return PostContactForm{Sender: s}.Post(ctx, l)
+		},
+		htadaptor.WithTemplate(tmpl.Lookup("page")),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	validator, err := NewFieldValidator(
+		tmpl.Lookup("input"),
+		tmpl.Lookup("textarea"),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return htadaptor.NewMethodMux(&htadaptor.MethodSwitch{
+		Get:   get,
+		Post:  post,
+		Patch: validator,
+	}), nil
 }

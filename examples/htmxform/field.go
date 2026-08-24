@@ -20,13 +20,6 @@ type FormField struct {
 	IsRequired bool
 }
 
-func (f FormField) IsValid() bool {
-	if f.Error != "" {
-		return false
-	}
-	return true
-}
-
 type fieldValidator struct {
 	Input    *template.Template
 	TextArea *template.Template
@@ -257,6 +250,7 @@ func NewEmailFieldWithValue(lc *i18n.Localizer, v string) (f FormField, err erro
 func NewMessageField(lc *i18n.Localizer) (f FormField, err error) {
 	f.Name = "message"
 	f.Type = "text"
+	f.IsRequired = true
 	f.Label, err = lc.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
 			ID:    "Message",

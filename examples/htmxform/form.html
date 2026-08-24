@@ -1,21 +1,29 @@
-{{ define `page` }}
+{{ define `page` -}}
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
+      integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+      crossorigin="anonymous"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+    >
   </head>
   <body>
-    {{ template `form` . }}
+    <main class="container">
+      {{ template `form` . }}
+    </main>
   </body>
 </html>
 {{ end }}
 
-{{ define "input" }}
+{{ define "input" -}}
 <div class="field">
   <label for="{{ .Name }}" class="label">
-    {{ .Label }}{{ if .Required }} &nbsp;*{{ end }}
+    {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
   </label>
   <input
     type="{{ .Type }}"
@@ -23,28 +31,42 @@
     class="input"
     value="{{ .Value }}"
     hx-patch=""
+    hx-params="{{ .Name }}"
     hx-trigger="blur, keyup changed delay:800ms"
     hx-target="closest .field"
     hx-swap="outerHTML"
   />
+  {{ with .Help }}
+    <p class="help">{{ . }}</p>
+  {{ end }}
+  {{ with .Error }}
+    <p class="help is-error">{{ . }}</p>
+  {{ end }}
 </div>
-{{ end }}
+{{- end }}
 
-{{ define "textarea" }}
+{{ define "textarea" -}}
 <div class="field">
   <label for="{{ .Name }}" class="label">
-    {{ .Label }}{{ if .Required }} &nbsp;*{{ end }}
+    {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
   </label>
   <textarea
     name="{{ .Name }}"
     class="input"
     hx-patch=""
+    hx-params="{{ .Name }}"
     hx-trigger="blur, keyup changed delay:800ms"
     hx-target="closest .field"
     hx-swap="outerHTML"
   >{{ .Value }}</textarea>
+  {{ with .Help }}
+    <p class="help">{{ . }}</p>
+  {{ end }}
+  {{ with .Error }}
+    <p class="help is-error">{{ . }}</p>
+  {{ end }}
 </div>
-{{ end }}
+{{- end }}
 
 {{ define `form` }}
 {{ if .Sent }}
@@ -52,36 +74,13 @@
   <p>[{{ .Message.Value }}]</p>
   <p>{{ .Sent }}</p>
 {{ else }}
-<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="">
+<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form">
   <fieldset style="white-space: pre;">
-    <div class="field">
-      <label for="name" class="label">{{ .NameLabel }} &nbsp;*</label>
-      <input
-        type="text"
-        name="name"
-        class="input"
-        value="{{ .Letter.Name }}"
-        hx-patch=""
-        hx-trigger="blur, keyup changed delay:400ms"
-        hx-target="closest .field"
-        hx-swap="outerHTML"
-      >
-    </div>
-
-    <label for="email">{{ .EmailLabel }} &nbsp;*</label>
-    <input type="text" name="email" value="{{ .Letter.Email }}">
-
-    <label for="phone">{{ .PhoneLabel }}</label>
-    <input type="text" name="phone" value="{{ .Letter.Phone }}">
-
-    <label for="message">{{ .MessageLabel }} &nbsp;*</label>
-    <textarea name="message" style="min-height: 6rem;">{{ .Letter.Message }}</textarea>
-
-    {{- with .Error -}}
-      <p style="color: red;">{{.}}</p>
-    {{- end -}}
-
-    <p><button type="submit">{{ .SendLabel }}</button></p>
+    {{- template "input" .Name -}}
+    {{- template "input" .Email -}}
+    {{- template "input" .Phone -}}
+    {{- template "textarea" .Message -}}
+    <p><button type="submit">{{ .Send }}</button></p>
   </fieldset>
 </form>
 {{ end }}

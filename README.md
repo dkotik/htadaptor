@@ -11,7 +11,6 @@ Package `htadaptor` provides convenient generic domain logic adaptors for HTTP h
 - [ ] Add default memory use limit.
 - [ ] Document that custom decoders are not constrained by read limit and memory limit.
 - [ ] Document every `Option`.
-- [ ] Modernize HTMX form example for Go 1.27 changes.
 - [ ] Add file system adaptor with decoder that can stream files.
 </details>
 

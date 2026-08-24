@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Contact</title>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
+      integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
+      crossorigin="anonymous"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+    >
+  </head>
+  <body>
+    <main class="container">
+      
+
+<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form">
+  <fieldset style="white-space: pre;"><div class="field">
+  <label for="name" class="label">
+    Your Name &nbsp;*
+  </label>
+  <input
+    type="text"
+    name="name"
+    class="input"
+    value=""
+    hx-patch=""
+    hx-params="name"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  />
+  
+  
+</div><div class="field">
+  <label for="email" class="label">
+    E-mail Address &nbsp;*
+  </label>
+  <input
+    type="email"
+    name="email"
+    class="input"
+    value=""
+    hx-patch=""
+    hx-params="email"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  />
+  
+  
+</div><div class="field">
+  <label for="phone" class="label">
+    Phone Number
+  </label>
+  <input
+    type="phone"
+    name="phone"
+    class="input"
+    value=""
+    hx-patch=""
+    hx-params="phone"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  />
+  
+  
+</div><div class="field">
+  <label for="message" class="label">
+    Message &nbsp;*
+  </label>
+  <textarea
+    name="message"
+    class="input"
+    hx-patch=""
+    hx-params="message"
+    hx-trigger="blur, keyup changed delay:800ms"
+    hx-target="closest .field"
+    hx-swap="outerHTML"
+  ></textarea>
+  
+  
+</div><p><button type="submit">Send</button></p>
+  </fieldset>
+</form>
+
+
+    </main>
+  </body>
+</html>

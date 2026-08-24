@@ -19,6 +19,15 @@ github.com/nicksnyder/go-i18n/v2/i18n
 github.com/nicksnyder/go-i18n/v2/i18n/template
 github.com/nicksnyder/go-i18n/v2/internal
 github.com/nicksnyder/go-i18n/v2/internal/plural
+# github.com/pmezard/go-difflib v1.0.0
+## explicit
+github.com/pmezard/go-difflib/difflib
+# github.com/sebdah/goldie/v2 v2.8.0
+## explicit; go 1.12
+github.com/sebdah/goldie/v2
+# github.com/sergi/go-diff v1.0.0
+## explicit
+github.com/sergi/go-diff/diffmatchpatch
 # golang.org/x/text v0.14.0
 ## explicit; go 1.18
 golang.org/x/text/internal/language
