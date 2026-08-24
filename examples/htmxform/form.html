@@ -13,7 +13,23 @@
     >
   </head>
   <body>
+    <style>
+      .htmx-indicator {
+          opacity: 0;
+          visibility: hidden;
+          max-height: 1.5rem;
+          max-width: 1.5rem;
+          margin: 0.4rem 1rem 0 1rem;
+      }
+      .htmx-request .htmx-indicator,
+      .htmx-request.htmx-indicator {
+          opacity: 1;
+          visibility: visible;
+          transition: opacity 200ms ease-in;
+      }
+    </style>
     <main class="container">
+      <h1>{{ .Title }}</h1>
       {{ template `form` . }}
     </main>
   </body>
@@ -25,22 +41,26 @@
   <label for="{{ .Name }}" class="label">
     {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
   </label>
-  <input
-    type="{{ .Type }}"
-    name="{{ .Name }}"
-    class="input"
-    value="{{ .Value }}"
-    hx-patch=""
-    hx-params="{{ .Name }}"
-    hx-trigger="blur, keyup changed delay:800ms"
-    hx-target="closest .field"
-    hx-swap="outerHTML"
-  />
+  <div class="control">
+    <input
+      id="{{ or .ID .Name }}"
+      type="{{ .Type }}"
+      name="{{ .Name }}"
+      class="input{{ if .Error }} is-danger{{ end }}"
+      value="{{ .Value }}"
+      hx-patch=""
+      hx-params="{{ .Name }}"
+      hx-trigger="blur, change, keyup delay:300ms changed"
+      hx-target="closest .field"
+      hx-swap="outerHTML"
+      hx-indicator="closest form"
+    />
+  </div>
   {{ with .Help }}
     <p class="help">{{ . }}</p>
   {{ end }}
   {{ with .Error }}
-    <p class="help is-error">{{ . }}</p>
+    <p class="help is-danger">{{ . }}</p>
   {{ end }}
 </div>
 {{- end }}
@@ -50,40 +70,47 @@
   <label for="{{ .Name }}" class="label">
     {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
   </label>
-  <textarea
-    name="{{ .Name }}"
-    class="input"
-    hx-patch=""
-    hx-params="{{ .Name }}"
-    hx-trigger="blur, keyup changed delay:800ms"
-    hx-target="closest .field"
-    hx-swap="outerHTML"
-  >{{ .Value }}</textarea>
+  <div class="control">
+    <textarea
+      id="{{ or .ID .Name }}"
+      name="{{ .Name }}"
+      class="textarea{{ if .Error }} is-danger{{ end }}"
+      hx-patch=""
+      hx-params="{{ .Name }}"
+      hx-trigger="blur, change, keyup delay:300ms changed"
+      hx-target="closest .field"
+      hx-swap="outerHTML"
+      hx-indicator="closest form"
+    >{{ .Value }}</textarea>
+  </div>
   {{ with .Help }}
     <p class="help">{{ . }}</p>
   {{ end }}
   {{ with .Error }}
-    <p class="help is-error">{{ . }}</p>
+    <p class="help is-danger">{{ . }}</p>
   {{ end }}
 </div>
 {{- end }}
 
 {{ define `form` }}
-{{ if .Sent }}
-  <h1>Success!</h1>
-  <p>[{{ .Message.Value }}]</p>
-  <p>{{ .Sent }}</p>
-{{ else }}
-<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form">
-  <fieldset style="white-space: pre;">
-    {{- template "input" .Name -}}
-    {{- template "input" .Email -}}
-    {{- template "input" .Phone -}}
-    {{- template "textarea" .Message -}}
-    <p><button type="submit">{{ .Send }}</button></p>
-  </fieldset>
-</form>
-{{ end }}
+  {{ if .Sent }}
+    <h1>Success!</h1>
+    <p>[{{ .Message.Value }}]</p>
+    <p>{{ .Sent }}</p>
+  {{ else }}
+  <form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form m-4">
+    <fieldset>
+      {{- template "input" .Name -}}
+      {{- template "input" .Email -}}
+      {{- template "input" .Phone -}}
+      {{- template "textarea" .Message -}}
+      <p>
+        <button type="submit" class="button is-primary">{{ .Send }}</button>
+        <img id="spinner" class="htmx-indicator" src="/spinner.svg" alt="Loading..."/>
+      </p>
+    </fieldset>
+  </form>
+  {{ end }}
 {{ end }}
 
 {{ define `validationFailed` }}

@@ -12,84 +12,119 @@
     >
   </head>
   <body>
+    <style>
+      .htmx-indicator {
+          opacity: 0;
+          visibility: hidden;
+          max-height: 1.5rem;
+          max-width: 1.5rem;
+          margin: 0.4rem 1rem 0 1rem;
+      }
+      .htmx-request .htmx-indicator,
+      .htmx-request.htmx-indicator {
+          opacity: 1;
+          visibility: visible;
+          transition: opacity 200ms ease-in;
+      }
+    </style>
     <main class="container">
       
-
-<form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form">
-  <fieldset style="white-space: pre;"><div class="field">
+  
+  <form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form m-4">
+    <fieldset><div class="field">
   <label for="name" class="label">
     Your Name &nbsp;*
   </label>
-  <input
-    type="text"
-    name="name"
-    class="input"
-    value=""
-    hx-patch=""
-    hx-params="name"
-    hx-trigger="blur, keyup changed delay:800ms"
-    hx-target="closest .field"
-    hx-swap="outerHTML"
-  />
+  <div class="control">
+    <input
+      id="name"
+      type="text"
+      name="name"
+      class="input"
+      value=""
+      hx-patch=""
+      hx-params="name"
+      hx-trigger="blur keyup changed delay:800ms"
+      hx-target="closest .field"
+      hx-swap="outerHTML"
+      hx-indicator="closest form"
+    />
+  </div>
   
   
-    <p class="help is-error">Name is required</p>
+    <p class="help is-danger">Name is required</p>
   
 </div><div class="field">
   <label for="email" class="label">
     E-mail Address &nbsp;*
   </label>
-  <input
-    type="email"
-    name="email"
-    class="input"
-    value=""
-    hx-patch=""
-    hx-params="email"
-    hx-trigger="blur, keyup changed delay:800ms"
-    hx-target="closest .field"
-    hx-swap="outerHTML"
-  />
+  <div class="control">
+    <input
+      id="email"
+      type="email"
+      name="email"
+      class="input"
+      value=""
+      hx-patch=""
+      hx-params="email"
+      hx-trigger="blur keyup changed delay:800ms"
+      hx-target="closest .field"
+      hx-swap="outerHTML"
+      hx-indicator="closest form"
+    />
+  </div>
   
   
-    <p class="help is-error">Email is required</p>
+    <p class="help is-danger">Email is required</p>
   
 </div><div class="field">
   <label for="phone" class="label">
     Phone Number
   </label>
-  <input
-    type="phone"
-    name="phone"
-    class="input"
-    value=""
-    hx-patch=""
-    hx-params="phone"
-    hx-trigger="blur, keyup changed delay:800ms"
-    hx-target="closest .field"
-    hx-swap="outerHTML"
-  />
+  <div class="control">
+    <input
+      id="phone"
+      type="phone"
+      name="phone"
+      class="input"
+      value=""
+      hx-patch=""
+      hx-params="phone"
+      hx-trigger="blur keyup changed delay:800ms"
+      hx-target="closest .field"
+      hx-swap="outerHTML"
+      hx-indicator="closest form"
+    />
+  </div>
   
   
 </div><div class="field">
   <label for="message" class="label">
     Message &nbsp;*
   </label>
-  <textarea
-    name="message"
-    class="input"
-    hx-patch=""
-    hx-params="message"
-    hx-trigger="blur, keyup changed delay:800ms"
-    hx-target="closest .field"
-    hx-swap="outerHTML"
-  ></textarea>
+  <div class="control">
+    <textarea
+      id="message"
+      name="message"
+      class="input"
+      hx-patch=""
+      hx-params="message"
+      hx-trigger="blur keyup changed delay:800ms"
+      hx-target="closest .field"
+      hx-swap="outerHTML"
+      hx-indicator="closest form"
+      rows="8"
+    ></textarea>
+  </div>
   
   
-</div><p><button type="submit">Send</button></p>
-  </fieldset>
-</form>
-
+</div><p>
+        <button type="submit" class="button is-primary">Send</button>
+        <img id="spinner" class="htmx-indicator" src="/spinner.svg" alt="Loading..."/>
+      </p>
+    </fieldset>
+  </form>
+  
 
     </main>
   </body>

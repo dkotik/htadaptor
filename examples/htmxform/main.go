@@ -6,15 +6,21 @@ package main
 
 import (
 	"context"
+	_ "embed" // for spinner
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/dkotik/htadaptor"
 	"github.com/dkotik/htadaptor/middleware/acceptlanguage"
+	"github.com/dkotik/htadaptor/staticfs"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 )
+
+//go:embed spinner.svg
+var spinner []byte
 
 type mockSender struct {
 	*Letter
@@ -33,19 +39,29 @@ func main() {
 	defer l.Close()
 
 	bundle := i18n.NewBundle(language.English)
-	// mux := http.NewServeMux()
-
-	// mux.Handle("GET /{$}", getForm)
-	// mux.Handle("POST /{$}", postForm)
-
-	fmt.Printf(
-		`Listening at http://%[1]s/
-`,
-		l.Addr(),
-	)
+	mux := http.NewServeMux()
+	mux.Handle("GET /spinner.svg", staticfs.NewFastFileSystemFileWithContentType(spinner, "image/svg+xml"))
 
 	letter := new(Letter)
-	http.Serve(l, acceptlanguage.New(bundle)(
-		htadaptor.Must(NewContactForm(&mockSender{Letter: letter})),
+	mux.Handle("/{$}", acceptlanguage.New(bundle)(
+		slowHandler{ // slow responses down to show loading indicators
+			Handler: htadaptor.Must(NewContactForm(&mockSender{Letter: letter})),
+		},
 	))
+
+	fmt.Printf(`Listening at http://%[1]s/ `, l.Addr())
+	http.Serve(l, mux)
+}
+
+type slowHandler struct {
+	http.Handler
+}
+
+func (h slowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	select {
+	case <-r.Context().Done():
+		return
+	case <-time.After(time.Second * 2):
+	}
+	h.Handler.ServeHTTP(w, r)
 }

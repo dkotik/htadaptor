@@ -177,6 +177,15 @@ func NewContactForm(s Sender) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	postHX, err := adaptor.AdaptFunc(
+		func(ctx context.Context, l *Letter) (PostContactForm, error) {
+			return PostContactForm{Sender: s}.Post(ctx, l)
+		},
+		htadaptor.WithTemplate(tmpl.Lookup("form")),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	validator, err := NewFieldValidator(
 		tmpl.Lookup("input"),
@@ -187,7 +196,7 @@ func NewContactForm(s Sender) (http.Handler, error) {
 	}
 	return htadaptor.NewMethodMux(&htadaptor.MethodSwitch{
 		Get:   get,
-		Post:  post,
+		Post:  htadaptor.NewHTMXSwitch(post, postHX),
 		Patch: validator,
 	}), nil
 }

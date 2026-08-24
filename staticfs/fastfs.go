@@ -67,6 +67,13 @@ func NewFastFileSystemFile(contents []byte) *FastFile {
 	}
 }
 
+func NewFastFileSystemFileWithContentType(contents []byte, contentType string) *FastFile {
+	return &FastFile{
+		contentType: contentType,
+		contents:    contents,
+	}
+}
+
 type fastFileSystemOptions struct {
 	Index       map[string]*FastFile
 	Fallthrough http.Handler

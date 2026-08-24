@@ -11,6 +11,7 @@ import (
 )
 
 type FormField struct {
+	ID         string // very important for focus
 	Label      string
 	Name       string
 	Type       string
@@ -267,7 +268,15 @@ func NewMessageFieldWithValue(lc *i18n.Localizer, v string) (f FormField, err er
 	}
 	f.Value = v
 	if v == "" {
-		// all good
+		f.Error, err = lc.Localize(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "MessageRequired",
+				Other: "Message is required.",
+			},
+		})
+		if err != nil {
+			return f, err
+		}
 	} else if len(v) < 7 {
 		f.Error, err = lc.Localize(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
