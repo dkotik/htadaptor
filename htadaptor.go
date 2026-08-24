@@ -40,7 +40,7 @@ type Decoder interface {
 
 type DecoderFunc func(any, *http.Request) error
 
-func (f DecoderFunc) Decoder(v any, r *http.Request) error {
+func (f DecoderFunc) Decode(v any, r *http.Request) error {
 	return f(v, r)
 }
 

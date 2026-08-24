@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
     <title>Contact</title>
@@ -28,96 +28,98 @@
       }
     </style>
     <main class="container">
+      <h1 class="title">Contact</h1>
       
   
   <form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form m-4">
     <fieldset><div class="field">
   <label for="name" class="label">
-    Your Name &nbsp;*
+    Name &nbsp;*
   </label>
-  <div class="control">
+  <div class="control" hx-target="next .error">
     <input
-      id="name"
       type="text"
       name="name"
-      class="input"
+      class="input is-danger"
       value=""
       hx-patch=""
       hx-params="name"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
+      hx-trigger="blur, change, keyup delay:300ms changed"
+      hx-swap="innerHTML"
       hx-indicator="closest form"
     />
   </div>
   
-  
-    <p class="help is-danger">Name is required</p>
-  
+  <div class="error">
+    
+      <p class="help is-danger">Name is required</p>
+    
+  </div>
 </div><div class="field">
   <label for="email" class="label">
-    E-mail Address &nbsp;*
+    Email &nbsp;*
   </label>
-  <div class="control">
+  <div class="control" hx-target="next .error">
     <input
-      id="email"
       type="email"
       name="email"
-      class="input"
+      class="input is-danger"
       value=""
       hx-patch=""
       hx-params="email"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
+      hx-trigger="blur, change, keyup delay:300ms changed"
+      hx-swap="innerHTML"
       hx-indicator="closest form"
     />
   </div>
   
-  
-    <p class="help is-danger">Email is required</p>
-  
+  <div class="error">
+    
+      <p class="help is-danger">Email is required</p>
+    
+  </div>
 </div><div class="field">
   <label for="phone" class="label">
-    Phone Number
+    Phone
   </label>
-  <div class="control">
+  <div class="control" hx-target="next .error">
     <input
-      id="phone"
-      type="phone"
+      type="text"
       name="phone"
       class="input"
       value=""
       hx-patch=""
       hx-params="phone"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
+      hx-trigger="blur, change, keyup delay:300ms changed"
+      hx-swap="innerHTML"
       hx-indicator="closest form"
     />
   </div>
   
-  
+  <div class="error">
+    
+  </div>
 </div><div class="field">
   <label for="message" class="label">
     Message &nbsp;*
   </label>
-  <div class="control">
+  <div class="control" hx-target="next .error">
     <textarea
-      id="message"
       name="message"
-      class="input"
+      class="textarea is-danger"
       hx-patch=""
       hx-params="message"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
+      hx-trigger="blur, change, keyup delay:300ms changed"
       hx-swap="outerHTML"
       hx-indicator="closest form"
-      rows="8"
     ></textarea>
   </div>
   
-  
+  <div class="error">
+    
+      <p class="help is-danger">Message is required.</p>
+    
+  </div>
 </div><p>
         <button type="submit" class="button is-primary">Send</button>
         <img id="spinner" class="htmx-indicator" src="/spinner.svg" alt="Loading..."/>

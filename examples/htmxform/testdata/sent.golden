@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
     <title>Contact</title>
@@ -28,6 +28,7 @@
       }
     </style>
     <main class="container">
+      <h1 class="title">Contact</h1>
       
   
     <h1>Success!</h1>

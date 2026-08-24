@@ -1,6 +1,6 @@
 {{ define `page` -}}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
@@ -29,7 +29,7 @@
       }
     </style>
     <main class="container">
-      <h1>{{ .Title }}</h1>
+      <h1 class="title">{{ .Title }}</h1>
       {{ template `form` . }}
     </main>
   </body>
@@ -41,9 +41,8 @@
   <label for="{{ .Name }}" class="label">
     {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
   </label>
-  <div class="control">
+  <div class="control" hx-target="next .error">
     <input
-      id="{{ or .ID .Name }}"
       type="{{ .Type }}"
       name="{{ .Name }}"
       class="input{{ if .Error }} is-danger{{ end }}"
@@ -51,17 +50,18 @@
       hx-patch=""
       hx-params="{{ .Name }}"
       hx-trigger="blur, change, keyup delay:300ms changed"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
+      hx-swap="innerHTML"
       hx-indicator="closest form"
     />
   </div>
   {{ with .Help }}
     <p class="help">{{ . }}</p>
   {{ end }}
-  {{ with .Error }}
-    <p class="help is-danger">{{ . }}</p>
-  {{ end }}
+  <div class="error">
+    {{ with .Error }}
+      <p class="help is-danger">{{ . }}</p>
+    {{ end }}
+  </div>
 </div>
 {{- end }}
 
@@ -70,15 +70,13 @@
   <label for="{{ .Name }}" class="label">
     {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
   </label>
-  <div class="control">
+  <div class="control" hx-target="next .error">
     <textarea
-      id="{{ or .ID .Name }}"
       name="{{ .Name }}"
       class="textarea{{ if .Error }} is-danger{{ end }}"
       hx-patch=""
       hx-params="{{ .Name }}"
       hx-trigger="blur, change, keyup delay:300ms changed"
-      hx-target="closest .field"
       hx-swap="outerHTML"
       hx-indicator="closest form"
     >{{ .Value }}</textarea>
@@ -86,9 +84,11 @@
   {{ with .Help }}
     <p class="help">{{ . }}</p>
   {{ end }}
-  {{ with .Error }}
-    <p class="help is-danger">{{ . }}</p>
-  {{ end }}
+  <div class="error">
+    {{ with .Error }}
+      <p class="help is-danger">{{ . }}</p>
+    {{ end }}
+  </div>
 </div>
 {{- end }}
 

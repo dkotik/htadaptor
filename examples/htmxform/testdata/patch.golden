@@ -1,100 +1,13 @@
-<div class="field">
-  <label for="name" class="label">
-    Your Name &nbsp;*
-  </label>
-  <div class="control">
-    <input
-      id="name"
-      type="text"
-      name="name"
-      class="input"
-      value=""
-      hx-patch=""
-      hx-params="name"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
-      hx-indicator="closest form"
-    />
-  </div>
-  
-  
-    <p class="help is-danger">Name is required</p>
-  
-</div>
+<p class="help is-danger">Name is required</p>
 
 ==================
 
-<div class="field">
-  <label for="phone" class="label">
-    Phone Number
-  </label>
-  <div class="control">
-    <input
-      id="phone"
-      type="phone"
-      name="phone"
-      class="input"
-      value=""
-      hx-patch=""
-      hx-params="phone"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
-      hx-indicator="closest form"
-    />
-  </div>
-  
-  
-</div>
+
 
 ==================
 
-<div class="field">
-  <label for="email" class="label">
-    E-mail Address &nbsp;*
-  </label>
-  <div class="control">
-    <input
-      id="email"
-      type="email"
-      name="email"
-      class="input"
-      value=""
-      hx-patch=""
-      hx-params="email"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
-      hx-indicator="closest form"
-    />
-  </div>
-  
-  
-    <p class="help is-danger">Email is required</p>
-  
-</div>
+<p class="help is-danger">Email is required</p>
 
 ==================
 
-<div class="field">
-  <label for="message" class="label">
-    Message &nbsp;*
-  </label>
-  <div class="control">
-    <textarea
-      id="message"
-      name="message"
-      class="input"
-      hx-patch=""
-      hx-params="message"
-      hx-trigger="blur keyup changed delay:800ms"
-      hx-target="closest .field"
-      hx-swap="outerHTML"
-      hx-indicator="closest form"
-      rows="8"
-    ></textarea>
-  </div>
-  
-  
-</div>
+<p class="help is-danger">Message is required.</p>
