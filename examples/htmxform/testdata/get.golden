@@ -84,7 +84,7 @@
             hx-target="global #nameFieldError"
             hx-swap="innerHTML"
             hx-indicator="closest form"
-            hx-sync="closest form:abort"
+            hx-sync="closest form:queue all"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
             hx-on:htmx:config:request="inlineValidate('name', event)"
             required
@@ -107,7 +107,7 @@
             hx-target="global #emailFieldError"
             hx-swap="innerHTML"
             hx-indicator="closest form"
-            hx-sync="closest form:abort"
+            hx-sync="closest form:queue all"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
             hx-on:htmx:config:request="inlineValidate('email', event)"
             required
@@ -130,7 +130,7 @@
             hx-target="global #phoneFieldError"
             hx-swap="innerHTML"
             hx-indicator="closest form"
-            hx-sync="closest form:abort"
+            hx-sync="closest form:queue all"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
             hx-on:htmx:config:request="inlineValidate('phone', event)"
           />
@@ -150,7 +150,7 @@
             hx-target="global #messageFieldError"
             hx-swap="innerHTML"
             hx-indicator="closest form"
-            hx-sync="closest form:abort"
+            hx-sync="closest form:queue all"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
             hx-on:htmx:config:request="inlineValidate('message', event)"
             required
