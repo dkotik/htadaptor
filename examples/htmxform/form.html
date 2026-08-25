@@ -23,10 +23,10 @@
       .htmx-request.htmx-indicator {
           opacity: 1;
           visibility: visible;
-          transition: opacity 200ms ease-in;
+          transition: opacity 500ms ease-in;
       }
     </style>
-    <main class="container">
+    <main class="container" style="max-width: 30em; margin-top: 6rem;">
       <section class="article">
         <h1 class="title">{{ .Title }}</h1>
         {{ template `form` . }}
@@ -36,93 +36,24 @@
 </html>
 {{ end }}
 
-{{ define "input" -}}
-<div class="field">
-  <label for="{{ .Name }}" class="label">
-    {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
-  </label>
-  <div class="control">
-    <input
-      type="{{ .Type }}"
-      name="{{ .Name }}"
-      class="input{{ if .Error }} is-danger{{ end }}"
-      value="{{ .Value }}"
-      hx-patch=""
-      hx-trigger="input changed delay:300ms"
-      hx-target="global .validate-{{ .Name }}.error"
-      hx-swap="innerHTML"
-      hx-indicator="closest form"
-      hx-sync="closest form:abort"
-    />
-  </div>
-  {{ with .Help }}
-    <p class="help">{{ . }}</p>
-  {{ end }}
-  <div class="validate-{{ .Name }} error">
-    {{ with .Error }}
-      <p class="help is-danger">{{ . }}</p>
-    {{ end }}
-  </div>
-</div>
-{{- end }}
-
-{{ define "textarea" -}}
-<div class="field">
-  <label for="{{ .Name }}" class="label">
-    {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
-  </label>
-  <div class="control" hx-target="next .error">
-    <textarea
-      name="{{ .Name }}"
-      class="textarea{{ if .Error }} is-danger{{ end }}"
-      hx-patch=""
-      hx-trigger="input changed delay:300ms"
-      hx-swap="outerHTML"
-      hx-indicator="closest form"
-      hx-sync="closest form:abort"
-    >{{ .Value }}</textarea>
-  </div>
-  {{ with .Help }}
-    <p class="help">{{ . }}</p>
-  {{ end }}
-  <div class="error">
-    {{ with .Error }}
-      <p class="help is-danger">{{ . }}</p>
-    {{ end }}
-  </div>
-</div>
-{{- end }}
-
 {{ define `form` }}
-  {{ if .Sent }}
+  {{ if .IsValid }}
     <h1>Success!</h1>
-    <p>[{{ .Message.Value }}]</p>
-    <p>{{ .Sent }}</p>
+    <p>{{ .SentLabel }}</p>
   {{ else }}
   <script>
-  document.addEventListener('htmx:config:request', function(event) {
-      if (event.detail.ctx.request.method === "PATCH") {
-        const name = event.detail.ctx.sourceElement.name
-        const formData = event.detail.ctx.request.body
+    document.addEventListener('htmx:config:request', function(event) {
+        if (event.detail.ctx.request.method === "PATCH") {
+          const name = event.detail.ctx.sourceElement.name
+          const formData = event.detail.ctx.request.body
 
-        // patch requests should contain only the source
-        // field value
-        for (const [key, value] of [...formData.entries()]) {
-          if (key !== name) {
-            formData.delete(key);
+          // patch requests should contain only the source
+          // field value and remove the rest from the form
+          for (const [key, value] of [...formData.entries()]) {
+            if (key !== name) {
+              formData.delete(key);
+            }
           }
-        }
-      }
-  });
-
-    document.body.addEventListener('htmx:beforeRequest', function(evt) {
-      // console.log(event.detail.requestConfig.verb)
-      // console.log(event.detail.elt.nodeName)
-      console.log(event.detail.requestConfig.disabledElements)
-        // Check if the triggering element matches your custom override condition
-        if (event.detail.requestConfig.verb === "patch" && event.detail.elt.nodeName !== "BUTTON") {
-            // Prevent htmx from processing disabled elements for this request
-            delete evt.detail.requestConfig.disabledElements;
         }
     });
   </script>
@@ -132,32 +63,125 @@
     hx-target="this"
     hx-swap="outerHTML"
     hx-post=""
-    hx-disabled-elt="button, input, textarea, select, this"
+    hx-disable="button, input, textarea, select, this"
     class="form m-4">
     <fieldset>
-      {{- template "input" .Name -}}
-      {{- template "input" .Email -}}
-      {{- template "input" .Phone -}}
-      {{- template "textarea" .Message -}}
+      <div class="field">
+        <label for="name" class="label">
+          {{ .NameLabel }} &nbsp;*
+        </label>
+        <div class="control">
+          <input
+            type="name"
+            name="name"
+            class="input"
+            value="{{ .Letter.Name }}"
+            hx-patch=""
+            hx-trigger="input changed delay:300ms"
+            hx-target="global #nameFieldError"
+            hx-swap="innerHTML"
+            hx-indicator="closest form"
+            hx-sync="closest form:abort"
+            required
+          />
+        </div>
+        <div id="nameFieldError" class="error">
+          {{ with .NameError }}
+            <p class="help is-danger">{{ . }}</p>
+          {{ end }}
+        </div>
+      </div>
+      <div class="field">
+        <label for="email" class="label">
+          {{ .EmailLabel }} &nbsp;*
+        </label>
+        <div class="control">
+          <input
+            type="email"
+            name="email"
+            class="input"
+            value="{{ .Letter.Email }}"
+            hx-patch=""
+            hx-trigger="input changed delay:300ms"
+            hx-target="global #emailFieldError"
+            hx-swap="innerHTML"
+            hx-indicator="closest form"
+            hx-sync="closest form:abort"
+            required
+          />
+        </div>
+        <div id="emailFieldError" class="error">
+          {{ with .EmailError }}
+            <p class="help is-danger">{{ . }}</p>
+          {{ end }}
+        </div>
+      </div>
+      <div class="field">
+        <label for="phone" class="label">
+          {{ .PhoneLabel }}
+        </label>
+        <div class="control">
+          <input
+            type="phone"
+            name="phone"
+            class="input"
+            value="{{ .Letter.Phone }}"
+            hx-patch=""
+            hx-trigger="input changed delay:300ms"
+            hx-target="global #phoneFieldError"
+            hx-swap="innerHTML"
+            hx-indicator="closest form"
+            hx-sync="closest form:abort"
+          />
+        </div>
+        <div id="phoneFieldError" class="error">
+          {{ with .PhoneError }}
+            <p class="help is-danger">{{ . }}</p>
+          {{ end }}
+        </div>
+      </div>
+      <div class="field">
+        <label for="message" class="label">
+          {{ .MessageLabel }} &nbsp;*
+        </label>
+        <div class="control">
+          <textarea
+            name="message"
+            class="textarea"
+            hx-patch=""
+            hx-trigger="input changed delay:300ms"
+            hx-target="global #messageFieldError"
+            hx-swap="innerHTML"
+            hx-indicator="closest form"
+            hx-sync="closest form:abort"
+            required
+          >{{ .Letter.Message }}</textarea>
+        </div>
+        <div id="messageFieldError" class="error">
+          {{ with .MessageError }}
+            <p class="help is-danger">{{ . }}</p>
+          {{ end }}
+        </div>
+      </div>
       <p>
-        <button type="submit" class="button is-primary">{{ .Send }}</button>
+        <button type="submit" class="button is-primary">{{ .SendLabel }}</button>
         <svg id="spinner" class="htmx-indicator"
           fill="hsl(228, 97%, 42%)" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
           <defs><linearGradient id="RadialGradient8932"><stop offset="0%" stop-color="currentColor" stop-opacity="1"/><stop offset="100%" stop-color="currentColor" stop-opacity="0.25"/></linearGradient></defs>
-            <style>@keyframes spin8932 {
-                    to {
-                        transform: rotate(360deg);
-                    }
-                }
+            <style>
+              @keyframes spin8932 {
+                  to {
+                      transform: rotate(360deg);
+                  }
+              }
 
-                #circle8932 {
-                    transform-origin: 50% 50%;
-                    stroke: url(#RadialGradient8932);
-                    fill: none;
-                    animation: spin8932 .5s infinite linear;
-                    :
-
-                }</style>
+              #circle8932 {
+                  transform-origin: 50% 50%;
+                  stroke: url(#RadialGradient8932);
+                  fill: none;
+                  animation: spin8932 .5s infinite linear;
+              }
+            </style>
           <circle cx="10" cy="10" r="8" id="circle8932" stroke-width="2"/>
         </svg>
       </p>

@@ -22,16 +22,15 @@
       .htmx-request.htmx-indicator {
           opacity: 1;
           visibility: visible;
-          transition: opacity 200ms ease-in;
+          transition: opacity 500ms ease-in;
       }
     </style>
-    <main class="container">
+    <main class="container" style="max-width: 30em; margin-top: 6rem;">
       <section class="article">
         <h1 class="title">Contact</h1>
         
   
     <h1>Success!</h1>
-    <p>[test message]</p>
     <p>Thank you! We will follow up with you soon.</p>
   
 

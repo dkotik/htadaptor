@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -19,9 +20,14 @@ import (
 
 type mockSender struct {
 	*Letter
+	Attempts int
 }
 
 func (m *mockSender) Send(ctx context.Context, l *Letter) error {
+	if m.Attempts > 0 {
+		m.Attempts--
+		return errors.New("mock attempt failed, try again")
+	}
 	*m.Letter = *l
 	return nil
 }
@@ -36,10 +42,16 @@ func main() {
 	bundle := i18n.NewBundle(language.English)
 
 	letter := new(Letter)
-	fmt.Printf(`Listening at http://%[1]s/ `, l.Addr())
+	fmt.Printf("http://%[1]s/\n", l.Addr())
 	http.Serve(l, acceptlanguage.New(bundle)(
-		slowHandler{ // slow responses down to show loading indicators
-			Handler: htadaptor.Must(NewContactForm(&mockSender{Letter: letter})),
+		// slow responses down to show loading indicators
+		slowHandler{
+			Handler: htadaptor.Must(NewContactForm(
+				&mockSender{
+					Letter:   letter,
+					Attempts: 2,
+				},
+			)),
 		},
 	))
 }

@@ -29,190 +29,132 @@ func (l *Letter) Validate(ctx context.Context) error {
 }
 
 type ContactForm struct {
-	Title   string
-	Name    FormField
-	Phone   FormField
-	Email   FormField
-	Message FormField
-	Send    string
-	Sent    string
+	Letter  Letter
+	IsValid bool
+
+	localizer    *i18n.Localizer
+	nameError    *i18n.LocalizeConfig
+	emailError   *i18n.LocalizeConfig
+	phoneError   *i18n.LocalizeConfig
+	messageError *i18n.LocalizeConfig
 }
 
-func (f ContactForm) WithSchema() ContactForm {
-	f.Name.Name = "name"
-	f.Name.Type = "text"
-	f.Name.IsRequired = true
+func newContactForm(ctx context.Context) (ContactForm, error) {
+	lc, ok := htadaptor.LocalizerFromContext(ctx)
+	if !ok {
+		return ContactForm{}, errors.New("no localizer in context")
+	}
+	return ContactForm{
+		localizer: lc,
+	}, nil
+}
 
-	f.Phone.Name = "phone"
-	f.Phone.Type = "text"
-
-	f.Email.Name = "email"
-	f.Email.Type = "email"
-	f.Email.IsRequired = true
-
-	f.Message.Name = "message"
-	f.Message.Type = "textarea"
-	f.Message.IsRequired = true
+func (f ContactForm) Validate(l *Letter) ContactForm {
+	f.Letter = *l
+	f.nameError = validateName(l.Name)
+	f.emailError = validateEmail(l.Email)
+	f.phoneError = validatePhone(l.Phone)
+	f.messageError = validateMessage(l.Message)
+	f.IsValid = f.nameError == nil &&
+		f.emailError == nil &&
+		f.phoneError == nil &&
+		f.messageError == nil
 	return f
 }
 
-func (f ContactForm) WithLabels(lc *i18n.Localizer) (_ ContactForm, err error) {
-	f.Title, err = lc.Localize(&i18n.LocalizeConfig{
+func (f ContactForm) Title() (string, error) {
+	return f.localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
 			ID:    "Contact",
 			Other: "Contact",
 		},
 	})
-	if err != nil {
-		return f, err
-	}
-	f.Name.Label, err = lc.Localize(&i18n.LocalizeConfig{
+}
+
+func (f ContactForm) NameLabel() (string, error) {
+	return f.localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
 			ID:    "LabelName",
 			Other: "Name",
 		},
 	})
-	if err != nil {
-		return f, err
+}
+
+func (f ContactForm) NameError() (string, error) {
+	if f.nameError == nil {
+		return "", nil
 	}
-	f.Phone.Label, err = lc.Localize(&i18n.LocalizeConfig{
+	return f.localizer.Localize(f.nameError)
+}
+
+func (f ContactForm) PhoneLabel() (string, error) {
+	return f.localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
 			ID:    "LabelPhone",
 			Other: "Phone",
 		},
 	})
-	if err != nil {
-		return f, err
+}
+
+func (f ContactForm) PhoneError() (string, error) {
+	if f.phoneError == nil {
+		return "", nil
 	}
-	f.Email.Label, err = lc.Localize(&i18n.LocalizeConfig{
+	return f.localizer.Localize(f.phoneError)
+}
+
+func (f ContactForm) EmailLabel() (string, error) {
+	return f.localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
 			ID:    "LabelEmail",
 			Other: "Email",
 		},
 	})
-	if err != nil {
-		return f, err
+}
+
+func (f ContactForm) EmailError() (string, error) {
+	if f.emailError == nil {
+		return "", nil
 	}
-	f.Message.Label, err = lc.Localize(&i18n.LocalizeConfig{
+	return f.localizer.Localize(f.emailError)
+}
+
+func (f ContactForm) MessageLabel() (string, error) {
+	return f.localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
 			ID:    "LabelMessage",
 			Other: "Message",
 		},
 	})
-	if err != nil {
-		return f, err
-	}
-	return f, nil
 }
 
-func (f ContactForm) send() *i18n.LocalizeConfig {
-	return &i18n.LocalizeConfig{
+func (f ContactForm) MessageError() (string, error) {
+	if f.messageError == nil {
+		return "", nil
+	}
+	return f.localizer.Localize(f.messageError)
+}
+
+func (f ContactForm) SendLabel() (string, error) {
+	return f.localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
 			ID:    "LabelSend",
 			Other: "Send",
 		},
-	}
+	})
 }
 
-func (f ContactForm) Get(ctx context.Context) (_ ContactForm, err error) {
-	lc, _ := htadaptor.LocalizerFromContext(ctx)
-	if lc == nil {
-		return f, errors.New("nil context localizer")
-	}
-	f, err = f.WithLabels(lc)
-	if err != nil {
-		return f, err
-	}
-	f.Send, err = lc.Localize(f.send())
-	f = f.WithSchema()
-	if err != nil {
-		return f, err
-	}
-	return f, nil
+func (f ContactForm) SentLabel() (string, error) {
+	return f.localizer.Localize(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "Sent",
+			Other: "Thank you! We will follow up with you soon.",
+		},
+	})
 }
 
 type Sender interface {
 	Send(ctx context.Context, l *Letter) error
-}
-
-type PostContactForm struct {
-	ContactForm
-	Sender  Sender
-	IsValid bool
-}
-
-func (f PostContactForm) Post(ctx context.Context, l *Letter) (_ PostContactForm, err error) {
-	lc, _ := htadaptor.LocalizerFromContext(ctx)
-	if lc == nil {
-		return f, errors.New("nil context localizer")
-	}
-	var verr *i18n.LocalizeConfig
-	f.IsValid = true
-
-	if verr = validateName(l.Name); verr != nil {
-		f.IsValid = false
-		f.ContactForm.Name.Error, err = lc.Localize(verr)
-		if err != nil {
-			return f, err
-		}
-	}
-	f.ContactForm.Name.Value = l.Name
-
-	if verr = validatePhone(l.Phone); verr != nil {
-		f.IsValid = false
-		f.ContactForm.Phone.Error, err = lc.Localize(verr)
-		if err != nil {
-			return f, err
-		}
-	}
-	f.ContactForm.Phone.Value = l.Phone
-
-	if verr = validateEmail(l.Email); verr != nil {
-		f.IsValid = false
-		f.ContactForm.Email.Error, err = lc.Localize(verr)
-		if err != nil {
-			return f, err
-		}
-	}
-	f.ContactForm.Email.Value = l.Email
-
-	if verr = validateMessage(l.Message); verr != nil {
-		f.IsValid = false
-		f.ContactForm.Message.Error, err = lc.Localize(verr)
-		if err != nil {
-			return f, err
-		}
-	}
-	f.ContactForm.Message.Value = l.Message
-
-	if f.IsValid {
-		f.Sent, err = lc.Localize(&i18n.LocalizeConfig{
-			DefaultMessage: &i18n.Message{
-				ID:    "Sent",
-				Other: "Thank you! We will follow up with you soon.",
-			},
-		})
-		if err != nil {
-			return f, err
-		}
-		err = f.Sender.Send(ctx, l)
-		if err != nil {
-			f.Sent = ""
-			// TODO: handle send error as a form error
-			return f, err
-		}
-	}
-
-	f.ContactForm, err = f.ContactForm.WithLabels(lc)
-	if err != nil {
-		return f, err
-	}
-	f.Send, err = lc.Localize(f.send())
-	f.ContactForm = f.ContactForm.WithSchema()
-	if err != nil {
-		return f, err
-	}
-	return f, nil
 }
 
 func NewContactForm(s Sender) (http.Handler, error) {
@@ -223,7 +165,7 @@ func NewContactForm(s Sender) (http.Handler, error) {
 	adaptor := htadaptor.New()
 	get, err := adaptor.AdaptNullaryFunc(
 		func(ctx context.Context) (ContactForm, error) {
-			return ContactForm{}.Get(ctx)
+			return newContactForm(ctx)
 		},
 		htadaptor.WithTemplate(tmpl.Lookup("page")),
 	)
@@ -231,19 +173,39 @@ func NewContactForm(s Sender) (http.Handler, error) {
 		return nil, err
 	}
 
+	send := func(ctx context.Context, l *Letter) (ContactForm, error) {
+		form, err := newContactForm(ctx)
+		if err != nil {
+			return form, err
+		}
+		form = form.Validate(l)
+		if !form.IsValid {
+			return form, nil
+		}
+		if err = s.Send(ctx, l); err != nil {
+			form.IsValid = false
+			form.messageError = &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "SenderFailed",
+					Other: "could not send the message: {{ .Error }}",
+				},
+				TemplateData: map[string]any{
+					"Error": err.Error(),
+				},
+			}
+		}
+		return form, nil
+	}
+
 	post, err := adaptor.AdaptFunc(
-		func(ctx context.Context, l *Letter) (PostContactForm, error) {
-			return PostContactForm{Sender: s}.Post(ctx, l)
-		},
+		send,
 		htadaptor.WithTemplate(tmpl.Lookup("page")),
 	)
 	if err != nil {
 		return nil, err
 	}
 	postHX, err := adaptor.AdaptFunc(
-		func(ctx context.Context, l *Letter) (PostContactForm, error) {
-			return PostContactForm{Sender: s}.Post(ctx, l)
-		},
+		send,
 		htadaptor.WithTemplate(tmpl.Lookup("form")),
 	)
 	if err != nil {
@@ -252,22 +214,21 @@ func NewContactForm(s Sender) (http.Handler, error) {
 
 	validator, err := NewValidator(
 		adaptor,
-		FieldValidator{
-			Name:      "message",
-			Validator: validateMessage,
+		func(name, value string) (*i18n.LocalizeConfig, bool) {
+			switch name {
+			case "message":
+				return validateMessage(value), true
+			case "email":
+				return validateEmail(value), true
+			case "name":
+				return validateName(value), true
+			case "phone":
+				return validatePhone(value), true
+			default:
+				return nil, false
+			}
 		},
-		FieldValidator{
-			Name:      "email",
-			Validator: validateEmail,
-		},
-		FieldValidator{
-			Name:      "name",
-			Validator: validateName,
-		},
-		FieldValidator{
-			Name:      "phone",
-			Validator: validatePhone,
-		},
+		10*1024, // 10kb
 	)
 	if err != nil {
 		return nil, err
