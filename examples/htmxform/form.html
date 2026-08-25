@@ -61,20 +61,21 @@
     <p>{{ .SentLabel }}</p>
   {{ else }}
   <script>
-    document.addEventListener('htmx:config:request', function(event) {
-        if (event.detail.ctx.request.method === "PATCH") {
-          const name = event.detail.ctx.sourceElement.name
-          const formData = event.detail.ctx.request.body
+    const inlineValidate = (validatorName, event) => {
+      event.detail.ctx.sourceElement.classList.remove('is-danger')
+      const name = event.detail.ctx.sourceElement.name
+      const formData = event.detail.ctx.request.body
 
-          // patch requests should contain only the source
-          // field value and remove the rest from the form
-          for (const [key, value] of [...formData.entries()]) {
-            if (key !== name) {
-              formData.delete(key);
-            }
-          }
+      for (const [key, value] of [...formData.entries()]) {
+        if (key !== name) {
+          formData.delete(key)
+        } else {
+          formData.delete(key)
+          formData.set("name", validatorName)
+          formData.set("value", value)
         }
-    });
+      }
+    }
   </script>
   <form
     method="post"
@@ -101,8 +102,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('name', event)"
             required
           />
         </div>
@@ -126,8 +127,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('email', event)"
             required
           />
         </div>
@@ -151,8 +152,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('phone', event)"
           />
         </div>
         <div id="phoneFieldError">
@@ -173,8 +174,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('message', event)"
             required
           >{{ .Letter.Message }}</textarea>
         </div>

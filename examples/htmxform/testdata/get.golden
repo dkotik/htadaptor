@@ -24,6 +24,19 @@
           visibility: visible;
           transition: opacity 500ms ease-in;
       }
+
+      form div.field p.help.is-danger {
+        padding-left: 0.6rem;
+        padding-top: 0.4rem;
+        padding-bottom: 0.3rem;
+        font-size: 100%;
+      }
+
+      div#messageFieldError>p.help.is-danger {
+        padding-top: 0.4rem;
+        padding-bottom: 0.3rem;
+        font-size: 100%;
+      }
     </style>
     <main class="container" style="max-width: 30em; margin-top: 6rem;">
       <section class="article">
@@ -31,20 +44,21 @@
         
   
   <script>
-    document.addEventListener('htmx:config:request', function(event) {
-        if (event.detail.ctx.request.method === "PATCH") {
-          const name = event.detail.ctx.sourceElement.name
-          const formData = event.detail.ctx.request.body
+    const inlineValidate = (validatorName, event) => {
+      event.detail.ctx.sourceElement.classList.remove('is-danger')
+      const name = event.detail.ctx.sourceElement.name
+      const formData = event.detail.ctx.request.body
 
-          
-          
-          for (const [key, value] of [...formData.entries()]) {
-            if (key !== name) {
-              formData.delete(key);
-            }
-          }
+      for (const [key, value] of [...formData.entries()]) {
+        if (key !== name) {
+          formData.delete(key)
+        } else {
+          formData.delete(key)
+          formData.set("name", validatorName)
+          formData.set("value", value)
         }
-    });
+      }
+    }
   </script>
   <form
     method="post"
@@ -71,14 +85,12 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('name', event)"
             required
           />
         </div>
-        <div id="nameFieldError" class="error">
-          
-        </div>
+        <div id="nameFieldError"></div>
       </div>
       <div class="field">
         <label for="email" class="label">
@@ -96,14 +108,12 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('email', event)"
             required
           />
         </div>
-        <div id="emailFieldError" class="error">
-          
-        </div>
+        <div id="emailFieldError"></div>
       </div>
       <div class="field">
         <label for="phone" class="label">
@@ -121,13 +131,11 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('phone', event)"
           />
         </div>
-        <div id="phoneFieldError" class="error">
-          
-        </div>
+        <div id="phoneFieldError"></div>
       </div>
       <div class="field">
         <label for="message" class="label">
@@ -143,14 +151,12 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
-            hx-on:input="this.classList.remove('is-danger')"
             hx-on:htmx:response:error="this.classList.add('is-danger')"
+            hx-on:htmx:config:request="inlineValidate('message', event)"
             required
           ></textarea>
         </div>
-        <div id="messageFieldError" class="error">
-          
-        </div>
+        <div id="messageFieldError"></div>
       </div>
       <p>
         <button type="submit" class="button is-primary">Send</button>

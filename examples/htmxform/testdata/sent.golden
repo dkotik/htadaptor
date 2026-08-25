@@ -24,6 +24,19 @@
           visibility: visible;
           transition: opacity 500ms ease-in;
       }
+
+      form div.field p.help.is-danger {
+        padding-left: 0.6rem;
+        padding-top: 0.4rem;
+        padding-bottom: 0.3rem;
+        font-size: 100%;
+      }
+
+      div#messageFieldError>p.help.is-danger {
+        padding-top: 0.4rem;
+        padding-bottom: 0.3rem;
+        font-size: 100%;
+      }
     </style>
     <main class="container" style="max-width: 30em; margin-top: 6rem;">
       <section class="article">

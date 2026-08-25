@@ -1,13 +1,13 @@
-<p class="help is-danger">Name is required</p>
+<p class="help is-danger">⚠️&nbsp;&nbsp;Name is required.</p>
 
 ==================
 
-<p class="help is-danger">Phone number is format invalid.</p>
+
 
 ==================
 
-<p class="help is-danger">Email is required</p>
+<p class="help is-danger">⚠️&nbsp;&nbsp;Email is required.</p>
 
 ==================
 
-<p class="help is-danger">Message is required.</p>
+<p class="help is-danger">⚠️&nbsp;&nbsp;Message is required.</p>
