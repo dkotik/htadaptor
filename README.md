@@ -7,10 +7,6 @@ Package `htadaptor` provides convenient generic domain logic adaptors for HTTP h
 <details>
   <summary>Planned features for <strong>v1.0.0</strong> release. ↩</summary>
 
-- [ ] Add default read limit and WithNoReadLimit option to bust it.
-- [ ] Add default memory use limit.
-- [ ] Document that custom decoders are not constrained by read limit and memory limit.
-- [ ] Document every `Option`.
 - [ ] Add file system adaptor with decoder that can stream files.
 </details>
 

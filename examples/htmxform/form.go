@@ -49,19 +49,6 @@ func newContactForm(ctx context.Context) (ContactForm, error) {
 	}, nil
 }
 
-func (f ContactForm) Validate(l *Letter) ContactForm {
-	f.Letter = *l
-	f.nameError = validateName(l.Name)
-	f.emailError = validateEmail(l.Email)
-	f.phoneError = validatePhone(l.Phone)
-	f.messageError = validateMessage(l.Message)
-	f.IsValid = f.nameError == nil &&
-		f.emailError == nil &&
-		f.phoneError == nil &&
-		f.messageError == nil
-	return f
-}
-
 func (f ContactForm) Title() (string, error) {
 	return f.localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: &i18n.Message{
@@ -214,21 +201,6 @@ func NewContactForm(s Sender) (http.Handler, error) {
 
 	validator, err := NewValidator(
 		adaptor,
-		func(name, value string) (*i18n.LocalizeConfig, bool) {
-			switch name {
-			case "message":
-				return validateMessage(value), true
-			case "email":
-				return validateEmail(value), true
-			case "name":
-				return validateName(value), true
-			case "phone":
-				return validatePhone(value), true
-			default:
-				return nil, false
-			}
-		},
-		10*1024, // 10kb
 		tmpl.Lookup("validationError"),
 	)
 	if err != nil {

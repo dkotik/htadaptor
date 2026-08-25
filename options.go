@@ -21,8 +21,13 @@ type options struct {
 	ErrorHandler   ErrorHandler
 }
 
+// Option intializes the [Adaptor] with defaults
+// for [AdaptFunc], [AdaptNullaryFunc], and [AdaptVoidFunc] handlers.
 type Option func(*options) error
 
+// WithOptions groups multiple [Option]s into a sequence.
+// It is a helper function for creating reusable configuration
+// sets.
 func WithOptions(withOptions ...Option) Option {
 	return func(o *options) (err error) {
 		for _, option := range withOptions {
@@ -80,6 +85,8 @@ func WithTemplate(t *template.Template) Option {
 	}
 }
 
+// WithDefaultEncoder sets the default encoder to [JSONEncoder]
+// if no other encoder had been set.
 func WithDefaultEncoder() Option {
 	return func(o *options) error {
 		if o.Encoder != nil {
@@ -89,6 +96,7 @@ func WithDefaultEncoder() Option {
 	}
 }
 
+// WithErrorHandler sets the request error handler.
 func WithErrorHandler(h ErrorHandler) Option {
 	return func(o *options) error {
 		if h == nil {
@@ -106,6 +114,9 @@ var (
 	defaultErrorHandlerHTMLSetup sync.Once
 )
 
+// WithDefaultErrorHandler sets the default error handler
+// matching the content type of the encoder if no other
+// error handler had been set.
 func WithDefaultErrorHandler() Option {
 	return func(o *options) (err error) {
 		if o.ErrorHandler != nil {
@@ -143,7 +154,17 @@ func WithDefaultErrorHandler() Option {
 	}
 }
 
-func WithDecoder(d Decoder) Option {
+// WithUnsafeDecoder sets the decoder for the [Adaptor].
+// The decoder is used to decode the request body into a struct.
+// If no decoder is set, the default struct decoder is used.
+//
+// This option is mutually exclusive with [WithDecoderOptions].
+// When the decoder is set, all the previously
+// decoder options are discarded.
+//
+// Use this option with caution, as it bypasses the default
+// body read limit and parsing memory limit.
+func WithUnsafeDecoder(d Decoder) Option {
 	return func(o *options) error {
 		if d == nil {
 			return errors.New("cannot use a <nil> decoder")
@@ -154,14 +175,28 @@ func WithDecoder(d Decoder) Option {
 	}
 }
 
+// WithDecoderOptions modifies the default reflection-based
+// struct decoder.
+//
+// This option is mutually exclusive with [WithUnsafeDecoder].
+// When the decoder options are set, the previously set
+// decoder is discarded.
 func WithDecoderOptions(withOptions ...reflectd.Option) Option {
 	return func(o *options) error {
+		for _, opt := range withOptions {
+			if opt == nil {
+				return errors.New("cannot use a <nil> decoder option")
+			}
+		}
 		o.Decoder = nil
 		o.DecoderOptions = append(o.DecoderOptions, withOptions...)
 		return nil
 	}
 }
 
+// WithDefaultDecoder uses a reflection-based struct decoder.
+// Any options set via [WithDecoderOptions] are applied to
+// the decoder.
 func WithDefaultDecoder() Option {
 	return func(o *options) (err error) {
 		defer func() {
@@ -169,14 +204,16 @@ func WithDefaultDecoder() Option {
 				err = fmt.Errorf("cannot initialize default struct decoder: %w", err)
 			}
 		}()
-		d, err := reflectd.NewDecoder()
+		d, err := reflectd.NewDecoder(o.DecoderOptions...)
 		if err != nil {
 			return err
 		}
-		return WithDecoder(d)(o)
+		return WithUnsafeDecoder(d)(o)
 	}
 }
 
+// WithReadLimit sets the read limit for the default decoder.
+// This option is only applicable when using the default decoder.
 func WithReadLimit(upto int64) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithReadLimit(upto))
@@ -184,6 +221,8 @@ func WithReadLimit(upto int64) Option {
 	}
 }
 
+// WithMemoryLimit sets the memory limit for the default decoder.
+// This option is only applicable when using the default decoder.
 func WithMemoryLimit(upto int64) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithMemoryLimit(upto))
@@ -191,6 +230,8 @@ func WithMemoryLimit(upto int64) Option {
 	}
 }
 
+// WithExtractors sets the extractors for the default decoder.
+// This option is only applicable when using the default decoder.
 func WithExtractors(exs ...extract.RequestValueExtractor) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithExtractors(exs...))
@@ -198,6 +239,8 @@ func WithExtractors(exs ...extract.RequestValueExtractor) Option {
 	}
 }
 
+// WithQueryValues sets the query values for the default decoder.
+// This option is only applicable when using the default decoder.
 func WithQueryValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithQueryValues(names...))
@@ -205,6 +248,8 @@ func WithQueryValues(names ...string) Option {
 	}
 }
 
+// WithHeaderValues sets the header values for the default decoder.
+// This option is only applicable when using the default decoder.
 func WithHeaderValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithHeaderValues(names...))
@@ -212,6 +257,8 @@ func WithHeaderValues(names ...string) Option {
 	}
 }
 
+// WithCookieValues sets the cookie values for the default decoder.
+// This option is only applicable when using the default decoder.
 func WithCookieValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithCookieValues(names...))
@@ -219,6 +266,8 @@ func WithCookieValues(names ...string) Option {
 	}
 }
 
+// WithPathValues sets the path values for the default decoder.
+// This option is only applicable when using the default decoder.
 func WithPathValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithPathValues(names...))
@@ -227,6 +276,7 @@ func WithPathValues(names ...string) Option {
 }
 
 // WithSessionValues is a convenience option that adds [reflectd.WithSessionValues] to the decoder options.
+// This option is only applicable when using the default decoder.
 func WithSessionValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithSessionValues(names...))

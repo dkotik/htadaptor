@@ -11,9 +11,20 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-type FieldValidator func(string, string) (*i18n.LocalizeConfig, bool)
+func (f ContactForm) Validate(l *Letter) ContactForm {
+	f.Letter = *l
+	f.nameError = validateName(l.Name)
+	f.emailError = validateEmail(l.Email)
+	f.phoneError = validatePhone(l.Phone)
+	f.messageError = validateMessage(l.Message)
+	f.IsValid = f.nameError == nil &&
+		f.emailError == nil &&
+		f.phoneError == nil &&
+		f.messageError == nil
+	return f
+}
 
-type inputValidation struct {
+type validationRequest struct {
 	Name  string
 	Value string
 }
@@ -33,37 +44,29 @@ func newValidationError(ctx context.Context, msg *i18n.LocalizeConfig) error {
 	return errors.New(verr)
 }
 
-func (i *inputValidation) Validate(ctx context.Context) error {
-	switch i.Name {
+func (v *validationRequest) Validate(ctx context.Context) error {
+	switch v.Name {
 	case "message":
-		return newValidationError(ctx, validateMessage(i.Value))
+		return newValidationError(ctx, validateMessage(v.Value))
 	case "name":
-		return newValidationError(ctx, validateName(i.Value))
+		return newValidationError(ctx, validateName(v.Value))
 	case "email":
-		return newValidationError(ctx, validateEmail(i.Value))
+		return newValidationError(ctx, validateEmail(v.Value))
 	case "phone":
-		return newValidationError(ctx, validatePhone(i.Value))
+		return newValidationError(ctx, validatePhone(v.Value))
 	}
 	return nil
 }
 
 func NewValidator(
 	a htadaptor.Adaptor,
-	fv FieldValidator,
-	readLimit int64,
 	template *template.Template,
 ) (http.Handler, error) {
-	if fv == nil {
-		return nil, errors.New("nil validator")
-	}
 	if template == nil {
 		return nil, errors.New("nil template")
 	}
-	if readLimit < 1 {
-		return nil, errors.New("read limit must be non-negative")
-	}
 	return a.AdaptFunc(
-		func(context.Context, *inputValidation) (string, error) {
+		func(context.Context, *validationRequest) (string, error) {
 			return "", nil
 		},
 		htadaptor.WithEncoder(htadaptor.EncoderFunc(

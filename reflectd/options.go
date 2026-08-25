@@ -41,9 +41,6 @@ func WithReadLimit(upto int64) Option {
 		if upto > oneMB*1_000_000 { // math.MaxInt64
 			return errors.New("read limit is too large")
 		}
-		if o.ReadLimit != 0 {
-			return errors.New("read limit is already set")
-		}
 		o.ReadLimit = upto
 		return nil
 	}
@@ -62,9 +59,6 @@ func WithMemoryLimit(upto int64) Option {
 		}
 		if upto > oneMB*10_000 { // math.MaxInt64
 			return errors.New("memory limit is too large")
-		}
-		if o.MemoryLimit != 0 {
-			return errors.New("memory limit is already set")
 		}
 		o.MemoryLimit = upto
 		return nil
