@@ -54,6 +54,7 @@ func TestContactFormExample(t *testing.T) {
 	t.Run("PATCH", func(t *testing.T) {
 		b := &bytes.Buffer{}
 		formData := url.Values{}
+		// formData.Set("type", "name")
 		formData.Set("name", "")
 		payload := strings.NewReader(formData.Encode())
 		req, err := http.NewRequest("PATCH", srv.URL, payload)
@@ -69,6 +70,7 @@ func TestContactFormExample(t *testing.T) {
 		_, _ = b.WriteString("\n\n==================\n\n")
 
 		formData = url.Values{}
+		// formData.Set("type", "phone")
 		formData.Set("phone", "")
 		payload = strings.NewReader(formData.Encode())
 		req, err = http.NewRequest("PATCH", srv.URL, payload)
@@ -84,6 +86,7 @@ func TestContactFormExample(t *testing.T) {
 		_, _ = b.WriteString("\n\n==================\n\n")
 
 		formData = url.Values{}
+		// formData.Set("type", "email")
 		formData.Set("email", "")
 		payload = strings.NewReader(formData.Encode())
 		req, err = http.NewRequest("PATCH", srv.URL, payload)
@@ -99,6 +102,7 @@ func TestContactFormExample(t *testing.T) {
 		_, _ = b.WriteString("\n\n==================\n\n")
 
 		formData = url.Values{}
+		// formData.Set("type", "message")
 		formData.Set("message", "")
 		payload = strings.NewReader(formData.Encode())
 		req, err = http.NewRequest("PATCH", srv.URL, payload)

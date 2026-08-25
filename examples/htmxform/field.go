@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 
 	"github.com/dkotik/htadaptor"
+	"github.com/dkotik/htadaptor/extract"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -44,41 +45,48 @@ func NewValidator(
 			return nil, errors.New("nil validator")
 		}
 	}
-	return a.AdaptFunc(
-		func(ctx context.Context, field *fieldValue) (string, error) {
-			for _, fv := range fvs {
-				if fv.Name == field.Name {
-					lc, ok := htadaptor.LocalizerFromContext(ctx)
-					if !ok {
-						return "", errors.New("context localizer not found")
-					}
-					verr := fv.Validator(field.Value)
-					if verr == nil {
-						return "", nil
-					}
-					return lc.Localize(verr)
-				}
-			}
-			return "", fmt.Errorf("unknown field: %s", field.Name)
+	return a.AdaptStringFunc(
+		func(ctx context.Context, msg string) (string, error) {
+			return msg, nil // pass through the extractor value
 		},
-		htadaptor.WithDecoder(htadaptor.DecoderFunc(
-			func(v any, r *http.Request) (err error) {
-				if err = r.ParseForm(); err != nil {
-					return err
+		extract.StringValueExtractorFunc(
+			func(r *http.Request) (_ string, err error) {
+				type limitReadCloser struct {
+					io.Reader
+					io.Closer
 				}
-				fv, ok := v.(*fieldValue)
-				if !ok {
-					return errors.New("not a field value type")
+
+				// enforce the upper limit on the request body
+				r.Body = limitReadCloser{
+					Reader: io.LimitReader(r.Body, 10*1024),
+					Closer: r.Body,
 				}
+				if r.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+					if err = r.ParseForm(); err != nil {
+						return "", err
+					}
+				} else if err = r.ParseMultipartForm(10 * 1024); err != nil {
+					return "", err
+				}
+
 				for key, values := range r.Form {
-					// take the first value
-					fv.Name = key
-					fv.Value = values[0]
-					return nil
+					for _, fv := range fvs {
+						if fv.Name == key {
+							verr := fv.Validator(values[0])
+							if verr == nil {
+								return "", nil
+							}
+							lc, ok := htadaptor.LocalizerFromContext(r.Context())
+							if !ok {
+								return "", errors.New("context localizer not found")
+							}
+							return lc.Localize(verr)
+						}
+					}
 				}
-				return errors.New("no field value")
+				return "", errors.New("absent field value")
 			},
-		)),
+		),
 		htadaptor.WithTemplate(
 			template.Must(
 				template.New("").Parse(`

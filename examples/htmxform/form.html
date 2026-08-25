@@ -4,9 +4,7 @@
   <head>
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
-    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js"
-      integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
-      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6" integrity="sha384-6lyVbhrs13b9z7mLOpt/N6R76rtkEBWgCjAXRs/DSWyi2AMnQSs10ijWk+PI8n7W" crossorigin="anonymous"></script>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
@@ -29,8 +27,10 @@
       }
     </style>
     <main class="container">
-      <h1 class="title">{{ .Title }}</h1>
-      {{ template `form` . }}
+      <section class="article">
+        <h1 class="title">{{ .Title }}</h1>
+        {{ template `form` . }}
+      </section>
     </main>
   </body>
 </html>
@@ -41,23 +41,24 @@
   <label for="{{ .Name }}" class="label">
     {{ .Label }}{{ if .IsRequired }} &nbsp;*{{ end }}
   </label>
-  <div class="control" hx-target="next .error">
+  <div class="control">
     <input
       type="{{ .Type }}"
       name="{{ .Name }}"
       class="input{{ if .Error }} is-danger{{ end }}"
       value="{{ .Value }}"
       hx-patch=""
-      hx-params="{{ .Name }}"
-      hx-trigger="blur, change, keyup delay:300ms changed"
+      hx-trigger="input changed delay:300ms"
+      hx-target="global .validate-{{ .Name }}.error"
       hx-swap="innerHTML"
       hx-indicator="closest form"
+      hx-sync="closest form:abort"
     />
   </div>
   {{ with .Help }}
     <p class="help">{{ . }}</p>
   {{ end }}
-  <div class="error">
+  <div class="validate-{{ .Name }} error">
     {{ with .Error }}
       <p class="help is-danger">{{ . }}</p>
     {{ end }}
@@ -75,10 +76,10 @@
       name="{{ .Name }}"
       class="textarea{{ if .Error }} is-danger{{ end }}"
       hx-patch=""
-      hx-params="{{ .Name }}"
-      hx-trigger="blur, change, keyup delay:300ms changed"
+      hx-trigger="input changed delay:300ms"
       hx-swap="outerHTML"
       hx-indicator="closest form"
+      hx-sync="closest form:abort"
     >{{ .Value }}</textarea>
   </div>
   {{ with .Help }}
@@ -98,7 +99,41 @@
     <p>[{{ .Message.Value }}]</p>
     <p>{{ .Sent }}</p>
   {{ else }}
-  <form method="post" enctype="multipart/form-data" hx-target="this" hx-swap="innerHTML" hx-post="" class="form m-4">
+  <script>
+  document.addEventListener('htmx:config:request', function(event) {
+      if (event.detail.ctx.request.method === "PATCH") {
+        const name = event.detail.ctx.sourceElement.name
+        const formData = event.detail.ctx.request.body
+
+        // patch requests should contain only the source
+        // field value
+        for (const [key, value] of [...formData.entries()]) {
+          if (key !== name) {
+            formData.delete(key);
+          }
+        }
+      }
+  });
+
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+      // console.log(event.detail.requestConfig.verb)
+      // console.log(event.detail.elt.nodeName)
+      console.log(event.detail.requestConfig.disabledElements)
+        // Check if the triggering element matches your custom override condition
+        if (event.detail.requestConfig.verb === "patch" && event.detail.elt.nodeName !== "BUTTON") {
+            // Prevent htmx from processing disabled elements for this request
+            delete evt.detail.requestConfig.disabledElements;
+        }
+    });
+  </script>
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    hx-target="this"
+    hx-swap="outerHTML"
+    hx-post=""
+    hx-disabled-elt="button, input, textarea, select, this"
+    class="form m-4">
     <fieldset>
       {{- template "input" .Name -}}
       {{- template "input" .Email -}}
@@ -106,7 +141,25 @@
       {{- template "textarea" .Message -}}
       <p>
         <button type="submit" class="button is-primary">{{ .Send }}</button>
-        <img id="spinner" class="htmx-indicator" src="/spinner.svg" alt="Loading..."/>
+        <svg id="spinner" class="htmx-indicator"
+          fill="hsl(228, 97%, 42%)" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="RadialGradient8932"><stop offset="0%" stop-color="currentColor" stop-opacity="1"/><stop offset="100%" stop-color="currentColor" stop-opacity="0.25"/></linearGradient></defs>
+            <style>@keyframes spin8932 {
+                    to {
+                        transform: rotate(360deg);
+                    }
+                }
+
+                #circle8932 {
+                    transform-origin: 50% 50%;
+                    stroke: url(#RadialGradient8932);
+                    fill: none;
+                    animation: spin8932 .5s infinite linear;
+                    :
+
+                }</style>
+          <circle cx="10" cy="10" r="8" id="circle8932" stroke-width="2"/>
+        </svg>
       </p>
     </fieldset>
   </form>
