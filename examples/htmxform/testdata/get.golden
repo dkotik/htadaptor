@@ -71,6 +71,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           />
         </div>
@@ -94,6 +96,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           />
         </div>
@@ -117,6 +121,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
           />
         </div>
         <div id="phoneFieldError" class="error">
@@ -137,6 +143,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           ></textarea>
         </div>

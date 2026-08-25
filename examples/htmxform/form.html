@@ -25,6 +25,19 @@
           visibility: visible;
           transition: opacity 500ms ease-in;
       }
+
+      form div.field p.help.is-danger {
+        padding-left: 0.6rem;
+        padding-top: 0.4rem;
+        padding-bottom: 0.3rem;
+        font-size: 100%;
+      }
+
+      div#messageFieldError>p.help.is-danger {
+        padding-top: 0.4rem;
+        padding-bottom: 0.3rem;
+        font-size: 100%;
+      }
     </style>
     <main class="container" style="max-width: 30em; margin-top: 6rem;">
       <section class="article">
@@ -34,6 +47,12 @@
     </main>
   </body>
 </html>
+{{ end }}
+
+{{ define `validationError` }}
+  {{- with . -}}
+    <p class="help is-danger">⚠️&nbsp;&nbsp;{{ . }}</p>
+  {{- end -}}
 {{ end }}
 
 {{ define `form` }}
@@ -74,7 +93,7 @@
           <input
             type="name"
             name="name"
-            class="input"
+            class="input{{ if .NameError }} is-danger{{ end }}"
             value="{{ .Letter.Name }}"
             hx-patch=""
             hx-trigger="input changed delay:300ms"
@@ -82,13 +101,13 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           />
         </div>
-        <div id="nameFieldError" class="error">
-          {{ with .NameError }}
-            <p class="help is-danger">{{ . }}</p>
-          {{ end }}
+        <div id="nameFieldError">
+          {{- template `validationError` .NameError -}}
         </div>
       </div>
       <div class="field">
@@ -99,7 +118,7 @@
           <input
             type="email"
             name="email"
-            class="input"
+            class="input{{ if .EmailError }} is-danger{{ end }}"
             value="{{ .Letter.Email }}"
             hx-patch=""
             hx-trigger="input changed delay:300ms"
@@ -107,13 +126,13 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           />
         </div>
-        <div id="emailFieldError" class="error">
-          {{ with .EmailError }}
-            <p class="help is-danger">{{ . }}</p>
-          {{ end }}
+        <div id="emailFieldError">
+          {{- template `validationError` .EmailError -}}
         </div>
       </div>
       <div class="field">
@@ -124,7 +143,7 @@
           <input
             type="phone"
             name="phone"
-            class="input"
+            class="input{{ if .PhoneError }} is-danger{{ end }}"
             value="{{ .Letter.Phone }}"
             hx-patch=""
             hx-trigger="input changed delay:300ms"
@@ -132,12 +151,12 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
           />
         </div>
-        <div id="phoneFieldError" class="error">
-          {{ with .PhoneError }}
-            <p class="help is-danger">{{ . }}</p>
-          {{ end }}
+        <div id="phoneFieldError">
+          {{- template `validationError` .PhoneError -}}
         </div>
       </div>
       <div class="field">
@@ -147,20 +166,20 @@
         <div class="control">
           <textarea
             name="message"
-            class="textarea"
+            class="textarea{{ if .MessageError }} is-danger{{ end }}"
             hx-patch=""
             hx-trigger="input changed delay:300ms"
             hx-target="global #messageFieldError"
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           >{{ .Letter.Message }}</textarea>
         </div>
-        <div id="messageFieldError" class="error">
-          {{ with .MessageError }}
-            <p class="help is-danger">{{ . }}</p>
-          {{ end }}
+        <div id="messageFieldError">
+          {{- template `validationError` .MessageError -}}
         </div>
       </div>
       <p>

@@ -63,7 +63,7 @@
           <input
             type="name"
             name="name"
-            class="input"
+            class="input is-danger"
             value=""
             hx-patch=""
             hx-trigger="input changed delay:300ms"
@@ -71,6 +71,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           />
         </div>
@@ -88,7 +90,7 @@
           <input
             type="email"
             name="email"
-            class="input"
+            class="input is-danger"
             value=""
             hx-patch=""
             hx-trigger="input changed delay:300ms"
@@ -96,6 +98,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           />
         </div>
@@ -113,7 +117,7 @@
           <input
             type="phone"
             name="phone"
-            class="input"
+            class="input is-danger"
             value=""
             hx-patch=""
             hx-trigger="input changed delay:300ms"
@@ -121,6 +125,8 @@
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
           />
         </div>
         <div id="phoneFieldError" class="error">
@@ -136,13 +142,15 @@
         <div class="control">
           <textarea
             name="message"
-            class="textarea"
+            class="textarea is-danger"
             hx-patch=""
             hx-trigger="input changed delay:300ms"
             hx-target="global #messageFieldError"
             hx-swap="innerHTML"
             hx-indicator="closest form"
             hx-sync="closest form:abort"
+            hx-on:input="this.classList.remove('is-danger')"
+            hx-on:htmx:response:error="this.classList.add('is-danger')"
             required
           ></textarea>
         </div>

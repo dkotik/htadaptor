@@ -61,9 +61,6 @@ func WithStatusCode(statusCode int) Option {
 		if statusCode < 1 {
 			return errors.New("invalid status code")
 		}
-		if o.StatusCode != 0 {
-			return errors.New("response status code is already set")
-		}
 		// status code is applied inside [WithDefaultEncoder]
 		o.StatusCode = statusCode
 		return nil

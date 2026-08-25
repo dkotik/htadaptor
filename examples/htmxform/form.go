@@ -187,7 +187,7 @@ func NewContactForm(s Sender) (http.Handler, error) {
 			form.messageError = &i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
 					ID:    "SenderFailed",
-					Other: "could not send the message: {{ .Error }}",
+					Other: "Delivery failed: {{ .Error }}.",
 				},
 				TemplateData: map[string]any{
 					"Error": err.Error(),
@@ -229,6 +229,7 @@ func NewContactForm(s Sender) (http.Handler, error) {
 			}
 		},
 		10*1024, // 10kb
+		tmpl.Lookup("validationError"),
 	)
 	if err != nil {
 		return nil, err

@@ -16,22 +16,20 @@ import (
 
 type FieldValidator func(string, string) (*i18n.LocalizeConfig, bool)
 
-type fieldValue struct {
-	Name  string
-	Value string
-}
-
-func (v *fieldValue) Validate(context.Context) error {
-	return nil
-}
-
 func NewValidator(
 	a htadaptor.Adaptor,
 	fv FieldValidator,
 	readLimit int64,
+	template *template.Template,
 ) (http.Handler, error) {
 	if fv == nil {
 		return nil, errors.New("nil validator")
+	}
+	if template == nil {
+		return nil, errors.New("nil template")
+	}
+	if readLimit < 1 {
+		return nil, errors.New("read limit must be non-negative")
 	}
 	return a.AdaptStringFunc(
 		func(ctx context.Context, msg string) (string, error) {
@@ -69,18 +67,28 @@ func NewValidator(
 					if !ok {
 						return "", errors.New("context localizer not found")
 					}
-					return lc.Localize(verr)
+					msg, err := lc.Localize(verr)
+					if err != nil {
+						return "", err
+					}
+					return "", errors.New(msg)
 				}
 				return "", errors.New("validation field absent")
 			},
 		),
-		htadaptor.WithTemplate(
-			template.Must(
-				template.New("").Parse(`
-					{{- with . -}}
-					  <p class="help is-danger">{{ . }}</p>
-					{{- end -}}
-				`),
+		htadaptor.WithEncoder(htadaptor.EncoderFunc(
+			func(w http.ResponseWriter, r *http.Request, i int, a any) error {
+				// empty response means everything is fine
+				return nil
+			},
+		)),
+		htadaptor.WithErrorHandler(
+			htadaptor.ErrorHandlerFunc(
+				func(w http.ResponseWriter, r *http.Request, err error) error {
+					w.Header().Set("content-type", "text/html")
+					w.WriteHeader(http.StatusUnprocessableEntity)
+					return template.Execute(w, err.Error())
+				},
 			),
 		),
 	)
@@ -129,8 +137,7 @@ func validatePhone(v string) *i18n.LocalizeConfig {
 				Other: "Phone number must be less than 64 characters",
 			},
 		}
-	}
-	if !regexp.MustCompile(`^\+?[0-9\-\(\) ]{7,63}$`).MatchString(v) {
+	} else if !regexp.MustCompile(`^\+?[0-9\-\(\) ]{7,63}$`).MatchString(v) {
 		return &i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorPhoneInvalid",
@@ -140,6 +147,8 @@ func validatePhone(v string) *i18n.LocalizeConfig {
 	}
 	return nil
 }
+
+var reValidEmailAddressW3C = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 func validateEmail(v string) *i18n.LocalizeConfig {
 	if v == "" {
@@ -163,8 +172,7 @@ func validateEmail(v string) *i18n.LocalizeConfig {
 				Other: "Email must be less than 64 characters",
 			},
 		}
-	}
-	if !regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`).MatchString(v) {
+	} else if !reValidEmailAddressW3C.MatchString(v) {
 		return &i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorEmailInvalid",
