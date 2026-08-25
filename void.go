@@ -19,13 +19,14 @@ func (a Adaptor) AdaptVoidFunc[T any, V Validatable[T]](
 	if err != nil {
 		return nil, err
 	}
-	return &VoidFuncAdaptor[T, V]{
-		domainCall: domainCall,
-		// statusCode:   a.statusCode,
-		// encoder:      a.encoder,
-		decoder:      o.Decoder,
-		errorHandler: o.ErrorHandler,
-	}, nil
+	return ApplyMiddleware(
+		&VoidFuncAdaptor[T, V]{
+			domainCall: domainCall,
+			// statusCode:   a.statusCode,
+			// encoder:      a.encoder,
+			decoder:      o.Decoder,
+			errorHandler: o.ErrorHandler,
+		}, o.Middleware...), nil
 }
 
 // VoidStringFuncAdaptor calls a domain function with decoded

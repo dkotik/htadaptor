@@ -19,6 +19,7 @@ type options struct {
 	Encoder        Encoder
 	StatusCode     int
 	ErrorHandler   ErrorHandler
+	Middleware     []Middleware
 }
 
 // Option intializes the [Adaptor] with defaults
@@ -280,6 +281,38 @@ func WithPathValues(names ...string) Option {
 func WithSessionValues(names ...string) Option {
 	return func(o *options) error {
 		o.DecoderOptions = append(o.DecoderOptions, reflectd.WithSessionValues(names...))
+		return nil
+	}
+}
+
+// WithMiddleware adds [http.Handler] middleware wrappers
+// to the adaptor. They will be applied in reverse order,
+// so the first middleware is the outermost wrapper.
+func WithMiddleware(m ...Middleware) Option {
+	return func(o *options) error {
+		for _, mw := range m {
+			if mw == nil {
+				return fmt.Errorf("nil adaptor middleware")
+			}
+		}
+		o.Middleware = append(o.Middleware, m...)
+		return nil
+	}
+}
+
+// WithMiddlewareIncludingOnly sets the middleware for the adaptor,
+// replacing any existing middleware with the provided ones.
+//
+// They will be applied in reverse order,
+// so the first middleware is the outermost wrapper.
+func WithMiddlewareIncludingOnly(m ...Middleware) Option {
+	return func(o *options) error {
+		for _, mw := range m {
+			if mw == nil {
+				return fmt.Errorf("nil adaptor middleware")
+			}
+		}
+		o.Middleware = m
 		return nil
 	}
 }

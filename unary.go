@@ -19,13 +19,14 @@ func (a Adaptor) AdaptFunc[T any, V Validatable[T], O any](
 	if err != nil {
 		return nil, err
 	}
-	return &UnaryFuncAdaptor[T, V, O]{
-		domainCall:   domainCall,
-		statusCode:   o.StatusCode,
-		encoder:      o.Encoder,
-		decoder:      o.Decoder,
-		errorHandler: o.ErrorHandler,
-	}, nil
+	return ApplyMiddleware(
+		&UnaryFuncAdaptor[T, V, O]{
+			domainCall:   domainCall,
+			statusCode:   o.StatusCode,
+			encoder:      o.Encoder,
+			decoder:      o.Decoder,
+			errorHandler: o.ErrorHandler,
+		}, o.Middleware...), nil
 }
 
 // UnaryFuncAdaptor extracts a struct from request

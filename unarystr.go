@@ -25,13 +25,15 @@ func (a Adaptor) AdaptStringFunc[O any](
 	if err != nil {
 		return nil, err
 	}
-	return &UnaryStringFuncAdaptor[O]{
-		domainCall:      domainCall,
-		stringExtractor: stringExtractor,
-		statusCode:      o.StatusCode,
-		encoder:         o.Encoder,
-		errorHandler:    o.ErrorHandler,
-	}, nil
+	return ApplyMiddleware(
+		&UnaryStringFuncAdaptor[O]{
+			domainCall:      domainCall,
+			stringExtractor: stringExtractor,
+			statusCode:      o.StatusCode,
+			encoder:         o.Encoder,
+			errorHandler:    o.ErrorHandler,
+		},
+		o.Middleware...), nil
 }
 
 // UnaryStringFuncAdaptor extracts a string value from request

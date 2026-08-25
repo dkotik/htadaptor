@@ -165,6 +165,11 @@ func (a Adaptor) initialize(withOptions []Option) (o *options, err error) {
 // New initializes a generic hyper text [Adaptor] with the given options
 // that are used as the default options for the adapted domain calls.
 func New(withOptions ...Option) Adaptor {
+	// return Adaptor{
+	// 	options: append([]Option{
+	// 		unpanic.New(),
+	// 	}, withOptions...),
+	// }
 	return Adaptor{
 		options: withOptions,
 	}

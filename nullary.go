@@ -19,12 +19,13 @@ func (a Adaptor) AdaptNullaryFunc[O any](
 	if err != nil {
 		return nil, err
 	}
-	return &NullaryFuncAdaptor[O]{
-		domainCall:   domainCall,
-		statusCode:   o.StatusCode,
-		encoder:      o.Encoder,
-		errorHandler: o.ErrorHandler,
-	}, nil
+	return ApplyMiddleware(
+		&NullaryFuncAdaptor[O]{
+			domainCall:   domainCall,
+			statusCode:   o.StatusCode,
+			encoder:      o.Encoder,
+			errorHandler: o.ErrorHandler,
+		}, o.Middleware...), nil
 }
 
 // NullaryFuncAdaptor calls a domain function with no input

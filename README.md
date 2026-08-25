@@ -89,12 +89,12 @@ See [examples](https://github.com/dkotik/htadaptor/tree/main/examples) folder fo
 
 ## Adaptor Options
 
-- [WithDecoder](https://pkg.go.dev/github.com/dkotik/htadaptor#WithDecoder)
-    - [WithReadLimit](https://pkg.go.dev/github.com/dkotik/htadaptor#WithReadLimit)
-    - [WithMemoryLimit](https://pkg.go.dev/github.com/dkotik/htadaptor#WithMemoryLimit)
-    - [WithExtractors](https://pkg.go.dev/github.com/dkotik/htadaptor#WithExtractors)
+- [WithReadLimit](https://pkg.go.dev/github.com/dkotik/htadaptor#WithReadLimit)
+- [WithMemoryLimit](https://pkg.go.dev/github.com/dkotik/htadaptor#WithMemoryLimit)
+- [WithExtractors](https://pkg.go.dev/github.com/dkotik/htadaptor#WithExtractors)
 - [WithEncoder](https://pkg.go.dev/github.com/dkotik/htadaptor#WithEncoder)
 - [WithErrorHandler](https://pkg.go.dev/github.com/dkotik/htadaptor#WithErrorHandler)
+- [WithUnsafeDecoder](https://pkg.go.dev/github.com/dkotik/htadaptor#WithUnsafeDecoder)
 
 ## Extractors
 

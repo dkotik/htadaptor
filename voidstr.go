@@ -25,11 +25,12 @@ func (a Adaptor) AdaptVoidStringFunc(
 	if err != nil {
 		return nil, err
 	}
-	return &VoidStringFuncAdaptor{
-		domainCall:      domainCall,
-		stringExtractor: stringExtractor,
-		errorHandler:    o.ErrorHandler,
-	}, nil
+	return ApplyMiddleware(
+		&VoidStringFuncAdaptor{
+			domainCall:      domainCall,
+			stringExtractor: stringExtractor,
+			errorHandler:    o.ErrorHandler,
+		}, o.Middleware...), nil
 }
 
 // VoidStringFuncAdaptor extracts a string value from request
