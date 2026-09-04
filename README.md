@@ -7,7 +7,9 @@ Package `htadaptor` provides convenient generic domain logic adaptors for HTTP h
 <details>
   <summary>Planned features for <strong>v1.0.0</strong> release. ↩</summary>
 
+- [ ] unpanic should be based on ErrorHandler
 - [ ] Add file system adaptor with decoder that can stream files.
+- [ ] Trim dependencies to zero.
 </details>
 
 ## Why do you need this package?
@@ -45,6 +47,8 @@ String adaptors are best when only one request value is needed:
 |-----------------|----------------------|--------------:|
 | [AdaptStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#Adaptor.AdaptStringFunc) | context, string      |    any, error |
 | [AdaptVoidStringFunc](https://pkg.go.dev/github.com/dkotik/htadaptor#Adaptor.AdaptVoidStringFunc)  | context, string      |         error |
+
+Many claim that the standard library interface `http.ResponseWriter` is entirely sufficient for writing HTTP applications. While true in principle, the general interface is a slope for many vulnerabilities. For example, developers frequently write directly to http.ResponseWriter, which sniffs the MIME content type from early response bytes, which can disable browser protections against cross-site scripting.
 
 ## Installation
 

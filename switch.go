@@ -156,3 +156,25 @@ func (s htmxSwitch) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	s.Normal.ServeHTTP(w, r)
 }
+
+type extractorSwitch struct {
+	Extractor   extract.StringValueExtractor
+	WhenPresent http.Handler
+	WhenAbsent  http.Handler
+}
+
+func NewExtractorSwitch(extractor extract.StringValueExtractor, whenPresent, whenAbsent http.Handler) extractorSwitch {
+	return extractorSwitch{
+		Extractor:   extractor,
+		WhenPresent: whenPresent,
+		WhenAbsent:  whenAbsent,
+	}
+}
+
+func (s extractorSwitch) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if value, _ := s.Extractor.ExtractStringValue(r); value == "" {
+		s.WhenAbsent.ServeHTTP(w, r)
+		return
+	}
+	s.WhenPresent.ServeHTTP(w, r)
+}
